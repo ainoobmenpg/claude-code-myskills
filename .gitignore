@@ -1,0 +1,5 @@
+# Claude Code project-specific data
+.claude/
+
+# macOS
+.DS_Store
