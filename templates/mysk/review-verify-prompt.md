@@ -113,7 +113,7 @@
   "verifications": [
     {
       "original_finding_id": "F001",
-      "status": "fixed or not_fixed or partially_fixed",
+      "status": "fixed or not_fixed or unclear",
       "detail": "詳細な検証結果"
     }
   ],
