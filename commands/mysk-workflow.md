@@ -43,21 +43,21 @@
        │  └──────┬──────┘                  │   修正計画＋修正  │   │
        │         │                          └────────┬────────┘   │
        └────→────┘                                   │            │
-                 ▼                   ┌──────┴──────┐     │
-       ┌─────────────────┐                    ▼             ▼     │
-       │mysk-spec-       │            high 全 fixed    high 残り  │
-       │  implement      │                                       │
-       │  実装計画作成    │                                       │
-       │  （計画のみ）    │                                       │
-       └────────┬────────┘                    │             │     │
-                │                             ▼             └─────┘
-                ▼                   ┌─────────────────┐
-           実装計画完了                  │mysk-review-verify│
-                                    │  別ペイン(Opus)  │
-                                    └────────┬────────┘
-                                             │
-                                             ▼
-                                          完了
+                 ▼                              ┌────┴────┐        │
+       ┌─────────────────┐                       ▼         ▼        │
+       │mysk-spec-       │            high 全 fixed  high 残り      │
+       │  implement      │       (ユーザー確認)                       │
+       │  実装計画作成    │                                         │
+       │  （計画のみ）    │                                         │
+       └────────┬────────┘              │           │              │
+                │                       ▼           └──────┐       │
+                ▼            ┌─────────────────┐         │       │
+           実装計画完了       │mysk-review-verify│◄────────┘       │
+                             │  別ペイン(Opus)  │                 │
+                             └────────┬─────────┘                 │
+                                      │                            │
+                                      ▼                            │
+                                   完了─────────────────────────────┘
 ```
 
 ---
@@ -196,8 +196,10 @@
 
 判定:
   - high 未修正あり → /mysk-review-fix に戻る
-  - high 全て fixed → /mysk-review-verify に進む
+  - high 全て fixed → ユーザー確認 → /mysk-review-verify に進む
 ```
+
+**重要**: verifyへの遷移にはユーザー確認が必要です。diffcheck結果を確認し、ユーザーの指示を待ってください。
 
 出力: `diffcheck.json`
 
@@ -237,7 +239,7 @@ diffcheck 実行
   ├─ Yes → /mysk-review-fix（ループ継続）
   └─ No → 続行
        ↓
-  全 high fixed → /mysk-review-verify（最終確認）
+  全 high fixed → ユーザー確認 → /mysk-review-verify（最終確認）
 ```
 
 ### review-verify（最終確認）
@@ -272,7 +274,7 @@ verify 実行（Opus/max）※1回のみ
 
 | 条件 | アクション |
 |------|----------|
-| diffcheck: high 全 fixed | `/mysk-review-verify` へ |
+| diffcheck: high 全 fixed | ユーザー確認 → `/mysk-review-verify` へ |
 | diffcheck: high 未修正あり | `/mysk-review-fix` ループ継続 |
 | verify: passed | **終了** |
 | verify: failed | エラー報告 → **終了** |
@@ -357,6 +359,7 @@ verify 実行（Opus/max）※1回のみ
   "version": 1,
   "run_id": "20260327-101530Z-user-auth",
   "created_at": "UTCタイムスタンプ",
+  "updated_at": "UTCタイムスタンプ",
   "status": "completed",
   "source": {
     "type": "spec",
@@ -365,11 +368,11 @@ verify 実行（Opus/max）※1回のみ
   "summary": {
     "overall_quality": "評価",
     "headline": "サマリー",
-    "finding_count": N
+    "finding_count": {"high": N, "medium": N, "low": N}
   },
   "findings": [
     {
-      "id": "S001",
+      "id": "F1",
       "severity": "high or medium or low",
       "category": "カテゴリ",
       "section": "対象セクション",
@@ -423,6 +426,11 @@ verify 実行（Opus/max）※1回のみ
 }
 ```
 
+**総合判定基準**:
+- `passed`: すべての指摘がfixed。新たな問題も見つからない。
+- `partially_passed`: 一部の指摘がpartially_fixed。high severityの未解決指摘がない場合のみ。
+- `failed`: high severityの未解決指摘が残っている、または新たなhigh severityの問題が見つかった場合。
+
 ### diffcheck.json（差分確認）
 
 ```json
@@ -448,9 +456,16 @@ verify 実行（Opus/max）※1回のみ
       "note": "備考"
     }
   ],
-  "next_step": "/mysk-review-verify"
+  "next_step": "verifyの実行にはユーザー確認が必要です。diffcheck結果を確認し、ユーザーの指示を待ってください。"
 }
 ```
+
+**判定基準**:
+- `fixed`: 問題が完全に解消されており、同等の問題が同じ箇所で再発しない。根本原因が取り除かれていること。
+- `not_fixed`: 問題が未解決、または修正が不十分で問題が残存している。
+- `partially_fixed`: 修正は行われたが、根本原因の一部が残っている、または修正自体は適切だが関連する別箇所に同等の問題が未対応で残っている、または修正によって新たな問題が発生した可能性がある。
+
+適用上の注記: diffcheckでは、コード差分に基づいて上記基準で判定する（実行結果は確認しない）。
 
 ### status.json（進捗管理）
 

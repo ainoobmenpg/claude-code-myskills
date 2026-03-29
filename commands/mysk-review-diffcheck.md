@@ -31,7 +31,47 @@ user-invocable: true
 ## 実行フロー
 
 1. run_id解決、review.json存在確認
-2. review.jsonのfindings読込（フォールバック付き）、verify.jsonのnew_findingsがあれば追加
+2. review.jsonから`project_root`を読み取り、これを`WORK_DIR`に設定
+3. review.jsonのfindings読込（フォールバック付き）、verify.jsonのnew_findingsがあれば追加
+
+## パススキーマ
+
+**定義**: `project_root`はreview.jsonに記録されたプロジェクトルートディレクトリを指す。
+
+`file`フィールドは、`project_root`からの相対パスで記録されます。
+
+**正しい形式**: `.claude/`プレフィックスを含む相対パス
+  - 例: `.claude/commands/mysk-workflow.md`
+
+**不正な形式**（避けるべき）:
+  - `commands/mysk-workflow.md`（`.claude/`がない）
+
+### パス解決アルゴリズム
+
+ファイルを読み取る際は、以下の手順でパスを解決します:
+
+1. `resolved_path = project_root + "/" + file`
+2. ファイルが存在する → そのまま使用
+3. ファイルが存在しない かつ `file`が`.claude/`で始まらない場合:
+   - `fallback_path = project_root + "/.claude/" + file` を試す
+   - 存在すれば `fallback_path` を使用
+4. 両方存在しない場合:
+   - エラーとして報告（ファイルが見つからない）
+
+**重要**: review.jsonの`file`フィールドには`.claude/`プレフィックスが含まれています（例: `.claude/commands/mysk-workflow.md`）。上記アルゴリズムに従い、`project_root`と連結して正しいファイルパスを解決してください。`.claude/`プレフィックスがないパスの場合は、フォールバック処理により自動で付与して両方試してください。
+
+## 判定基準
+
+各指摘について以下の基準で判定すること:
+
+- fixed: 問題が完全に解消されており、同等の問題が同じ箇所で再発しない。根本原因が取り除かれていること。
+- not_fixed: 問題が未解決、または修正が不十分で問題が残存している。
+- partially_fixed: 以下のいずれかに該当する場合:
+  - 修正は行われたが、根本原因の一部が残っている
+  - 修正自体は適切だが、関連する別箇所に同等の問題が未対応で残っている
+  - 修正によって新たな問題が発生した可能性がある
+
+**適用上の注記**: diffcheckでは、コード差分に基づいて上記基準で判定する（実行結果は確認しない）。
 
 ### review.json フォールバック
 
@@ -57,12 +97,20 @@ user-invocable: true
 
 ## 次ステップ判定
 
+**重要**: verifyの実行にはユーザー確認が必要です。diffcheck結果を確認し、ユーザーの指示を待ってください。
+
 | 条件 | 次アクション |
 |------|-------------|
-| 全highがfixed | /mysk-review-verify |
-| 未修正highあり | /mysk-review-fix |
-| highなし、未修正mediumあり | ユーザー確認（既定はverify） |
+| 全highがfixed | ユーザー確認「verifyを実行しますか？」 |
+| 未修正highあり | ユーザー確認「high重要度の指摘が残っています。verifyを実行しますか？（推奨: まず修正を完了させてからverifyを実行してください）」 |
+| highなし、未修正mediumあり | ユーザー確認「verifyを実行しますか？（medium重要度の指摘が残っています）」 |
+
+ユーザーが承認した場合のみ `/mysk-review-verify` を実行してください。
 
 ## JSON形式
 
 version, run_id, created_at, type, summary(total/findings/fixed/not_fixed/unclear/high_remaining/medium_remaining), checks[](finding_id/severity/status/note), next_step
+
+**next_stepフィールドの値**:
+- highが残っている場合: "verifyの実行にはユーザー確認が必要です。high重要度の指摘が残っています。"
+- high全fixedの場合: "verifyの実行にはユーザー確認が必要です。diffcheck結果を確認し、ユーザーの指示を待ってください。"
