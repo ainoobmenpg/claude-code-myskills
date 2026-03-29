@@ -12,23 +12,33 @@ If status is "completed":
    - 指摘数 (finding_count: high/medium/low)
    - 主な指摘 (各findingの id/title/severity/category)
 3. Finally, confirm "次のアクションを選択してください：/mysk-spec-revise で修正 / 終了"
+4. Perform cleanup:
+   ```
+   cmux send --workspace "{WS_REF}" --surface "{SUB_SURFACE}" "/exit"
+   sleep 1
+   cmux send-key --workspace "{WS_REF}" --surface "{SUB_SURFACE}" return
+   sleep 2
+   cmux close-surface --workspace "{WS_REF}" --surface "{SUB_SURFACE}"
+   ```
 
 If status is "failed":
 1. Read status.json and display the error content in progress field
-2. Delete spec-review-monitor using CronDelete
-
-If status is "waiting_for_user":
-1. Display only once (not every check): "サブエージェントが質問を待っています。サブペインで回答してください。"
-2. Display: "cmux focus-surface --workspace {WS_REF} --surface {SUB_SURFACE}"
-Do nothing else (do not delete job)
-
-If status is "started" or "initialized":
-- Do nothing. Do not output any message.
-
-If status is "in_progress" and updated_at is more than 15 minutes ago:
-1. Display "サブエージェントが15分以上応答していません。タイムアウトの可能性があります。"
-2. Confirm "アクションを選択してください：再開 / 待機続行 / 中止"
+2. Perform cleanup:
+   ```
+   cmux send --workspace "{WS_REF}" --surface "{SUB_SURFACE}" "/exit"
+   sleep 1
+   cmux send-key --workspace "{WS_REF}" --surface "{SUB_SURFACE}" return
+   sleep 2
+   cmux close-surface --workspace "{WS_REF}" --surface "{SUB_SURFACE}"
+   ```
 3. Delete spec-review-monitor using CronDelete
 
-If status is "in_progress" with recent updated_at:
-- Do nothing. Do not output any message.
+If status is "in_progress":
+1. Check if updated_at is more than 15 minutes ago:
+   - Get current time: `date -u +%Y-%m-%dT%H:%M:%SZ`
+   - Parse updated_at and calculate difference
+   - If more than 15 minutes:
+     1. Display "サブエージェントが15分以上応答していません。タイムアウトの可能性があります。"
+     2. Confirm "アクションを選択してください：再開 / 待機続行 / 中止"
+     3. Delete spec-review-monitor using CronDelete
+   - Otherwise: Do nothing

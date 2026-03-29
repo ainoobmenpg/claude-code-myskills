@@ -74,7 +74,8 @@
     ├── fix-plan.md               # 修正計画
     ├── diffcheck.json            # 差分確認結果
     ├── verify.json               # 最終検証結果
-    └── status.json               # 進捗管理（サブエージェント用）
+    ├── status.json               # 進捗管理（汎用）
+    └── status-review.json        # 進捗管理（spec-review専用）
 ```
 
 **run_idの形式**: `YYYYMMDD-HHMMSSZ-{slug}`
@@ -109,7 +110,7 @@
 
 ### ステップ2: 仕様レビュー `/mysk-spec-review [run_id]`
 
-別ペイン（Opus/max）でサブエージェントを起動し、仕様書をレビューする。
+仕様書をレビューし、不備や改善点をJSONで保存する。
 
 ```
 レビュー観点:
@@ -118,12 +119,6 @@
   - 一貫性: 記述間で矛盾がないか
   - 実現可能性: 技術的・時間的制約を考慮できるか
   - テスト可能性: 受け入れ条件が検証可能か
-
-実行フロー:
-  ├─ 別cmuxペインを作成
-  ├─ サブエージェント（Opus・最大effort）を起動
-  ├─ 仕様書をレビューしJSONで保存
-  └─ メインセッションに結果を表示
 ```
 
 出力: `spec-review.json`
@@ -293,7 +288,7 @@ verify 実行（Opus/max）※1回のみ
 | コマンド | 説明 | 実行場所 | 引数 |
 |---------|------|---------|------|
 | `/mysk-spec-draft` | 仕様書下書き作成 | 別ペイン(Opus) | `[topic]` |
-| `/mysk-spec-review` | 仕様レビュー | 別ペイン(Opus) | `[run_id]` |
+| `/mysk-spec-review` | 仕様レビュー | メイン | `[run_id]` |
 | `/mysk-spec-revise` | 仕様書に指摘を反映 | メイン | `[run_id]` |
 | `/mysk-spec-implement` | 実装計画作成（計画のみ） | メイン | `[run_id]` |
 | `/mysk-review-check` | コードレビュー | 別ペイン(Opus) | `[run_id] [path]` |
@@ -472,4 +467,4 @@ verify 実行（Opus/max）※1回のみ
 ---
 
 *作成日: 2026-03-27*
-*更新日: 2026-03-29*
+*更新日: 2026-03-28*

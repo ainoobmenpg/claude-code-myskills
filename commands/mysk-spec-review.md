@@ -121,11 +121,6 @@ sed -e "s|{STATUS_FILE}|$STATUS_FILE|g" -e "s|{REVIEW_PATH}|$REVIEW_PATH|g" \
 - レビュー結果の要約
 - 次のステップ案内
 
-**クリーンアップ**（完了後）:
-```bash
-cmux send --workspace "$WS_REF" --surface "$SUB_SURFACE" "/exit" && sleep 1 && cmux send-key --workspace "$WS_REF" --surface "$SUB_SURFACE" return && sleep 2 && cmux close-surface --workspace "$WS_REF" --surface "$SUB_SURFACE"
-```
-
 ## レビュー観点
 
 - 完全性: 必須セクションが揃っているか

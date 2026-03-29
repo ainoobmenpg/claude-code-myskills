@@ -36,7 +36,7 @@
 
 ```json
 {
-  "version": "1.0",
+  "version": 1,
   "run_id": "{RUN_ID}",
   "created_at": "UTCタイムスタンプ",
   "source": {
@@ -114,5 +114,5 @@ progress を適宜更新（例: "完全性チェック完了"、"明確性チェ
 ## 完了時の手順
 
 1. {REVIEW_PATH} にレビュー結果JSONを保存してください
-2. status.json を completed に更新してください
-3. 「仕様書レビューを保存しました」とのみ報告してください
+2. {STATUS_FILE} で指定されたファイルを completed に更新してください
+3. 「レビュー完了」とのみ報告してください
