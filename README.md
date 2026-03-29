@@ -88,6 +88,7 @@ cp -r templates/mysk ~/.claude/templates/mysk
 | `/mysk-spec-review` | 仕様書をレビューしJSONで保存 | 別ペイン(Opus) | `[run_id]` |
 | `/mysk-spec-revise` | レビュー指摘を差分更新 | メイン | `[run_id]` |
 | `/mysk-spec-implement` | 実装計画を作成（計画のみ） | メイン | `[run_id]` |
+| `/mysk-implement-start` | impl-plan.mdを読み込み実装を実行 | メイン | `[run_id]` |
 
 ### コードレビュー
 
@@ -148,6 +149,16 @@ cp -r templates/mysk ~/.claude/templates/mysk
               |
               v
          実装計画完了
+              |
+              v
+     +-----------------+
+     |mysk-implement-  |
+     |start            |
+     |実装を一括実行    |
+     +--------+--------+
+              |
+              v
+            完了
 ```
 
 ### fix-diffcheck ループ
@@ -184,6 +195,7 @@ check(Opus) -> fix(Sonnet) -> diffcheck(Sonnet) -> fix -> diffcheck -> ... -> ve
     +-- spec.md                   # 仕様書（確定版）
     +-- spec-draft.md             # 仕様書（下書き）
     +-- spec-review.json          # 仕様レビュー結果
+    +-- impl-plan.md              # 実装計画
     +-- review.json               # コードレビュー結果
     +-- fix-plan.md               # 修正計画
     +-- diffcheck.json            # 差分確認結果

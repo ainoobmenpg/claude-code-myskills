@@ -15,6 +15,7 @@ claude-code-myskills(cc-mysk)/
 |   +-- mysk-spec-review.md         # 仕様レビュー（別ペイン Opus）
 |   +-- mysk-spec-revise.md         # レビュー指摘の差分更新
 |   +-- mysk-spec-implement.md      # 実装計画作成（計画のみ）
+|   +-- mysk-implement-start.md     # impl-plan.mdを読み込み実装を実行
 |   +-- mysk-review-check.md        # コードレビュー（別ペイン Opus）
 |   +-- mysk-review-fix.md          # 修正計画 + 修正
 |   +-- mysk-review-diffcheck.md    # 差分確認（軽量）
@@ -43,6 +44,7 @@ claude-code-myskills(cc-mysk)/
 | `/mysk-spec-review` | 仕様レビュー | 別ペイン(Opus) | `[run_id]` |
 | `/mysk-spec-revise` | 仕様書に指摘を反映 | メイン | `[run_id]` |
 | `/mysk-spec-implement` | 実装計画作成（計画のみ） | メイン | `[run_id]` |
+| `/mysk-implement-start` | impl-plan.mdを読み込み実装を実行 | メイン | `[run_id]` |
 | `/mysk-review-check` | コードレビュー | 別ペイン(Opus) | `[run_id] [path]` |
 | `/mysk-review-fix` | 修正計画 + 修正 | メイン | `[run_id]` |
 | `/mysk-review-diffcheck` | 差分確認（軽量） | メイン | `[run_id]` |

@@ -99,6 +99,11 @@ spec-draft.md の生成完了後、monitor 側が以下を返す:
 cmux send --workspace "$WS_REF" --surface "$SUB_SURFACE" "/exit" && sleep 1 && cmux send-key --workspace "$WS_REF" --surface "$SUB_SURFACE" return && sleep 2 && cmux close-surface --workspace "$WS_REF" --surface "$SUB_SURFACE"
 ```
 
+## トラブルシューティング
+
+**結果が空の場合**:
+thinking ブロックに回答が含まれている可能性があります。thinking を展開して内容を確認してください。
+
 ## スラッグ生成ルール
 
 日本語→英訳→小文字→ハイフン区切り→最大20文字

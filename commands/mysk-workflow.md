@@ -52,13 +52,16 @@
        └────────┬────────┘              │           │              │
                 │                       ▼           └──────┐       │
                 ▼            ┌─────────────────┐         │       │
-           実装計画完了       │mysk-review-verify│◄────────┘       │
-                             │  別ペイン(Opus)  │                 │
-                             └────────┬─────────┘                 │
-                                      │                            │
-                                      ▼                            │
-                                   完了─────────────────────────────┘
+           ┌─────────────┐   │mysk-review-verify│◄────────┘       │
+           │mysk-        │   │  別ペイン(Opus)  │                 │
+           │implement-   │   └────────┬─────────┘                 │
+           │start        │            │                            │
+           │実装を一括    │            ▼                            │
+           │実行         │         完了─────────────────────────────┘
+           └─────────────┘
 ```
+
+**追加**: 実装計画完了後、`/mysk-implement-start {run_id}` で実装を一括実行できる。
 
 ---
 
@@ -70,6 +73,7 @@
     ├── spec.md                   # 仕様書（確定版）
     ├── spec-draft.md             # 仕様書（下書き）
     ├── spec-review.json          # 仕様レビュー結果
+    ├── impl-plan.md              # 実装計画
     ├── review.json               # コードレビュー結果
     ├── fix-plan.md               # 修正計画
     ├── diffcheck.json            # 差分確認結果
@@ -293,6 +297,7 @@ verify 実行（Opus/max）※1回のみ
 | `/mysk-spec-review` | 仕様レビュー | メイン | `[run_id]` |
 | `/mysk-spec-revise` | 仕様書に指摘を反映 | メイン | `[run_id]` |
 | `/mysk-spec-implement` | 実装計画作成（計画のみ） | メイン | `[run_id]` |
+| `/mysk-implement-start` | impl-plan.mdを読み込み実装を実行 | メイン | `[run_id]` |
 | `/mysk-review-check` | コードレビュー | 別ペイン(Opus) | `[run_id] [path]` |
 | `/mysk-review-fix` | 修正計画＋修正 | メイン | `[run_id]` |
 | `/mysk-review-diffcheck` | 差分確認（軽量） | メイン | `[run_id]` |

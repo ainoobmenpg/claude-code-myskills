@@ -100,6 +100,11 @@ sed -e "s|{REVIEW_JSON_PATH}|$REVIEW_JSON_PATH|g" -e "s|{WS_REF}|$WS_REF|g" -e "
 
 review.json の生成完了後、monitor 側がサマリ（全体/高/中/低/リスク）と主な指摘を返し、`/mysk-review-fix {run_id}` を案内する。
 
+## トラブルシューティング
+
+**結果が空の場合**:
+thinking ブロックに回答が含まれている可能性があります。thinking を展開して内容を確認してください。
+
 ## run_id の既定動作
 
 `/mysk-review-check` は開始コマンドなので、run_id を明示しない場合は新規 run_id を生成する。既存 run を流用しない。
