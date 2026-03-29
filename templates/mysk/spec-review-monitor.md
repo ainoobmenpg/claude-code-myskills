@@ -36,8 +36,16 @@ If status is "failed":
 If status is "in_progress":
 1. Check if updated_at is more than 15 minutes ago:
    - Get current time: `date -u +%Y-%m-%dT%H:%M:%SZ`
-   - Parse updated_at and calculate difference
-   - If more than 15 minutes:
+   - Parse updated_at and calculate difference using bash:
+     ```bash
+     UPDATED_AT="{updated_atの値}"
+     CURRENT_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+     # Unix timestampに変換（macOS: date -j, Linux: date -d）
+     UPDATED_TS=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$UPDATED_AT" +%s 2>/dev/null || date -d "$UPDATED_AT" +%s)
+     CURRENT_TS=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$CURRENT_TIME" +%s 2>/dev/null || date -d "$CURRENT_TIME" +%s)
+     DIFF_MINUTES=$(( (CURRENT_TS - UPDATED_TS) / 60 ))
+     ```
+   - If `$DIFF_MINUTES -gt 15`:
      1. Display "サブエージェントが15分以上応答していません。タイムアウトの可能性があります。"
      2. Confirm "アクションを選択してください：再開 / 待機続行 / 中止"
      3. Delete spec-review-monitor using CronDelete
