@@ -1,0 +1,70 @@
+---
+description: レビューJSONを読み高重要度指摘の修正計画を作成
+argument-hint: "[run_id]"
+user-invocable: true
+---
+
+# mysk-review-fix
+
+`/mysk-review-check` が保存したJSONを読み、高重要度指摘の修正計画を作る。いきなり修正せず、まず計画を提示して確認を取る。
+
+## 入力
+
+- run_id指定 or `~/.local/share/claude-mysk/`最新を自動選択
+
+- **データ保存先**: `~/.local/share/claude-mysk/`
+- `WORK_DIR`: `git rev-parse --show-toplevel 2>/dev/null || pwd`（プロジェクト作業ディレクトリ）
+
+## 読み込み対象
+
+`~/.local/share/claude-mysk/{run_id}/review.json`
+
+## 保存先
+
+`~/.local/share/claude-mysk/{run_id}/fix-plan.md`
+
+## 前提
+
+- 入力は `/mysk-review-check` のJSON契約に従うこと
+- Markdownレビュー文書や仕様書は入力として扱わない
+
+## 実行ルール
+
+1. run_id解決、レビューJSON読込・構造確認
+2. JSON不正または必須キー欠如ならエラー終了
+3. 初回レスポンスで編集開始せず、高重要度指摘の修正計画を日本語で提示
+4. 中・低重要度は既定で参考扱いのみ
+5. 高重要度0件ならその旨返し、必要なら中重要度へ進むかユーザー確認
+6. fix-plan.md保存後、「以上の修正を実施してよいですか？」で確認
+7. 了承後、highのみ修正（medium以降へは勝手に広げない）
+
+### review.json フォールバック
+
+サブエージェントがJSON契約に完全準拠しない場合があるため、以下のフォールバックで読み取る:
+
+- **findings配列**: `.findings` → ない場合 `.issues` も試す
+- **各finding**:
+  - `severity`: `.severity`
+  - `file`: `.file` → ない場合 `.location` からコロン前を抽出
+  - `line`: `.line` → ない場合 `.location` からコロン後を抽出（ハイフン区切りなら先頭）
+  - `title`: `.title`
+  - `detail`: `.detail` → ない場合 `.description`
+  - `suggested_fix`: `.suggested_fix` → ない場合 `.suggestion`
+  - `id`: `.id`
+- **summary**:
+  - finding_count: `.summary.finding_count` → ない場合 `.summary.total` → ない場合 `findings.length`
+  - overall_risk: `.summary.overall_risk` → ない場合 findingsのseverity分布から推定（highあり→"high"、mediumのみ→"medium"、lowのみ→"low"）
+- **source**: `.source.value` → ない場合 `.target`
+- **project_root**: `.project_root`
+
+## 初回レスポンス形式
+
+run_id、対象JSON、高重要度件数、修正対象ファイル、修正方針（ID/ファイル/行/方針）を表示。「以上の修正を実施してよいですか？」で確認。
+
+## 完了後案内
+
+「修正完了。run_id、次ステップ: /mysk-review-diffcheck {run_id} で修正状況を確認してください」と表示。
+
+## fix-diffcheckループ
+
+修正完了後 `/mysk-review-diffcheck` 案内。未修正highがあれば再度fix、全high修正済みなら `/mysk-review-verify` で最終確認。
