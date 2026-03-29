@@ -32,6 +32,7 @@ claude-code-myskills(cc-mysk)/
 |   +-- review-verify-monitor.md    # 最終検証監視
 +-- README.md                       # 利用者向けドキュメント
 +-- CLAUDE.md                       # このファイル
++-- LICENSE                         # MIT License
 ```
 
 ## スキル一覧
