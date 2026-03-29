@@ -2,25 +2,80 @@
 
 mysk は Claude Code で仕様策定からコードレビューまでを半自動化するスキル集。cmux（tmux ラッパー）と連携し、サブペインで Opus モデルのサブエージェントを起動して重い作業を任せる。メインセッションは Sonnet で軽量に進めるため、Opus のトークン消費を抑えられる。
 
+## クイックスタート（3分）
+
+前提: Claude Code CLI がインストール済み
+
+```
+1. リポジトリをクローン
+   git clone https://github.com/ainoobmenpg/claude-code-myskills.git && cd claude-code-myskills
+
+2. スキルを配置
+   mkdir -p ~/.claude/commands ~/.claude/templates
+   cp commands/*.md ~/.claude/commands/
+   cp -r templates/mysk ~/.claude/templates/mysk
+
+3. 確認
+   Claude Code で /mysk-workflow を実行
+```
+
 ## 前提条件
 
-- Claude Code (CLI)
-- cmux（オプション。別ペイン実行に使用）
-- macOS / Linux
+- **Claude Code (CLI)** — インストール済みであること（[Claude Code](https://docs.anthropic.com/en/docs/claude-code) 参照）
+- **cmux**（オプション）— 別ペイン実行に使用。未導入でもメインセッションで動作するコマンドは利用可能
+  - macOS: `brew install cmux` または [cmux リポジトリ](https://github.com/anthropics/cmux) 参照
+  - Linux: ソースからビルド
+- **macOS / Linux** — いずれかに対応
+- **データ保存先**: 成果物は `~/.local/share/claude-mysk/` に保存される
+
+### 別ペイン実行に必要な設定
+
+以下のコマンドは別ペインでの実行のため、追加の設定が必要です：
+
+- `/mysk-spec-draft`、`/mysk-spec-review`、`/mysk-review-check`、`/mysk-review-verify`
+
+**必須環境変数**:
+```bash
+export CMUX_SOCKET_PATH="$HOME/Library/Application Support/cmux/cmux.sock"  # macOS
+# または
+export CMUX_SOCKET_PATH="$HOME/.config/cmux/cmux.sock"  # Linux
+```
+
+**CronCreate ツール**: 進捗監視に CronCreate ツールを使用します。Claude Code で有効になっていることを確認してください。
+
+### セットアップ確認
+
+```bash
+# 1. ディレクトリ作成
+mkdir -p ~/.claude/commands ~/.claude/templates
+
+# 2. 環境変数確認
+echo "CMUX_SOCKET_PATH: $CMUX_SOCKET_PATH"
+
+# 3. ワークフロー確認
+/mysk-workflow
+```
 
 ## インストール
 
 `commands/` と `templates/` の中身を `~/.claude/` 配下に配置する。
 
 ```bash
-# シンボリックリンク（推奨）
-ln -s "$(pwd)/commands/"*.md ~/.claude/commands/
-ln -s "$(pwd)/templates/" ~/.claude/templates/mysk
+# ディレクトリ準備
+mkdir -p ~/.claude/commands ~/.claude/templates
 
-# またはコピー
+# シンボリックリンク（推奨）
+# 注意: ~/.claude/commands/ に同名ファイルがあると上書きされる
+# 既存のスキルがある場合は cp（コピー）を使ってください
+ln -sn "$(pwd)/commands/"*.md ~/.claude/commands/
+ln -sn "$(pwd)/templates/mysk" ~/.claude/templates/mysk
+
+# またはコピー（既存ファイルがある場合はこちらが安全）
 cp commands/*.md ~/.claude/commands/
 cp -r templates/mysk ~/.claude/templates/mysk
 ```
+
+**注意**: シンボリックリンク先に同名ファイルが既にある場合、意図せず上書きされる。他のスキルを既に導入している場合は、コピー方式を使うか、既存ファイルをバックアップしてから実行すること。
 
 ## コマンド一覧
 
@@ -70,7 +125,7 @@ cp -r templates/mysk ~/.claude/templates/mysk
        |  |  review      |                            |
        |  |  別ペイン     |                            v
        |  |  (Opus)       |                 +-------------------+
-       |  |  仕様レビュー |                 | mysk-review-diff  |
+       |  |  仕様レビュー |                 | mysk-review-diffcheck |
        |  +------+-------+                 |  差分確認（軽量）   |
        |         |                         +---------+---------+
        |         v                                   |
