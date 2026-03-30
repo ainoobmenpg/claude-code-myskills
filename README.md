@@ -110,12 +110,15 @@ Claude Code で `/mysk-workflow` を実行
 `commands/` と `templates/` の中身を `~/.claude/` 配下に配置する。
 
 ```bash
-# ディレクトリ準備
+# 0. 既存ファイルのバックアップ（必要な場合のみ）
+# ~/.claude/commands/ に mysk-*.md が既にある場合:
+mkdir -p backup
+cp ~/.claude/commands/mysk-*.md backup/
+
+# 1. ディレクトリ準備
 mkdir -p ~/.claude/commands ~/.claude/templates
 
-# シンボリックリンク（推奨）
-# 注意: ln は同名ファイルがあるとエラー（または -n/-f で置換）、cp は上書きされる
-# 既存のスキルがある場合は cp（コピー）を使うか、バックアップを取ってください
+# 2. ファイル配置（シンボリックリンク推奨）
 ln -sn "$(pwd)/commands/"*.md ~/.claude/commands/
 ln -sn "$(pwd)/templates/mysk" ~/.claude/templates/mysk
 
@@ -124,7 +127,9 @@ cp commands/*.md ~/.claude/commands/
 cp -r templates/mysk ~/.claude/templates/mysk
 ```
 
-**注意**: シンボリックリンク先に同名ファイルが既にある場合、意図せず上書きされる。他のスキルを既に導入している場合は、コピー方式を使うか、既存ファイルをバックアップしてから実行すること。
+**注意**:
+- シンボリックリンク先に同名ファイルが既にある場合、意図せず上書きされる。他のスキルを既に導入している場合は、コピー方式を使うか、既存ファイルをバックアップしてから実行すること。
+- バックアップ先はリポジトリ内の `backup/` ディレクトリを指定してください（例: `mkdir -p backup && cp ~/.claude/commands/mysk-*.md backup/`）
 
 ## コマンド一覧
 
@@ -304,3 +309,43 @@ check(Opus) -> fix(Sonnet) -> diffcheck(Sonnet) -> fix -> diffcheck -> ... -> ve
 # 最終確認
 /mysk-review-verify
 ```
+
+## スキルの更新
+
+mysk スキルを更新する場合は、以下のフローで行ってください。
+
+### 基本原則
+
+1. **リポジトリ側で修正**: `commands/` ディレクトリ内のスキルファイルを編集
+2. **環境に展開**: 修正を `~/.claude/commands/` に反映
+3. **確認**: Claude Code でスキルが正しく動作することを確認
+
+### インストール方式による展開方法の違い
+
+**シンボリックリンクで導入済みの場合**:
+- リポジトリ側の修正が自動反映されるため、再展開は不要です
+- 修正したファイルはすぐに反映されます
+
+**コピーで導入した場合**:
+- 以下のコマンドで再展開が必要です:
+
+```bash
+# 個別に更新
+cp commands/mysk-workflow.md ~/.claude/commands/
+
+# 全スキルを一括更新
+cp commands/mysk-*.md ~/.claude/commands/
+```
+
+### コマンド例
+
+```bash
+# 1. リポジトリ側で修正（お好みのエディタで）
+vim commands/mysk-workflow.md
+
+# 2. シンボリックリンクの場合は何もしなくてOK
+#    コピーの場合は以下を実行
+cp commands/mysk-*.md ~/.claude/commands/
+```
+
+**注意**: `~/.claude/commands/` 内のファイルを直接編集すると、リポジトリ側との同期が取れなくなります。必ずリポジトリ側で修正してください。

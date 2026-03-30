@@ -113,15 +113,56 @@ Issue や PR には適切なラベルを付与してください。
 git clone https://github.com/ainoobmenpg/claude-code-myskills.git
 cd claude-code-myskills
 
-# 2. スキルを配置
+# 2. 既存ファイルのバックアップ（必要な場合のみ）
+# ~/.claude/commands/ に mysk-*.md が既にある場合:
+mkdir -p backup
+cp ~/.claude/commands/mysk-*.md backup/
+
+# 3. スキルを配置
 mkdir -p ~/.claude/commands ~/.claude/templates
 cp commands/*.md ~/.claude/commands/
 cp -r templates/mysk ~/.claude/templates/mysk
 
-# 3. 動作確認
+# 4. 動作確認
 claude --model opus --dangerously-skip-permissions
 # Claude Code プロンプト内で /mysk-workflow を実行
 ```
+
+### スキルの更新
+
+mysk スキルを更新する場合は、以下のフローで行ってください。
+
+#### 基本原則
+
+1. **リポジトリ側で修正**: `commands/` ディレクトリ内のスキルファイルを編集
+2. **環境に展開**: 修正を `~/.claude/commands/` に反映
+3. **確認**: Claude Code でスキルが正しく動作することを確認
+
+#### インストール方式による展開方法の違い
+
+**シンボリックリンクで導入済みの場合**:
+- リポジトリ側の修正が自動反映されるため、再展開は不要です
+
+**コピーで導入した場合**:
+- 以下のコマンドで再展開が必要です:
+
+```bash
+# 全スキルを一括更新
+cp commands/mysk-*.md ~/.claude/commands/
+```
+
+#### コマンド例
+
+```bash
+# 1. リポジトリ側で修正（お好みのエディタで）
+vim commands/mysk-workflow.md
+
+# 2. シンボリックリンクの場合は何もしなくてOK
+#    コピーの場合は以下を実行
+cp commands/mysk-*.md ~/.claude/commands/
+```
+
+**注意**: `~/.claude/commands/` 内のファイルを直接編集すると、リポジトリ側との同期が取れなくなります。必ずリポジトリ側で修正してください。
 
 ## コードレビュー
 

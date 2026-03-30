@@ -3,3 +3,6 @@
 
 # macOS
 .DS_Store
+
+# Backup directory for existing files during installation
+backup/
