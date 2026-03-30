@@ -110,15 +110,15 @@ Claude Code で `/mysk-workflow` を実行
 `commands/` と `templates/` の中身を `~/.claude/` 配下に配置する。
 
 ```bash
-# 0. 既存ファイルのバックアップ（必要な場合のみ）
+# 1. 既存ファイルのバックアップ（必要な場合のみ）
 # ~/.claude/commands/ に mysk-*.md が既にある場合:
 mkdir -p backup
 cp ~/.claude/commands/mysk-*.md backup/
 
-# 1. ディレクトリ準備
+# 2. ディレクトリ準備
 mkdir -p ~/.claude/commands ~/.claude/templates
 
-# 2. ファイル配置（シンボリックリンク推奨）
+# 3. ファイル配置（シンボリックリンク推奨）
 ln -sn "$(pwd)/commands/"*.md ~/.claude/commands/
 ln -sn "$(pwd)/templates/mysk" ~/.claude/templates/mysk
 
