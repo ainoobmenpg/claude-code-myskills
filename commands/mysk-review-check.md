@@ -59,7 +59,7 @@ done
 
 **重要**: テンプレートには2つのスクリプトブロック（起動スクリプト＋待機スクリプト）が含まれている。両方を順番に実行すること。
 待機スクリプトはTrust確認を自動で承認し、`❯` プロンプトを検出するまでポーリングする。
-`READY:` が出力されるまで次のステップに進まないこと。`STALLED:` の場合は停滞状態を示す（stall_count >= 10でユーザーに継続/中止を確認）。
+`READY:` が出力されるまで次のステップに進まないこと。`TIMEOUT:` の場合はエラーとして扱ってください。
 
 ### 3. レビュープロンプトの送信
 
@@ -79,7 +79,7 @@ cmux send-key --workspace "$WS_REF" --surface "$SUB_SURFACE" return
 bashでsedを実行してモニターテキストを生成し、そのテキストを使って **CronCreateツール**（bashコマンドではない）で監視ジョブを登録する。
 
 ```bash
-sed -e "s|{REVIEW_JSON_PATH}|$REVIEW_JSON_PATH|g" -e "s|{WS_REF}|$WS_REF|g" -e "s|{SUB_SURFACE}|$SUB_SURFACE|g" \
+sed -e "s|{REVIEW_JSON_PATH}|$REVIEW_JSON_PATH|g" -e "s|{RUN_ID}|$RUN_ID|g" -e "s|{WS_REF}|$WS_REF|g" -e "s|{SUB_SURFACE}|$SUB_SURFACE|g" \
   $HOME/.claude/templates/mysk/review-check-monitor.md
 ```
 

@@ -1,3 +1,9 @@
+---
+description: mysk Workflow
+user-invocable: true
+argument-hint: なし
+---
+
 # mysk Workflow
 
 仕様策定からコードレビューまでの一連のワークフローを管理するスキル群。

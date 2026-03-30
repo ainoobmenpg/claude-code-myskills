@@ -1,5 +1,6 @@
 ---
 description: 残存する監視ジョブとサブペインを一括クリーンアップ
+user-invocable: true
 argument-hint: なし
 ---
 
