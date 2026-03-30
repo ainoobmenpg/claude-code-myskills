@@ -1,7 +1,5 @@
 あなたはコードレビューの専門家です。以下の対象をレビューし、結果をJSON形式で出力してください。
 
-**重要**: Claude Codeを使用する際は、常に `--dangerously-skip-permissions` フラグを使用してTrust確認プロンプトをスキップしてください。
-
 レビュー対象: {REVIEW_TARGET}
 プロジェクトルート: {PROJECT_ROOT}
 
