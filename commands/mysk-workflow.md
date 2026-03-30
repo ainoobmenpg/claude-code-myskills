@@ -159,7 +159,7 @@
   - 受け入れ条件との対応付け
 ```
 
-**完了後**: 次は `/mysk-implement-start` で実装を開始。実装完了後は `/mysk-review-check` でコードレビュー
+**完了後**: 次は `/mysk-implement-start` で実装を開始
 
 ---
 
@@ -199,6 +199,8 @@
 
 出力: `fix-plan.md`
 
+**完了後**: 次は `/mysk-review-diffcheck` で修正状況を確認
+
 ### ステップ3: 差分確認 `/mysk-review-diffcheck [run_id]`
 
 メインセッション（Sonnet）で修正状況を軽量確認する。別ペイン不要。
@@ -214,6 +216,8 @@
 ```
 
 **重要**: verifyへの遷移にはユーザー確認が必要です。diffcheck結果を確認し、ユーザーの指示を待ってください。
+
+**判定結果の要約**: high未修正→fixへ戻る、high全fixed→verifyへ
 
 出力: `diffcheck.json`
 
