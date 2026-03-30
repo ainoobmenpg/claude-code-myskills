@@ -24,6 +24,7 @@ user-invocable: true
 
 - `CMUX_SOCKET_PATH`環境変数が存在すること
 - review.jsonが存在すること
+- diffcheck.jsonが存在する場合は併せて読み込む（必須ではない）
 
 ## 実行フロー
 
@@ -31,6 +32,7 @@ user-invocable: true
 
 - run_id解決、review.json存在確認
 - review.jsonから `project_root` フィールドを読み取り、`WORK_DIR` に設定
+- diffcheck.jsonが存在する場合は読み込み、次ステップ判定の参考にする
 - project_rootがない場合：旧バージョンで作成されたreview.jsonなのでエラーとして報告し、失敗させる
   - エラーメッセージ: `エラー: review.jsonに 'project_root' フィールドがありません。このレビューは旧バージョンで作成されました。/mysk-review-check を再実行して互換性のあるレビューを作成してください。`
   - 再レビューを案内する

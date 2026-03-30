@@ -38,13 +38,7 @@ user-invocable: true
 
 **定義**: `project_root`はreview.jsonに記録されたプロジェクトルートディレクトリを指す。
 
-`file`フィールドは、`project_root`からの相対パスで記録されます。
-
-**正しい形式**: `.claude/`プレフィックスを含む相対パス
-  - 例: `.claude/commands/mysk-workflow.md`
-
-**不正な形式**（避けるべき）:
-  - `commands/mysk-workflow.md`（`.claude/`がない）
+`file`フィールドは、`project_root`からの相対パスで記録されます（例: `src/auth.ts`、`lib/utils.py`）。
 
 ### パス解決アルゴリズム
 
@@ -52,13 +46,8 @@ user-invocable: true
 
 1. `resolved_path = project_root + "/" + file`
 2. ファイルが存在する → そのまま使用
-3. ファイルが存在しない かつ `file`が`.claude/`で始まらない場合:
-   - `fallback_path = project_root + "/.claude/" + file` を試す
-   - 存在すれば `fallback_path` を使用
-4. 両方存在しない場合:
+3. ファイルが存在しない場合:
    - エラーとして報告（ファイルが見つからない）
-
-**重要**: review.jsonの`file`フィールドには`.claude/`プレフィックスが含まれています（例: `.claude/commands/mysk-workflow.md`）。上記アルゴリズムに従い、`project_root`と連結して正しいファイルパスを解決してください。`.claude/`プレフィックスがないパスの場合は、フォールバック処理により自動で付与して両方試してください。
 
 ## 判定基準
 
@@ -94,22 +83,20 @@ user-invocable: true
 
 ## 次ステップ判定
 
-**重要**: verifyの実行にはユーザー確認が必要です。diffcheck結果を確認し、ユーザーの指示を待ってください。
+**重要**: verifyへの遷移にはユーザー確認が必要です。
 
 | 条件 | 次アクション |
 |------|-------------|
-| 全highがfixed | ユーザー確認「verifyを実行しますか？」 |
-| 未修正highあり | ユーザー確認「high重要度の指摘が残っています。verifyを実行しますか？（推奨: まず修正を完了させてからverifyを実行してください）」 |
-| highなし、未修正mediumあり | ユーザー確認「verifyを実行しますか？（medium重要度の指摘が残っています）」 |
-
-ユーザーが承認した場合のみ `/mysk-review-verify` を実行してください。
+| 未修正highあり | `/mysk-review-fix` で残りの指摘を修正（ループ継続） |
+| 全highがfixed | ユーザー確認「verifyを実行しますか？」→ 承認時のみ `/mysk-review-verify` |
+| highなし、未修正mediumあり | ユーザー確認「verifyを実行しますか？（medium重要度の指摘が残っています）」→ 承認時のみ `/mysk-review-verify` |
 
 ## JSON形式
 
 version, run_id, created_at, type, summary(total/findings/fixed/not_fixed/unclear/high_remaining/medium_remaining), checks[](finding_id/severity/status/note), next_step
 
 **next_stepフィールドの値**:
-- highが残っている場合: "verifyの実行にはユーザー確認が必要です。high重要度の指摘が残っています。"
+- highが残っている場合: "/mysk-review-fix で残りの指摘を修正してください。"
 - high全fixedの場合: "verifyの実行にはユーザー確認が必要です。diffcheck結果を確認し、ユーザーの指示を待ってください。"
 
 ## 完了後案内

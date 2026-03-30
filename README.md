@@ -264,7 +264,7 @@ check(Opus) -> fix(Sonnet) -> diffcheck(Sonnet) -> fix -> diffcheck -> ... -> ve
 | コマンド | 読み込み | 出力 | ステータス |
 |---------|---------|------|----------|
 | `/mysk-spec-draft` | なし | `spec-draft.md`, `spec.md` | `status.json` |
-| `/mysk-spec-review` | `spec.md` | `spec-review.json` | `status-review.json` |
+| `/mysk-spec-review` | `spec.md`（存在時）、`spec-draft.md`（フォールバック） | `spec-review.json` | `status-review.json` |
 | `/mysk-spec-revise` | `spec.md`, `spec-review.json` | `spec.md`（更新）, `spec-v1.md`（バックアップ） | なし |
 | `/mysk-spec-implement` | `spec.md` | `impl-plan.md` | なし |
 | `/mysk-implement-start` | `impl-plan.md` | プロジェクトコードの変更（myskファイルは更新しない） | なし |

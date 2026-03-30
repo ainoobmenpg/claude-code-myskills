@@ -37,13 +37,7 @@ user-invocable: true
 
 **定義**: `project_root`はreview.jsonに記録されたプロジェクトルートディレクトリを指す。
 
-`file`フィールドは、`project_root`からの相対パスで記録されます。
-
-**正しい形式**: `.claude/`プレフィックスを含む相対パス
-  - 例: `.claude/commands/mysk-workflow.md`
-
-**不正な形式**（避けるべき）:
-  - `commands/mysk-workflow.md`（`.claude/`がない）
+`file`フィールドは、`project_root`からの相対パスで記録されます（例: `src/auth.ts`、`lib/utils.py`）。
 
 ### パス解決アルゴリズム
 
@@ -51,13 +45,8 @@ user-invocable: true
 
 1. `resolved_path = project_root + "/" + file`
 2. ファイルが存在する → そのまま使用
-3. ファイルが存在しない かつ `file`が`.claude/`で始まらない場合:
-   - `fallback_path = project_root + "/.claude/" + file` を試す
-   - 存在すれば `fallback_path` を使用
-4. 両方存在しない場合:
+3. ファイルが存在しない場合:
    - エラーとして報告（ファイルが見つからない）
-
-**重要**: review.jsonの`file`フィールドには`.claude/`プレフィックスが含まれています（例: `.claude/commands/mysk-workflow.md`）。上記アルゴリズムに従い、`project_root`と連結して正しいファイルパスを解決してください。`.claude/`プレフィックスがないパスの場合は、フォールバック処理により自動で付与して両方試してください。
 
 3. JSON不正または必須キー欠如ならエラー終了
 4. 初回レスポンスで編集開始せず、高重要度指摘の修正計画を日本語で提示
