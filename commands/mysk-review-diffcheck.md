@@ -111,3 +111,21 @@ version, run_id, created_at, type, summary(total/findings/fixed/not_fixed/unclea
 **next_stepフィールドの値**:
 - highが残っている場合: "verifyの実行にはユーザー確認が必要です。high重要度の指摘が残っています。"
 - high全fixedの場合: "verifyの実行にはユーザー確認が必要です。diffcheck結果を確認し、ユーザーの指示を待ってください。"
+
+## 完了後案内
+
+diffcheck 完了後：
+
+high 未修正ありの場合：
+```
+次: /mysk-review-fix で残りの指摘を修正
+```
+
+high 全 fixed の場合：
+```
+次: /mysk-review-verify で最終確認
+```
+
+※ high 指摘が存在しない場合は high 全 fixed と同等に扱い、verify へ誘導する
+
+- 上記条件を満たさない（エラー等）場合は案内なし

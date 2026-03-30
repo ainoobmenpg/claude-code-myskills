@@ -112,3 +112,15 @@ thinking ブロックに回答が含まれている可能性があります。th
 ## 例
 
 `/mysk-review-check`、`/mysk-review-check 20260327-101530Z-user-auth`、`/mysk-review-check src/auth.ts`
+
+## 完了後案内
+
+レビュー完了後：
+```
+次: /mysk-review-fix で指摘を修正
+```
+
+（指摘がない場合: `次: 指摘なし。完了`）
+
+- review.json に指摘が含まれる場合に出力
+- 上記条件を満たさない（エラー等）場合は案内なし

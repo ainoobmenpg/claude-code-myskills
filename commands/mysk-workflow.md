@@ -112,6 +112,8 @@
       └─ 修正して → 直接編集
 ```
 
+**完了後**: 次は シンプルなら `/mysk-spec-implement`、複雑なら `/mysk-spec-review`
+
 ### ステップ2: 仕様レビュー `/mysk-spec-review [run_id]`
 
 仕様書をレビューし、不備や改善点をJSONで保存する。
@@ -127,6 +129,8 @@
 
 出力: `spec-review.json`
 
+**完了後**: 次は `/mysk-spec-revise` でレビュー指摘を反映
+
 ### ステップ3: 指摘を反映 `/mysk-spec-revise [run_id]`
 
 レビュー指摘を既存仕様書に反映する（差分更新）。
@@ -140,6 +144,8 @@
   5. 改訂履歴を追加
 ```
 
+**完了後**: 次は `/mysk-spec-implement` で実装計画を作成
+
 ### ステップ4: 実装計画 `/mysk-spec-implement [run_id]`
 
 仕様書を読み込み、実装計画を作成する。
@@ -152,6 +158,8 @@
   - 各フェーズの具体的なタスク
   - 受け入れ条件との対応付け
 ```
+
+**完了後**: 次は `/mysk-implement-start` で実装を開始。実装完了後は `/mysk-review-check` でコードレビュー
 
 ---
 
@@ -172,6 +180,8 @@
 ```
 
 出力: `review.json`
+
+**完了後**: 次は `/mysk-review-fix` で指摘を修正
 
 ### ステップ2: 修正 `/mysk-review-fix [run_id]`
 
