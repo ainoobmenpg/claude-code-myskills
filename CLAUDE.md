@@ -21,6 +21,7 @@ claude-code-myskills(cc-mysk)/
 |   +-- mysk-review-diffcheck.md    # 差分確認（軽量）
 |   +-- mysk-review-verify.md       # 最終確認（別ペイン Opus）
 |   +-- mysk-workflow.md            # 全体ワークフロー参照
+|   +-- mysk-cleanup.md             # 残存監視ジョブ・サブペインのクリーンアップ
 +-- templates/mysk/                 # cmux 用プロンプト・モニターテンプレート
 |   +-- cmux-launch-procedure.md    # サブペイン起動手順
 |   +-- spec-draft-prompt.md        # 仕様策定プロンプト
@@ -50,6 +51,7 @@ claude-code-myskills(cc-mysk)/
 | `/mysk-review-diffcheck` | 差分確認（軽量） | メイン | `[run_id]` |
 | `/mysk-review-verify` | 最終確認 | 別ペイン(Opus) | `[run_id]` |
 | `/mysk-workflow` | 全体ワークフロー参照 | メイン | なし |
+| `/mysk-cleanup` | 残存する監視ジョブとサブペインを一括クリーンアップ | メイン | なし |
 
 ## 開発ワークフロー
 

@@ -149,9 +149,10 @@ cp -r templates/mysk ~/.claude/templates/mysk
 
 ### 全体
 
-| コマンド | 説明 |
-|---------|------|
-| `/mysk-workflow` | 全体ワークフローの参照・管理 |
+| コマンド | 説明 | 引数 |
+|---------|------|------|
+| `/mysk-workflow` | 全体ワークフローの参照・管理 | なし |
+| `/mysk-cleanup` | 残存する監視ジョブとサブペインを一括クリーンアップ | なし |
 
 引数省略時は最新の run_id を自動選択する（`/mysk-review-check` は新規 run_id を生成）。
 
