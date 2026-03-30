@@ -294,7 +294,7 @@ verify 実行（Opus/max）※1回のみ
 | コマンド | 説明 | 実行場所 | 引数 |
 |---------|------|---------|------|
 | `/mysk-spec-draft` | 仕様書下書き作成 | 別ペイン(Opus) | `[topic]` |
-| `/mysk-spec-review` | 仕様レビュー | メイン | `[run_id]` |
+| `/mysk-spec-review` | 仕様レビュー | 別ペイン(Opus) | `[run_id]` |
 | `/mysk-spec-revise` | 仕様書に指摘を反映 | メイン | `[run_id]` |
 | `/mysk-spec-implement` | 実装計画作成（計画のみ） | メイン | `[run_id]` |
 | `/mysk-implement-start` | impl-plan.mdを読み込み実装を実行 | メイン | `[run_id]` |
@@ -487,4 +487,4 @@ verify 実行（Opus/max）※1回のみ
 ---
 
 *作成日: 2026-03-27*
-*更新日: 2026-03-28*
+*更新日: 2026-03-30*
