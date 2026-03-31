@@ -1,0 +1,94 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Verify Result Schema",
+  "description": "verify状態機械の定義。review-verify-prompt.md、review-verify-monitor.md、mysk-workflow.mdで共通使用。",
+  "type": "object",
+  "properties": {
+    "verification_result": {
+      "type": "string",
+      "enum": ["passed", "partially_passed", "failed"],
+      "description": "検証結果の分類"
+    },
+    "passed": {
+      "type": "boolean",
+      "description": "すべての指摘が修正され、新規問題なし"
+    },
+    "partially_passed": {
+      "type": "boolean",
+      "description": "一部修正済みだが、未修正または新規問題あり"
+    },
+    "failed": {
+      "type": "boolean",
+      "description": "検証自体が失敗"
+    }
+  },
+  "definitions": {
+    "result_criteria": {
+      "passed": {
+        "description": "すべての指摘が修正され、新規問題なし",
+        "conditions": [
+          "verified_count == fixed_count",
+          "new_issues_count == 0",
+          "high_remaining == 0",
+          "medium_remaining == 0"
+        ],
+        "next_action": "終了"
+      },
+      "partially_passed": {
+        "description": "一部修正済みだが、未修正または新規問題あり",
+        "conditions": [
+          "fixed_count < verified_count",
+          "new_issues_count > 0",
+          "high_remaining > 0",
+          "medium_remaining > 0"
+        ].some(true),
+        "next_action": "/mysk-review-fix → /mysk-review-diffcheck → 終了"
+      },
+      "failed": {
+        "description": "検証自体が失敗",
+        "conditions": [
+          "review.jsonが読めない",
+          "project_rootがない",
+          "検証ロジックが実行できない"
+        ],
+        "next_action": "エラーレポート → 終了"
+      }
+    },
+    "transition_rules": {
+      "description": "状態遷移ルール",
+      "rules": [
+        {
+          "from": "in_progress",
+          "to": "passed",
+          "condition": "全指摘fixed && 新規問題なし"
+        },
+        {
+          "from": "in_progress",
+          "to": "partially_passed",
+          "condition": "未修正あり または 新規問題あり"
+        },
+        {
+          "from": "in_progress",
+          "to": "failed",
+          "condition": "検証エラー"
+        },
+        {
+          "from": "partially_passed",
+          "to": "passed",
+          "condition": "再verifyで全指摘fixed && 新規問題なし"
+        },
+        {
+          "from": "partially_passed",
+          "to": "passed",
+          "condition": "fix → diffcheckで全指摘fixed"
+        }
+      ]
+    }
+  },
+  "usage_notes": {
+    "prompt_integration": "review-verify-prompt.mdの冒頭で本schemaを読み込み、判定ロジックに使用する",
+    "monitor_integration": "review-verify-monitor.mdの終了判定で本schemaの条件を使用する",
+    "workflow_integration": "mysk-workflow.mdから本schemaを参照してドキュメントを生成する",
+    "note": "verifyはrun_idごとに1回のみ実行。partially_passedでも再verifyせずfix→diffcheckへ。"
+  }
+}

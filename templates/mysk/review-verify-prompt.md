@@ -1,5 +1,17 @@
 あなたはコードレビューの専門家です。以下の検証を実行し、結果をJSON形式で出力してください。
 
+## verify状態機械schemaの読み込み
+
+まず、以下のschemaを読み込み、判定ロジックに使用してください:
+```bash
+cat ~/.claude/templates/mysk/verify-schema.json
+```
+
+**重要**: `verification_result` の判定は、schemaの `definitions.result_criteria` に従ってください。
+- passed: 全指摘fixed && 新規問題なし
+- partially_passed: 未修正あり または 新規問題あり
+- failed: 検証エラー
+
 ## 検証対象
 
 レビューJSON: {REVIEW_JSON_PATH}

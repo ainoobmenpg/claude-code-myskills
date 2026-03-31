@@ -105,6 +105,26 @@ echo "CMUX_SOCKET_PATH: ${CMUX_SOCKET_PATH:-未設定}"
 
 Claude Code で `/mysk-workflow` を実行
 
+## 環境変数
+
+### MYSK_SKIP_PERMISSIONS
+
+サブエージェントの権限制限を制御します。
+
+- **既定値**: `false`（権限制限あり）
+- **設定値**: `true` | `false`
+- **用途**: `true` の場合、従来の権限スキップ動作（`--dangerously-skip-permissions`相当）
+
+**設定方法**:
+```bash
+export MYSK_SKIP_PERMISSIONS=true  # 権限スキップ（従来動作）
+export MYSK_SKIP_PERMISSIONS=false # 権限制限（既定）
+```
+
+**注意**:
+- 既定値（`false`）では、trust確認時にユーザー操作が必要です
+- 自動実行が必要な場合は `MYSK_SKIP_PERMISSIONS=true` を設定してください
+
 ## インストール
 
 `commands/` と `templates/` の中身を `~/.claude/` 配下に配置する。

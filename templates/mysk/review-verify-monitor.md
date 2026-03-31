@@ -53,6 +53,15 @@ If status is "in_progress" and updated_at is more than 15 minutes ago:
 Otherwise (in_progress with recent updated_at):
 Do nothing
 
+### verify状態機械schemaの参照
+
+終了判定ロジックは、以下のschemaの定義に従ってください:
+```bash
+cat ~/.claude/templates/mysk/verify-schema.json
+```
+
+**重要**: `verification_result` の判定は、schemaの `definitions.result_criteria` に従ってください。
+
 ### Termination Logic (when status is completed)
 
 **Important**: verifyはrun_idごとに1回のみ実行されます。partially_passedでも再検証しないでください。fix → diffcheck → 終了で応答してください。

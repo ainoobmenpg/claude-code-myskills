@@ -17,8 +17,16 @@ SUB_SURFACE=$(echo "$SPLIT_OUTPUT" | grep -oE 'surface:[0-9]+' | head -1)
 [ -z "$SUB_SURFACE" ] && { echo "Error: SUB_SURFACE is empty"; exit 1; }
 echo "SUB_SURFACE=$SUB_SURFACE"
 
+# 環境変数による権限制御
+if [ "$MYSK_SKIP_PERMISSIONS" != "true" ]; then
+  PERMISSION_FLAGS=""
+else
+  PERMISSION_FLAGS="--dangerously-skip-permissions"
+  echo "警告: MYSK_SKIP_PERMISSIONS=true により権限制限がスキップされます"
+fi
+
 cmux send --workspace "$WS_REF" --surface "$SUB_SURFACE" \
-  "cd {WORK_DIR} && claude --model opus --effort max --dangerously-skip-permissions"
+  "cd {WORK_DIR} && claude --model opus --effort max $PERMISSION_FLAGS"
 cmux send-key --workspace "$WS_REF" --surface "$SUB_SURFACE" return
 
 echo "LAUNCHED: WS_REF=$WS_REF SUB_SURFACE=$SUB_SURFACE"
@@ -37,13 +45,10 @@ WAIT_READY() {
     elapsed=$((elapsed + interval))
     SCREEN=$(cmux read-screen --workspace "$ws" --surface "$surf" 2>/dev/null || echo "")
 
-    # Trust確認が表示されたら "y" を押す（--dangerously-skip-permissions なら通常表示されない）
+    # Trust確認が表示された場合は待機（ユーザー操作を待つ）
     if echo "$SCREEN" | grep -qi "do you trust\|trust this\|trust.*project"; then
-      cmux send --workspace "$ws" --surface "$surf" "y"
-      cmux send-key --workspace "$ws" --surface "$surf" return
-      echo "TRUST: auto-accepted at ${elapsed}s"
-      sleep 5
-      continue
+      echo "TRUST: 確認待機中（ユーザー操作が必要です）"
+      # 自動承認せず、ユーザー操作を待つ
     fi
 
     # `> ` プロンプトが表示されたら完了
