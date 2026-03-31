@@ -6,12 +6,22 @@ If the file does not exist yet:
 
 If status is "completed":
 1. FIRST: Find spec-draft-monitor job in CronList and delete it using CronDelete. This must happen before any output to prevent duplicate firings.
-2. Then read {DRAFT_PATH} and display the following summary in Japanese:
-   - Overview
-   - Purpose
-   - Scope (in-scope and out-of-scope)
-   - Acceptance criteria
-3. Finally, confirm "この内容で確定しますか？（はい / いいえ / 修正して）"
+2. Then read {DRAFT_PATH} and display the following completion message in Japanese:
+
+仕様書下書きが完成しました。
+
+## run_id
+{RUN_ID}
+
+## 要約
+[Extract and display: Overview, Purpose, Scope (in-scope and out-of-scope), Acceptance criteria]
+
+## 保存先
+{DRAFT_PATH}
+
+確定処理はメイン会話で行います。「はい」「いいえ」「修正して」のいずれかで応答してください。
+
+Note: {RUN_ID} and {DRAFT_PATH} are substituted by the command-side initialization using sed.
 
 If status is "failed":
 1. Display error content

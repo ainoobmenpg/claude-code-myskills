@@ -28,9 +28,6 @@ user-invocable: true
 ## 実行ルール
 
 1. run_id解決、impl-plan.md 読込・存在確認
-   - **run_id省略時**: カレントプロジェクト（WORK_DIR）に一致するproject_rootを持つ最新のrun_idのみを選択
-   - **project_rootなしの古いrun**: 候補から除外する
-   - 該当するrun_idがない場合: エラーで終了し、run_id手動指定を促す
 2. impl-plan.md が存在しない場合、エラー終了
 3. impl-plan.md のフェーズ順にコード実装を一括実行する:
    - フェーズ間のユーザー承認を省略し連続実行する
@@ -40,9 +37,14 @@ user-invocable: true
 
 ## run_id 解決
 
-1. 引数で run_id が指定されていればそれを使用
-2. 未指定の場合、`~/.local/share/claude-mysk/` 内のディレクトリ名を降順ソートし、先頭を選択（最新ディレクトリの自動選択）
-3. 選択した run_id のディレクトリに `impl-plan.md` が存在するか確認
+統一アルゴリズムを使用:
+1. 引数で run_id が指定されていればそれを使用（終了）
+2. WORK_DIR を取得: `git rev-parse --show-toplevel 2>/dev/null || pwd`
+3. `~/.local/share/claude-mysk/` 内のディレクトリを降順ソート
+4. 各ディレクトリの run-meta.json を読み込む
+5. run-meta.json が存在しないディレクトリは候補から除外
+6. run-meta.json の project_root が WORK_DIR と一致する最初のディレクトリを選択
+7. 該当なし → エラー終了、run_id 手動指定を促す
 
 ## エラーハンドリング
 

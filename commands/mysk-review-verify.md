@@ -32,17 +32,33 @@ user-invocable: true
 
 ### 1. 初期化
 
-- run_id解決、review.json存在確認
-  - **run_id省略時**: カレントプロジェクト（WORK_DIR）に一致するproject_rootを持つ最新のrun_idのみを選択
-  - **project_rootなしの古いrun**: 候補から除外する
-  - 該当するrun_idがない場合: エラーで終了し、run_id手動指定を促す
-- review.jsonから `project_root` フィールドを読み取り、`WORK_DIR` に設定
+- run_id解決（統一アルゴリズム）:
+  1. 引数で run_id が指定されていればそれを使用（終了）
+  2. WORK_DIR を取得: `git rev-parse --show-toplevel 2>/dev/null || pwd`
+  3. `~/.local/share/claude-mysk/` 内のディレクトリを降順ソート
+  4. 各ディレクトリの run-meta.json を読み込む
+  5. run-meta.json が存在しないディレクトリは候補から除外
+  6. run-meta.json の project_root が WORK_DIR と一致する最初のディレクトリを選択
+  7. 該当なし → エラー終了、run_id 手動指定を促す
+- review.json存在確認
 - diffcheck.jsonが存在する場合は読み込み、次ステップ判定の参考にする
-- project_rootがない場合：旧バージョンで作成されたreview.jsonなのでエラーとして報告し、失敗させる
-  - エラーメッセージ: `エラー: review.jsonに 'project_root' フィールドがありません。このレビューは旧バージョンで作成されました。/mysk-review-check を再実行して互換性のあるレビューを作成してください。`
-  - 再レビューを案内する
 
-### 2. サブペイン準備
+### 2. 出力パス決定
+
+verify.json の既存状態に基づいて出力パスを決定:
+
+**手順**:
+1. `VERIFY_JSON_PATH="$RUN_DIR/verify.json"` を初期値とする
+2. verify.json が存在しない → `VERIFY_JSON_PATH` をそのまま使用
+3. verify.json が存在する場合:
+   - `jq` で `verification_result` を取得
+   - `result == "passed"` → AskUserQuestion でユーザー確認（自然な対話）
+   - `result != "passed"` → `VERIFY_JSON_PATH="$RUN_DIR/verify-rerun.json"` に変更
+4. ユーザーが再実行を拒否した場合 → 処理を中止
+
+**注意**: bash の `read` コマンドは Claude の Bash ツールでは動作しないため、必ず AskUserQuestion または自然な対話で確認すること。
+
+### 3. サブペインの準備
 
 テンプレート存在確認:
 ```bash
@@ -57,7 +73,7 @@ done
 待機スクリプトはTrust確認を自動で承認し、`❯` プロンプトを検出するまでポーリングする。
 `READY:` が出力されるまで次のステップに進まないこと。`TIMEOUT:` の場合はエラーとして扱う。
 
-### 3. 検証プロンプト送信
+### 4. 検証プロンプト送信
 
 sedで置換後、一時ファイルに保存し、短い読み込み指示を送信:
 ```bash
@@ -69,7 +85,7 @@ cmux send --workspace "$WS_REF" --surface "$SUB_SURFACE" \
 cmux send-key --workspace "$WS_REF" --surface "$SUB_SURFACE" return
 ```
 
-### 4. 状態監視
+### 5. 状態監視
 
 bashでsedを実行してモニターテキストを生成し、そのテキストを使って **CronCreateツール**（bashコマンドではない）で監視ジョブを登録する。
 
@@ -82,7 +98,7 @@ sed -e "s|{VERIFY_JSON_PATH}|$VERIFY_JSON_PATH|g" -e "s|{RUN_ID}|$RUN_ID|g" -e "
 - cron: `*/1 * * * *`
 - recurring: true
 
-### 5. このコマンドで返す内容
+### 6. このコマンドで返す内容
 
 このコマンドでは、verify 開始と監視ジョブ登録までを行う。
 verify 完了は待たずに終了する。
@@ -99,6 +115,8 @@ verify.json の生成完了後、monitor 側が終了判定ロジックに従い
 verify.jsonが既に存在する場合の再実行ロジック:
 - verify.jsonのverification_resultが`passed`の場合: 「既にpassedのverify結果があります。再実行しますか？」と確認
 - verification_resultが`passed`以外の場合: verify-rerun.jsonに出力する旨を表示して続行
+
+**※出力パス決定ロジック（step 2）で既に判定済み**: monitor側では判定済みの出力パス（VERIFY_JSON_PATH）を使用します。
 
 出力パスの決定ロジック:
 - verify.jsonが存在しない → verify.json
