@@ -125,10 +125,10 @@ cp ~/.claude/commands/mysk-*.md backup/
 # 3. スキルを配置
 mkdir -p ~/.claude/commands ~/.claude/templates/mysk
 cp commands/*.md ~/.claude/commands/
-cp templates/mysk/*.md ~/.claude/templates/mysk/
+cp -r templates/mysk/* ~/.claude/templates/mysk/
 
 # 4. 動作確認
-claude --model opus --dangerously-skip-permissions
+claude --model opus
 # Claude Code プロンプト内で /mysk-workflow を実行
 ```
 
@@ -153,7 +153,7 @@ mysk スキルを更新する場合は、以下のフローで行ってくださ
 ```bash
 # 全スキルを一括更新
 cp commands/mysk-*.md ~/.claude/commands/
-mkdir -p ~/.claude/templates/mysk && cp templates/mysk/*.md ~/.claude/templates/mysk/
+mkdir -p ~/.claude/templates/mysk && cp -r templates/mysk/* ~/.claude/templates/mysk/
 ```
 
 #### コマンド例
@@ -165,7 +165,7 @@ vim commands/mysk-workflow.md
 # 2. シンボリックリンクの場合は何もしなくてOK
 #    コピーの場合は以下を実行
 cp commands/mysk-*.md ~/.claude/commands/
-mkdir -p ~/.claude/templates/mysk && cp templates/mysk/*.md ~/.claude/templates/mysk/
+mkdir -p ~/.claude/templates/mysk && cp -r templates/mysk/* ~/.claude/templates/mysk/
 ```
 
 **注意**: `~/.claude/commands/` 内のファイルを直接編集すると、リポジトリ側との同期が取れなくなります。必ずリポジトリ側で修正してください。

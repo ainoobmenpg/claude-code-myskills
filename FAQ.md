@@ -104,7 +104,7 @@ ls ~/.claude/templates/mysk/*.md
 ファイルがない場合は、リポジトリからコピーしてください。
 
 ```bash
-mkdir -p ~/.claude/templates/mysk && cp templates/mysk/*.md ~/.claude/templates/mysk/
+mkdir -p ~/.claude/templates/mysk && cp -r templates/mysk/* ~/.claude/templates/mysk/
 ```
 
 ### Q: 別ペインが閉じられません

@@ -92,13 +92,13 @@ cat ~/.claude/templates/mysk/verify-schema.json
        ↓
 ┌──────────────────────────────────┐
 │ new_findings has high?           │
-│ → Yes: /mysk-review-fix → diffcheck → 【End】 │
+│ → Yes: error report → 【End】    │
 │ → No: continue                   │
 └──────────────────────────────────┘
        ↓
 ┌──────────────────────────────────┐
 │ summary.high_remaining > 0 ?      │
-│ → Yes: /mysk-review-fix → diffcheck → 【End】 │
+│ → Yes: error report → 【End】    │
 │ → No: continue                   │
 └──────────────────────────────────┘
        ↓
@@ -115,8 +115,8 @@ cat ~/.claude/templates/mysk/verify-schema.json
 |-----------|---------------------|-------------|
 | すべて修正済み、新規問題なし | `passed` | **終了** |
 | 検証失敗 | `failed` | エラーレポート → **終了** |
-| 新規`high`発見 | `partially_passed` | `/mysk-review-fix` → `/mysk-review-diffcheck` → **終了** |
-| 未修正の`high`あり | `partially_passed` | `/mysk-review-fix` → `/mysk-review-diffcheck` → **終了** |
+| 新規`high`発見 | `failed` | エラーレポート → **終了** |
+| 未修正の`high`あり | `failed` | エラーレポート → **終了** |
 | `high`なし、`medium`あり | `partially_passed` | ユーザーに確認（デフォルト：終了） |
 | `high`なし、`medium`なし | `passed` | **終了** |
 

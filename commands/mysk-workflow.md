@@ -431,6 +431,7 @@ verify 実行（Opus/max）※1回のみ
   "verifications": [
     {
       "original_finding_id": "F001",
+      "severity": "high or medium or low",
       "status": "fixed | not_fixed | unclear",
       "detail": "検証結果の詳細"
     }
@@ -451,8 +452,8 @@ verify 実行（Opus/max）※1回のみ
 
 **総合判定基準**:
 - `passed`: すべての指摘がfixed。新たな問題も見つからない。
-- `partially_passed`: 一部の指摘がunclear。high severityの未解決指摘がない場合のみ。
-- `failed`: high severityの未解決指摘が残っている、または新たなhigh severityの問題が見つかった場合。
+- `partially_passed`: mediumの未解決または新規mediumあり。high残存なし。
+- `failed`: high severityの未解決指摘が残っている、または新たなhigh severityの問題が見つかった場合、または検証エラー。
 
 ### diffcheck.json（差分確認）
 

@@ -58,6 +58,11 @@ If status is "failed":
    cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit" && sleep 1 && cmux send-key --workspace {WS_REF} --surface {SUB_SURFACE} return && sleep 2 && cmux close-surface --workspace {WS_REF} --surface {SUB_SURFACE}
    ```
 
+If status is "waiting_for_user":
+1. Display "サブエージェントが質問を待っています。サブペインで回答してください。"
+2. Display "cmux focus-surface --workspace {WS_REF} --surface {SUB_SURFACE}"
+Do nothing else (do not delete job)
+
 If status is "in_progress":
 1. Check if updated_at is more than 15 minutes ago:
    - Get current time: `date -u +%Y-%m-%dT%H:%M:%SZ`
