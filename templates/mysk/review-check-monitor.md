@@ -8,7 +8,7 @@ If the file does not exist yet:
 
 サブエージェントがJSON契約に完全準拠しない場合があるため、以下のフォールバックで読み取る:
 
-- **status**: `.status` → ない場合、`findings`配列が存在すれば "completed" とみなす
+- **status**: `.status` → ない場合、`"in_progress"` として扱う（フォールバックしない）
 - **findings配列**: `.findings` → ない場合 `.issues` も試す
 - **各finding**:
   - `severity`: `.severity`
@@ -27,7 +27,7 @@ If the file does not exist yet:
 - **created_at**: `.created_at` → ない場合 `.reviewed_at`
 - **run_id**: `.run_id`
 
-**If the status field does not exist AND no findings array exists**:
+**If the status field does not exist**:
 1. FIRST: Find review-check-monitor job in CronList and delete it using CronDelete
 2. Display error: "エラー: review.json に必須の 'status' フィールドがありません。サブエージェントがプロンプトの指示に従いませんでした。"
 3. Display review.json content for debugging: `cat {REVIEW_JSON_PATH}`
@@ -38,7 +38,7 @@ If the file does not exist yet:
    - cmux close-surface --workspace {WS_REF} --surface {SUB_SURFACE}
 5. Stop processing
 
-If status is "completed" (or findings exist without status):
+If status is "completed":
 1. FIRST: Find review-check-monitor job in CronList and delete it using CronDelete. This must happen before any output to prevent duplicate firings.
 2. Read {REVIEW_JSON_PATH} and extract data using fallback rules above
 3. Display the following summary in Japanese:

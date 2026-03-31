@@ -8,7 +8,7 @@ If the file does not exist yet:
 
 サブエージェントがJSON契約に完全準拠しない場合があるため、以下のフォールバックで読み取る:
 
-- **status**: `.status` → ない場合、`findings`または`verifications`配列が存在すれば "completed" とみなす
+- **status**: `.status` → ない場合、`"in_progress"` として扱う（フォールバックしない）
 - **verification_result**: `.verification_result` → ない場合 findingsから推定:
   - 全て fixed/passed → "passed"
   - 一部 not_fixed/open/unresolved → "partially_passed"
@@ -27,7 +27,7 @@ If the file does not exist yet:
   - new_issues_count: `.summary.new_issues_count` → ない場合 0
 - **new_findings**: `.new_findings` → ない場合空配列
 
-If status is "completed" (or findings/verifications exist without status):
+If status is "completed":
 1. FIRST: Find review-verify-monitor job in CronList and delete it using CronDelete. This must happen before any output to prevent duplicate firings.
 2. Read {VERIFY_JSON_PATH} and extract data using fallback rules above
 3. Determine verification_result using fallback rules
@@ -38,11 +38,15 @@ If status is "completed" (or findings/verifications exist without status):
    - sleep 2
    - cmux close-surface --workspace {WS_REF} --surface {SUB_SURFACE}
 
-**If no status AND no findings/verifications**:
+**If the status field does not exist**:
 1. FIRST: Delete review-verify-monitor using CronDelete
-2. Display error: "エラー: verify.json に解析可能なデータがありません。"
-3. Display verify.json content for debugging
-4. Cleanup
+2. Display error: "エラー: verify.json に必須の 'status' フィールドがありません。サブエージェントがプロンプトの指示に従いませんでした。"
+3. Display verify.json content for debugging: `cat {VERIFY_JSON_PATH}`
+4. Execute cleanup:
+   - cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit"
+   - cmux send-key --workspace {WS_REF} --surface {SUB_SURFACE} return
+   - sleep 2
+   - cmux close-surface --workspace {WS_REF} --surface {SUB_SURFACE}
 
 If status is "in_progress" and updated_at is more than 15 minutes ago:
 1. Display "サブエージェントが15分以上応答していません。タイムアウトの可能性があります。"
