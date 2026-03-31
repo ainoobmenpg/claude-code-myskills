@@ -356,8 +356,8 @@ mysk スキルを更新する場合は、以下のフローで行ってくださ
 
 ### 基本原則
 
-1. **リポジトリ側で修正**: `commands/` ディレクトリ内のスキルファイルを編集
-2. **環境に展開**: 修正を `~/.claude/commands/` に反映
+1. **リポジトリ側で修正**: `commands/` と `templates/mysk/` のファイルを編集
+2. **環境に展開**: 修正を `~/.claude/commands/` と `~/.claude/templates/mysk/` に反映
 3. **確認**: Claude Code でスキルが正しく動作することを確認
 
 ### インストール方式による展開方法の違い
@@ -387,6 +387,7 @@ vim commands/mysk-workflow.md
 # 2. シンボリックリンクの場合は何もしなくてOK
 #    コピーの場合は以下を実行
 cp commands/mysk-*.md ~/.claude/commands/
+mkdir -p ~/.claude/templates/mysk && cp templates/mysk/*.md ~/.claude/templates/mysk/
 ```
 
 **注意**: `~/.claude/commands/` 内のファイルを直接編集すると、リポジトリ側との同期が取れなくなります。必ずリポジトリ側で修正してください。
