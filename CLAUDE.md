@@ -47,7 +47,7 @@ claude-code-myskills(cc-mysk)/
 | `/mysk-spec-implement` | 実装計画作成（計画のみ） | メイン | `[run_id]` |
 | `/mysk-implement-start` | impl-plan.mdを読み込み実装を実行 | メイン | `[run_id]` |
 | `/mysk-review-check` | コードレビュー | 別ペイン(Opus) | `[run_id] [path]` |
-| `/mysk-review-fix` | 修正計画 + 修正 | メイン | `[run_id]` |
+| `/mysk-review-fix` | 修正計画と修正 | メイン | `[run_id]` |
 | `/mysk-review-diffcheck` | 差分確認（軽量） | メイン | `[run_id]` |
 | `/mysk-review-verify` | 最終確認 | 別ペイン(Opus) | `[run_id]` |
 | `/mysk-workflow` | 全体ワークフロー参照 | メイン | なし |

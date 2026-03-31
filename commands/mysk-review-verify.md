@@ -20,6 +20,8 @@ user-invocable: true
 
 `~/.local/share/claude-mysk/{run_id}/verify.json`
 
+**再実行時**: verify.jsonが既に存在する場合、verify-rerun.jsonに保存する
+
 ## 前提
 
 - `CMUX_SOCKET_PATH`環境変数が存在すること
@@ -31,6 +33,9 @@ user-invocable: true
 ### 1. 初期化
 
 - run_id解決、review.json存在確認
+  - **run_id省略時**: カレントプロジェクト（WORK_DIR）に一致するproject_rootを持つ最新のrun_idのみを選択
+  - **project_rootなしの古いrun**: 候補から除外する
+  - 該当するrun_idがない場合: エラーで終了し、run_id手動指定を促す
 - review.jsonから `project_root` フィールドを読み取り、`WORK_DIR` に設定
 - diffcheck.jsonが存在する場合は読み込み、次ステップ判定の参考にする
 - project_rootがない場合：旧バージョンで作成されたreview.jsonなのでエラーとして報告し、失敗させる
@@ -91,7 +96,15 @@ verify.json の生成完了後、monitor 側が終了判定ロジックに従い
 
 ## monitor 側の終了判定（verify.json 生成後）
 
-verifyは1run_idにつき1回のみ。partially_passedでも再verifyせずfix→diffcheckへ。
+verify.jsonが既に存在する場合の再実行ロジック:
+- verify.jsonのverification_resultが`passed`の場合: 「既にpassedのverify結果があります。再実行しますか？」と確認
+- verification_resultが`passed`以外の場合: verify-rerun.jsonに出力する旨を表示して続行
+
+出力パスの決定ロジック:
+- verify.jsonが存在しない → verify.json
+- verify.jsonが存在する場合:
+  - verification_result == "passed" → 確認プロンプト表示
+  - それ以外 → verify-rerun.json
 
 | 条件 | 次アクション |
 |------|-------------|

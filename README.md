@@ -148,7 +148,7 @@ cp -r templates/mysk ~/.claude/templates/mysk
 | コマンド | 説明 | 実行場所 | 引数 |
 |---------|------|---------|------|
 | `/mysk-review-check` | 差分または指定パスをレビュー | 別ペイン(Opus) | `[run_id] [path]` |
-| `/mysk-review-fix` | レビュー指摘の修正計画＋修正 | メイン | `[run_id]` |
+| `/mysk-review-fix` | レビュー指摘の修正計画と修正 | メイン | `[run_id]` |
 | `/mysk-review-diffcheck` | 修正状況を軽量確認 | メイン | `[run_id]` |
 | `/mysk-review-verify` | 最終確認で修正サイクル完了 | 別ペイン(Opus) | `[run_id]` |
 

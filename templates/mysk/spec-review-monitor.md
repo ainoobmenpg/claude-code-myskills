@@ -10,7 +10,7 @@ If status is "completed":
    - 全体品質 (overall_quality)
    - 評価 headline
    - 指摘数 (finding_count: high/medium/low)
-   - 主な指摘 (各findingの id/title/severity/category)
+   - 主な指摘 (各findingの id/title/severity/section)
 3. Finally, confirm "次のアクションを選択してください：/mysk-spec-revise で修正 / 終了"
 4. Perform cleanup:
    ```

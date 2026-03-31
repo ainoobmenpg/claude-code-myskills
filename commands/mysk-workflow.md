@@ -319,7 +319,7 @@ verify 実行（Opus/max）※1回のみ
 | `/mysk-spec-implement` | 実装計画作成（計画のみ） | メイン | `[run_id]` |
 | `/mysk-implement-start` | impl-plan.mdを読み込み実装を実行 | メイン | `[run_id]` |
 | `/mysk-review-check` | コードレビュー | 別ペイン(Opus) | `[run_id] [path]` |
-| `/mysk-review-fix` | 修正計画＋修正 | メイン | `[run_id]` |
+| `/mysk-review-fix` | 修正計画と修正 | メイン | `[run_id]` |
 | `/mysk-review-diffcheck` | 差分確認（軽量） | メイン | `[run_id]` |
 | `/mysk-review-verify` | 最終確認 | 別ペイン(Opus) | `[run_id]` |
 
@@ -399,8 +399,7 @@ verify 実行（Opus/max）※1回のみ
     {
       "id": "F1",
       "severity": "high or medium or low",
-      "category": "カテゴリ",
-      "section": "対象セクション",
+      "section": "完全性|明確性|一貫性|実現可能性|テスト可能性",
       "title": "タイトル",
       "detail": "詳細",
       "suggestion": "提案"

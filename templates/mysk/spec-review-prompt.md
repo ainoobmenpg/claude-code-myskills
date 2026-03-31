@@ -37,6 +37,7 @@
   "version": 1,
   "run_id": "{RUN_ID}",
   "created_at": "UTCタイムスタンプ",
+  "project_root": "{PROJECT_ROOT}",
   "source": {
     "type": "spec",
     "value": "仕様書タイトル"
@@ -54,8 +55,7 @@
     {
       "id": "F1",
       "severity": "high|medium|low",
-      "category": "完全性|明確性|一貫性|実現可能性|テスト可能性",
-      "section": "対象セクション名",
+      "section": "完全性|明確性|一貫性|実現可能性|テスト可能性",
       "title": "指摘タイトル",
       "detail": "詳細な説明",
       "suggestion": "改善提案"

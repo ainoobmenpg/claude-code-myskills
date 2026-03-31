@@ -1,5 +1,5 @@
 ---
-description: レビューJSONを読み高重要度指摘の修正計画を作成
+description: レビュー指摘の修正計画と修正
 argument-hint: "[run_id]"
 user-invocable: true
 ---
@@ -31,6 +31,8 @@ user-invocable: true
 ## 実行ルール
 
 1. run_id解決、review.jsonから`project_root`を読み取り、これを`WORK_DIR`に設定
+   - **project_rootがない場合**: エラーとして報告し、失敗させる
+   - エラーメッセージ: `エラー: review.jsonに 'project_root' フィールドがありません。このレビューは旧バージョンで作成されました。/mysk-review-check を再実行して互換性のあるレビューを作成してください。`
 2. レビューJSON読込・構造確認
 
 ## パススキーマ

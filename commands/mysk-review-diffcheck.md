@@ -31,6 +31,9 @@ user-invocable: true
 ## 実行フロー
 
 1. run_id解決、review.json存在確認
+   - **run_id省略時**: カレントプロジェクト（WORK_DIR）に一致するproject_rootを持つ最新のrun_idのみを選択
+   - **project_rootなしの古いrun**: 候補から除外する
+   - 該当するrun_idがない場合: エラーで終了し、run_id手動指定を促す
 2. review.jsonから`project_root`を読み取り、これを`WORK_DIR`に設定
 3. review.jsonのfindings読込（フォールバック付き）、verify.jsonのnew_findingsがあれば追加
 

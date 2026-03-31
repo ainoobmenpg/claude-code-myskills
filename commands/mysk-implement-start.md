@@ -28,6 +28,9 @@ user-invocable: true
 ## 実行ルール
 
 1. run_id解決、impl-plan.md 読込・存在確認
+   - **run_id省略時**: カレントプロジェクト（WORK_DIR）に一致するproject_rootを持つ最新のrun_idのみを選択
+   - **project_rootなしの古いrun**: 候補から除外する
+   - 該当するrun_idがない場合: エラーで終了し、run_id手動指定を促す
 2. impl-plan.md が存在しない場合、エラー終了
 3. impl-plan.md のフェーズ順にコード実装を一括実行する:
    - フェーズ間のユーザー承認を省略し連続実行する
