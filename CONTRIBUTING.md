@@ -32,7 +32,9 @@
 
 ## プルリクエスト
 
-コードの変更を提案する場合は、プルリクエスト（PR）を作成してください。
+**外部貢献者向けワークフロー**: コードの変更を提案する場合は、プルリクエスト（PR）を作成してください。
+
+メンテナーの場合は [CLAUDE.md](CLAUDE.md) の「ブランチ戦略」セクションを参照してください（main 直コミット）。
 
 ### PR の手順
 
@@ -119,9 +121,9 @@ mkdir -p backup
 cp ~/.claude/commands/mysk-*.md backup/
 
 # 3. スキルを配置
-mkdir -p ~/.claude/commands ~/.claude/templates
+mkdir -p ~/.claude/commands ~/.claude/templates/mysk
 cp commands/*.md ~/.claude/commands/
-cp -r templates/mysk ~/.claude/templates/mysk
+cp templates/mysk/*.md ~/.claude/templates/mysk/
 
 # 4. 動作確認
 claude --model opus --dangerously-skip-permissions

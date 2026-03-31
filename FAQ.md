@@ -59,8 +59,13 @@ ls -t ~/.local/share/claude-mysk/ | head -1
 
 ### Q: run_id を忘れました
 
-**A**: 最新のディレクトリを確認することで run_id を特定できます。
+**A**: run_id の解決ルールは以下の通りです：
 
+1. 引数で run_id が指定されていればそれを使用
+2. 省略時は、現在のプロジェクト（`git rev-parse --show-toplevel`）に一致する project_root を持つ最新の run_id を自動選択
+3. 該当する run_id がない場合はエラー
+
+手動で確認する場合:
 ```bash
 # 最新の run_id を確認
 ls -lt ~/.local/share/claude-mysk/ | head -5
@@ -99,7 +104,7 @@ ls ~/.claude/templates/mysk/*.md
 ファイルがない場合は、リポジトリからコピーしてください。
 
 ```bash
-cp -r templates/mysk ~/.claude/templates/mysk
+mkdir -p ~/.claude/templates/mysk && cp templates/mysk/*.md ~/.claude/templates/mysk/
 ```
 
 ### Q: 別ペインが閉じられません
