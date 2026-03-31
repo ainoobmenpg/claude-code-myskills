@@ -43,6 +43,14 @@ If status is "completed":
    - sleep 2
    - cmux close-surface --workspace {WS_REF} --surface {SUB_SURFACE}
 
+If status is "failed":
+1. FIRST: Find review-verify-monitor job in CronList and delete it using CronDelete
+2. Read status.json and display the error content in progress field
+3. Perform cleanup:
+   ```bash
+   cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit" && sleep 1 && cmux send-key --workspace {WS_REF} --surface {SUB_SURFACE} return && sleep 2 && cmux close-surface --workspace {WS_REF} --surface {SUB_SURFACE}
+   ```
+
 If status is "in_progress" and updated_at is more than 15 minutes ago:
 1. Display "サブエージェントが15分以上応答していません。タイムアウトの可能性があります。"
 2. Display "サブペインを確認: cmux focus-surface --workspace {WS_REF} --surface {SUB_SURFACE}"
