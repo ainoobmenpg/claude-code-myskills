@@ -11,27 +11,19 @@ If status is "completed":
    - 評価 headline
    - 指摘数 (finding_count: high/medium/low)
    - 主な指摘 (各findingの id/title/severity/section)
-3. Finally, confirm "次のアクションを選択してください：/mysk-spec-revise で修正 / 終了"
-4. Perform cleanup:
+3. Perform cleanup:
+   ```bash
+   cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit" && sleep 1 && cmux send-key --workspace {WS_REF} --surface {SUB_SURFACE} return && sleep 2 && cmux close-surface --workspace {WS_REF} --surface {SUB_SURFACE}
    ```
-   cmux send --workspace "{WS_REF}" --surface "{SUB_SURFACE}" "/exit"
-   sleep 1
-   cmux send-key --workspace "{WS_REF}" --surface "{SUB_SURFACE}" return
-   sleep 2
-   cmux close-surface --workspace "{WS_REF}" --surface "{SUB_SURFACE}"
-   ```
+4. Display: "次のステップ: /mysk-spec-revise でレビュー指摘を反映するか、終了してください。"
 
 If status is "failed":
-1. Read status.json and display the error content in progress field
-2. Perform cleanup:
+1. FIRST: Find spec-review-monitor job in CronList and delete it using CronDelete
+2. Read status.json and display the error content in progress field
+3. Perform cleanup:
+   ```bash
+   cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit" && sleep 1 && cmux send-key --workspace {WS_REF} --surface {SUB_SURFACE} return && sleep 2 && cmux close-surface --workspace {WS_REF} --surface {SUB_SURFACE}
    ```
-   cmux send --workspace "{WS_REF}" --surface "{SUB_SURFACE}" "/exit"
-   sleep 1
-   cmux send-key --workspace "{WS_REF}" --surface "{SUB_SURFACE}" return
-   sleep 2
-   cmux close-surface --workspace "{WS_REF}" --surface "{SUB_SURFACE}"
-   ```
-3. Delete spec-review-monitor using CronDelete
 
 If status is "in_progress":
 1. Check if updated_at is more than 15 minutes ago:

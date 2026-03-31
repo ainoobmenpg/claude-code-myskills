@@ -31,12 +31,7 @@ If status is "completed":
 1. FIRST: Find review-verify-monitor job in CronList and delete it using CronDelete. This must happen before any output to prevent duplicate firings.
 2. Read {VERIFY_JSON_PATH} and extract data using fallback rules above
 3. Determine verification_result using fallback rules
-4. Display result according to termination logic (see below)
-5. Cleanup:
-   - cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit"
-   - cmux send-key --workspace {WS_REF} --surface {SUB_SURFACE} return
-   - sleep 2
-   - cmux close-surface --workspace {WS_REF} --surface {SUB_SURFACE}
+4. Execute termination logic (see below). Each path includes cleanup at the end.
 
 **If the status field does not exist**:
 1. FIRST: Delete review-verify-monitor using CronDelete
@@ -138,6 +133,11 @@ passed
 レビューサイクルが完了しました。
 ```
 
+Then perform cleanup:
+```bash
+cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit" && sleep 1 && cmux send-key --workspace {WS_REF} --surface {SUB_SURFACE} return && sleep 2 && cmux close-surface --workspace {WS_REF} --surface {SUB_SURFACE}
+```
+
 **When high exists (continuing)**:
 
 ```
@@ -161,6 +161,11 @@ partially_passed
 注意: verifyはrun_idごとに1回のみ実行されます。以降はfix → diffcheckを使用してください。
 ```
 
+Then perform cleanup:
+```bash
+cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit" && sleep 1 && cmux send-key --workspace {WS_REF} --surface {SUB_SURFACE} return && sleep 2 && cmux close-surface --workspace {WS_REF} --surface {SUB_SURFACE}
+```
+
 **When medium only (asking)**:
 
 ```
@@ -181,10 +186,19 @@ partially_passed
 
 ## 保存先
 ~/.local/share/claude-mysk/{RUN_ID}/verify.json
+```
 
-中優先度の指摘を修正しますか？（はい / いいえ）
+Then use AskUserQuestion with the following options:
+- Option 1: "はい" (label: "はい（/mysk-review-fix で修正）")
+- Option 2: "いいえ" (label: "いいえ（レビューサイクル完了）")
 
-注意: 「いいえ」の場合、レビューサイクルは完了とみなされます。
+Handle the response:
+- **はい**: Display "次のステップ: /mysk-review-fix {RUN_ID} → /mysk-review-diffcheck {RUN_ID}" then perform cleanup
+- **いいえ**: Display "レビューサイクルが完了しました。" then perform cleanup
+
+Cleanup (in both cases):
+```bash
+cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit" && sleep 1 && cmux send-key --workspace {WS_REF} --surface {SUB_SURFACE} return && sleep 2 && cmux close-surface --workspace {WS_REF} --surface {SUB_SURFACE}
 ```
 
 **When error**:
@@ -197,4 +211,9 @@ partially_passed
 
 ## エラー内容
 {error message}
+```
+
+Then perform cleanup:
+```bash
+cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit" && sleep 1 && cmux send-key --workspace {WS_REF} --surface {SUB_SURFACE} return && sleep 2 && cmux close-surface --workspace {WS_REF} --surface {SUB_SURFACE}
 ```

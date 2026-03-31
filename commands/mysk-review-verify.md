@@ -132,23 +132,3 @@ verify.jsonが既に存在する場合の再実行ロジック:
 | high残存 | /mysk-review-fix→/mysk-review-diffcheck→終了 |
 | mediumのみ | ユーザー確認 |
 
-## 完了後案内
-
-verify 完了後：
-
-verify が passed の場合：
-```
-次: レビューサイクル完了
-```
-
-新たな high または未修正の high がある場合：
-```
-次: /mysk-review-fix で指摘を修正
-```
-
-medium のみの場合：
-```
-次: medium 指摘あり。/mysk-review-fix で対応するか終了
-```
-
-- 上記条件を満たさない（エラー等）場合は案内なし

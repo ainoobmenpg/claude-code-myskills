@@ -81,7 +81,7 @@ cmux send-key --workspace "$WS_REF" --surface "$SUB_SURFACE" return
 bashでsedを実行してモニターテキストを生成し、そのテキストを使って **CronCreateツール**（bashコマンドではない）で監視ジョブを登録する。
 
 ```bash
-sed -e "s|{STATUS_FILE}|$STATUS_FILE|g" -e "s|{DRAFT_PATH}|$DRAFT_PATH|g" \
+sed -e "s|{STATUS_FILE}|$STATUS_FILE|g" -e "s|{DRAFT_PATH}|$DRAFT_PATH|g" -e "s|{SPEC_PATH}|$SPEC_PATH|g" \
     -e "s|{WS_REF}|$WS_REF|g" -e "s|{SUB_SURFACE}|$SUB_SURFACE|g" \
     -e "s|{RUN_ID}|$RUN_ID|g" \
     $HOME/.claude/templates/mysk/spec-draft-monitor.md
@@ -101,18 +101,7 @@ sed -e "s|{STATUS_FILE}|$STATUS_FILE|g" -e "s|{DRAFT_PATH}|$DRAFT_PATH|g" \
 - 保存先
 - 状態: `started`
 
-spec-draft.md の生成完了後、monitor 側が要約を表示する。
-ユーザーが「はい」「いいえ」「修正して」のいずれかで応答したら、以下の処理を行う:
-
-確認結果に従う:
-- **はい**: 下書きを `spec.md` にコピー → クリーンアップ → 完了メッセージ
-- **いいえ**: クリーンアップ → 破棄メッセージ
-- **修正して**: `spec-draft.md` を Edit ツールで直接修正 → 再確認
-
-**クリーンアップ**:
-```bash
-cmux send --workspace "$WS_REF" --surface "$SUB_SURFACE" "/exit" && sleep 1 && cmux send-key --workspace "$WS_REF" --surface "$SUB_SURFACE" return && sleep 2 && cmux close-surface --workspace "$WS_REF" --surface "$SUB_SURFACE"
-```
+spec-draft.md の生成完了後、monitor 側が要約を表示し、AskUserQuestion でユーザー確認（はい/いいえ/修正して）を行い、コピー/破棄/修正処理とクリーンアップまで完結します。
 
 ## トラブルシューティング
 
@@ -127,13 +116,3 @@ thinking ブロックに回答が含まれている可能性があります。th
 
 `/mysk-spec-draft トピック`
 
-## 完了後案内
-
-仕様書下書きの確定完了後：
-```
-次: シンプルな仕様なら /mysk-spec-implement、複雑なら /mysk-spec-review
-```
-
-- spec-draft が正常に完了し spec.md が生成された場合に出力
-- 破棄された場合は出力しない
-- 上記条件を満たさない（エラー等）場合は案内なし
