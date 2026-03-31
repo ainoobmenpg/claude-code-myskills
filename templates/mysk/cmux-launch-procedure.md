@@ -4,6 +4,11 @@
 
 **重要**: cmuxコマンドでは常に長いオプション（--workspace/--surface）とref形式（workspace:N/surface:N）を使用してください。sendコマンドは短いオプション-w/-sを認識しません。
 
+**前提依存**:
+- `cmux`: 別ペイン実行に必須
+- `python3`: JSON解析に必須
+- `grep`, `sed`: テキスト処理に必須
+
 以下のスクリプトを実行してください（{WORK_DIR}を作業ディレクトリに置換）:
 
 ```bash

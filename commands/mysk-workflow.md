@@ -85,7 +85,6 @@ argument-hint: なし
     ├── diffcheck.json            # 差分確認結果
     ├── verify.json               # 最終検証結果
     ├── status.json               # 進捗管理（汎用）
-    └── status-review.json        # 進捗管理（spec-review専用）
 ```
 
 **run_idの形式**: `YYYYMMDD-HHMMSSZ-{slug}`
