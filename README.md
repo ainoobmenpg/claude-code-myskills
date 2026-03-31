@@ -159,8 +159,8 @@ cp ~/.claude/commands/mysk-*.md backup/
 mkdir -p ~/.claude/commands ~/.claude/templates
 
 # 3. ファイル配置（シンボリックリンク推奨）
-ln -sn "$(pwd)/commands/"*.md ~/.claude/commands/
-ln -sn "$(pwd)/templates/mysk" ~/.claude/templates/mysk
+ln -s "$(pwd)/commands/"*.md ~/.claude/commands/
+ln -s "$(pwd)/templates/mysk" ~/.claude/templates/mysk/
 
 # またはコピー（既存ファイルがある場合はこちらが安全）
 mkdir -p ~/.claude/commands ~/.claude/templates/mysk
