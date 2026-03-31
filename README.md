@@ -159,8 +159,9 @@ cp ~/.claude/commands/mysk-*.md backup/
 mkdir -p ~/.claude/commands ~/.claude/templates
 
 # 3. ファイル配置（シンボリックリンク推奨）
+mkdir -p ~/.claude/templates
 ln -s "$(pwd)/commands/"*.md ~/.claude/commands/
-ln -s "$(pwd)/templates/mysk" ~/.claude/templates/mysk/
+ln -sfn "$(pwd)/templates/mysk" ~/.claude/templates/mysk
 
 # またはコピー（既存ファイルがある場合はこちらが安全）
 mkdir -p ~/.claude/commands ~/.claude/templates/mysk
@@ -300,6 +301,7 @@ check(Opus) -> fix(Sonnet) -> diffcheck(Sonnet) -> fix -> diffcheck -> ... -> ve
     +-- fix-plan.md               # 修正計画
     +-- diffcheck.json            # 差分確認結果
     +-- verify.json               # 最終検証結果
+    +-- verify-rerun.json         # 再検証結果
     +-- run-meta.json             # run_id自動解決用メタデータ
     +-- status.json               # 進捗管理（汎用/spec-review専用）
 ```

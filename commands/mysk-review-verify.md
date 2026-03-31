@@ -129,8 +129,7 @@ verify.jsonが既に存在する場合の再実行ロジック:
 | 条件 | 次アクション |
 |------|-------------|
 | passed | 終了 |
-| failed | エラー報告→終了 |
-| new highあり | /mysk-review-fix→/mysk-review-diffcheck→終了 |
-| high残存 | /mysk-review-fix→/mysk-review-diffcheck→終了 |
+| failed（検証エラー） | エラー報告→終了 |
+| high残存・新規high | エラー報告→終了 |
 | mediumのみ | ユーザー確認 |
 

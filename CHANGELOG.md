@@ -10,7 +10,7 @@ All notable changes to mysk will be documented in this file.
 - `docs/MIGRATION.md` - 移行ガイド
 
 ### Changed
-- `cmux-launch-procedure.md`: 権限制限対応（`--dangerously-skip-permissions`削除、trust自動承認削除）
+- `cmux-launch-procedure.md`: 権限制限対応（`--dangerously-skip-permissions`は既定で無効化、`MYSK_SKIP_PERMISSIONS=true`でのみopt-in可能。trust確認は検知してユーザー操作待ちに変更）
 - `review-verify-prompt.md`: verify-schema.json参照対応
 - `review-verify-monitor.md`: verify-schema.json参照対応
 

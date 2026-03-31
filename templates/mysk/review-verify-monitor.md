@@ -45,7 +45,7 @@ If status is "completed":
 
 If status is "failed":
 1. FIRST: Find review-verify-monitor job in CronList and delete it using CronDelete
-2. Read status.json and display the error content in progress field
+2. Read {VERIFY_JSON_PATH} and display the error content in progress field
 3. Perform cleanup:
    ```bash
    cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit" && sleep 1 && cmux send-key --workspace {WS_REF} --surface {SUB_SURFACE} return && sleep 2 && cmux close-surface --workspace {WS_REF} --surface {SUB_SURFACE}
@@ -146,7 +146,7 @@ Then perform cleanup:
 cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit" && sleep 1 && cmux send-key --workspace {WS_REF} --surface {SUB_SURFACE} return && sleep 2 && cmux close-surface --workspace {WS_REF} --surface {SUB_SURFACE}
 ```
 
-**When high exists (continuing)**:
+**When high exists (failed)**:
 
 ```
 検証が完了しました。
@@ -155,7 +155,7 @@ cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit" && sleep 1 && cmu
 {RUN_ID}
 
 ## ステータス
-partially_passed
+failed
 
 ## 高優先度の問題
 - [新規] N001: src/auth/middleware.ts:25 - 型定義なし
@@ -164,9 +164,7 @@ partially_passed
 ## 保存先
 ~/.local/share/claude-mysk/{RUN_ID}/verify.json
 
-次のステップ: /mysk-review-fix {RUN_ID} → /mysk-review-diffcheck {RUN_ID}
-
-注意: verifyはrun_idごとに1回のみ実行されます。以降はfix → diffcheckを使用してください。
+高優先度の未解決問題があるため、レビューサイクルを終了します。
 ```
 
 Then perform cleanup:

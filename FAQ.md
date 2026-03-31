@@ -98,7 +98,7 @@ cp commands/*.md ~/.claude/commands/
 **A**: テンプレートファイルが `~/.claude/templates/mysk/` に配置されているか確認してください。
 
 ```bash
-ls ~/.claude/templates/mysk/*.md
+ls ~/.claude/templates/mysk/
 ```
 
 ファイルがない場合は、リポジトリからコピーしてください。

@@ -84,6 +84,8 @@ argument-hint: なし
     ├── fix-plan.md               # 修正計画
     ├── diffcheck.json            # 差分確認結果
     ├── verify.json               # 最終検証結果
+    ├── verify-rerun.json         # 再検証結果
+    ├── run-meta.json             # run_id自動解決用メタデータ
     ├── status.json               # 進捗管理（汎用）
 ```
 

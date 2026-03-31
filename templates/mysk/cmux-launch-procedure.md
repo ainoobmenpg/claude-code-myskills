@@ -1,6 +1,6 @@
 # cmuxサブペイン起動手順
 
-ペインを作成し、1つのBashコマンドでClaude Codeを起動し、Trust確認とプロンプト待ちを自動化します。手順を分割しないでください。分割するとClaude Codeがスキップする可能性があります。
+ペインを作成し、1つのBashコマンドでClaude Codeを起動し、Trust確認の検知とプロンプト待ちを行います。手順を分割しないでください。分割するとClaude Codeがスキップする可能性があります。
 
 **重要**: cmuxコマンドでは常に長いオプション（--workspace/--surface）とref形式（workspace:N/surface:N）を使用してください。sendコマンドは短いオプション-w/-sを認識しません。
 
@@ -40,7 +40,7 @@ echo "LAUNCHED: WS_REF=$WS_REF SUB_SURFACE=$SUB_SURFACE"
 上記の出力からWS_REFとSUB_SURFACEの値を取得した後、**以下の待機スクリプトを実行してください**:
 
 ```bash
-# Trust確認の自動承認 + プロンプト待ち（最大120秒）
+# Trust確認の検知と待機 + プロンプト待ち（最大120秒）
 # 読み取りコマンド: cmux read-screen --workspace "$WS_REF" --surface "$SUB_SURFACE"
 
 WAIT_READY() {
