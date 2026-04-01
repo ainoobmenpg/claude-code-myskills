@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "run_id": "20260401-120000Z-issues-only",
+  "created_at": "2026-04-01T12:00:00Z",
+  "project_root": "/test/project",
+  "source": {"type": "diff", "value": "src/main.ts"},
+  "summary": {
+    "overall_risk": "medium"
+  },
+  "issues": [
+    {
+      "id": "I001",
+      "severity": "medium",
+      "location": "src/util.ts:30",
+      "title": "issue via fallback",
+      "description": "desc via fallback",
+      "suggestion": "fix via fallback",
+      "category": "Logic"
+    }
+  ]
+}

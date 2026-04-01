@@ -6,3 +6,9 @@
 
 # Backup directory for existing files during installation
 backup/
+
+# Test framework
+tests/bats-core/
+
+# Node (no package.json)
+package-lock.json

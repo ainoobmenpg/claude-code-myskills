@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "run_id": "20260401-120000Z-fallback",
+  "issues": [
+    {"id": "F1", "severity": "high", "location": "src/main.ts:10", "category": "security", "description": "SQL injection", "suggestion": "Use parameterized queries"}
+  ],
+  "summary": {"total": 1},
+  "target": "src/main.ts"
+}

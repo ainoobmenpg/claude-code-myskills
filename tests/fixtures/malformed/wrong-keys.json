@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "run_id": "20260401-120000Z-wrong-keys",
+  "issues": [
+    {"id": "F1", "category": "completeness", "description": "wrong key format", "suggestion": "fix keys"}
+  ],
+  "summary": {"total": 1}
+}
