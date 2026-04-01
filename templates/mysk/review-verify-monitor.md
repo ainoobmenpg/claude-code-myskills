@@ -1,3 +1,5 @@
+**TEST MODE**: {TEST_MODE} が "1" の場合、partially_passed 時の AskUserQuestion をスキップし、自動的に「いいえ」（レビューサイクル完了）を選択して完了メッセージを表示し cleanup に進んでください。
+
 Read {VERIFY_JSON_PATH} and check the status field.
 
 If the file does not exist yet:

@@ -1,3 +1,5 @@
+**TEST MODE**: {TEST_MODE} が "1" の場合、completed 時の AskUserQuestion をスキップし、自動的に「はい」を選択して `cp {DRAFT_PATH} {SPEC_PATH}` を実行し、完了メッセージを表示して cleanup に進んでください。
+
 Read {STATUS_FILE} and check the status field and updated_at.
 
 If the file does not exist yet:
