@@ -9,7 +9,7 @@ cat ~/.claude/templates/mysk/verify-schema.json
 
 **重要**: `verification_result` の判定は、schemaの `definitions.result_criteria` に従ってください。
 - passed: 全指摘fixed && 新規問題なし
-- partially_passed: 未修正mediumあり または 新規mediumあり（high残存なし）
+- partially_passed: 未修正のnon-high（medium/low）あり または 新規non-highあり（high残存なし）
 - failed: high未解決 または 新規high発見 または 検証エラー
 
 ## 検証対象
@@ -76,7 +76,7 @@ cat ~/.claude/templates/mysk/verify-schema.json
 
 ## 下書き作成方法（中断防止）
 
-検証結果をverify.jsonに**段階的に**書き込んでください。すべての検証を一度に書こうとしないでください。
+検証結果を{VERIFY_JSON_PATH}に**段階的に**書き込んでください。すべての検証を一度に書こうとしないでください。
 
 手順:
 1. 検証開始時にWriteツールで初期JSONを保存してください
@@ -84,7 +84,7 @@ cat ~/.claude/templates/mysk/verify-schema.json
 3. すべての検証完了後に`summary`を計算し、Editツールで`summary`フィールドを更新してください
 4. `verification_result`を判定し、`status`を`completed`に変更してください
 
-**重要**: 頻繁に保存してください。そうすれば、中断されても書き込まれた検証結果はverify.jsonに残ります。
+**重要**: 頻繁に保存してください。そうすれば、中断されても書き込まれた検証結果は{VERIFY_JSON_PATH}に残ります。
 
 ## 検証項目
 
@@ -96,7 +96,7 @@ cat ~/.claude/templates/mysk/verify-schema.json
 ## verification_result判定基準
 
 - `passed`: すべての指摘が修正され、新規問題なし
-- `partially_passed`: 未修正mediumあり または 新規mediumあり（high残存なし）
+- `partially_passed`: 未修正のnon-high（medium/low）あり または 新規non-highあり（high残存なし）
 - `failed`: high未解決 または 新規high発見 または 検証自体が失敗
 
 ## 完了時JSON形式
@@ -120,7 +120,8 @@ cat ~/.claude/templates/mysk/verify-schema.json
     "remaining_count": 1,
     "new_issues_count": 0,
     "high_remaining": 0,
-    "medium_remaining": 1
+    "medium_remaining": 1,
+    "low_remaining": 0
   },
   "verifications": [
     {

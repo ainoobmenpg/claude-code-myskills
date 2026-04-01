@@ -7,8 +7,8 @@ Issue #5（サブエージェント権限過多）と Issue #6（verify状態機
 ### 主な変更点
 
 1. **サブエージェントの権限制限**
-   - `--dangerously-skip-permissions` フラグの削除（既定動作）
-   - trust確認の自動承認の廃止
+   - `--dangerously-skip-permissions` フラグは既定で無効化（`MYSK_SKIP_PERMISSIONS=true`でopt-in可能）
+   - trust確認は検知後にユーザー操作を待機（自動承認は廃止）
    - 環境変数 `MYSK_SKIP_PERMISSIONS` による制御
 
 2. **verify状態機械の統一**
@@ -26,11 +26,13 @@ Issue #5（サブエージェント権限過多）と Issue #6（verify状態機
 
 **変更される動作**:
 - trust確認: 自動承認 → ユーザー操作待機
-- 権限確認: 常にスキップ → 環境変数制御
+- 権限確認: 常にスキップ → 既定で制限、環境変数でopt-in
 
-### 破壊的変更
+### 破壊的変更（無人運用のみ）
 
-なし。既存のワークフローは機能し続けます。
+手動操作でのワークフローは引き続き機能しますが、**無人実行やtrust前提の自動運用では挙動が変わります**:
+- trust確認時にユーザー操作が必要となるため、自動パイプラインは停止します
+- 無人運用を継続する場合は `MYSK_SKIP_PERMISSIONS=true` を設定するか、Claude Codeのtrust設定を事前に完了してください
 
 ## 移行手順
 
@@ -68,8 +70,8 @@ trust確認時にユーザー操作が必要なため、コマンド実行時間
 
 ### 対処法
 
-- 自動実行が必要な場合は `MYSK_SKIP_PERMISSIONS=true` を設定してください
-- または、Claude Codeのtrust設定を事前に確認してください
+- 無人実行が必要な場合は `MYSK_SKIP_PERMISSIONS=true` を設定してください（従来動作）
+- または、Claude Codeのtrust設定を事前に完了してください
 
 ## 移行スケジュール
 

@@ -6,7 +6,7 @@ user-invocable: true
 
 # mysk-review-check
 
-別ペインでOpus・max effortのサブエージェントを起動し、レビュー結果をJSONで保存して要約を返す。
+別ペインでOpus・medium effortのサブエージェントを起動し、レビュー結果をJSONで保存して要約を返す。
 
 ## 入力
 

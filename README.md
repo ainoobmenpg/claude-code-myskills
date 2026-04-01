@@ -160,7 +160,7 @@ mkdir -p ~/.claude/commands ~/.claude/templates
 
 # 3. ファイル配置（シンボリックリンク推奨）
 mkdir -p ~/.claude/templates
-ln -s "$(pwd)/commands/"*.md ~/.claude/commands/
+ln -sf "$(pwd)/commands/"*.md ~/.claude/commands/
 ln -sfn "$(pwd)/templates/mysk" ~/.claude/templates/mysk
 
 # またはコピー（既存ファイルがある場合はこちらが安全）
@@ -319,8 +319,8 @@ check(Opus) -> fix(Sonnet) -> diffcheck(Sonnet) -> fix -> diffcheck -> ... -> ve
 | `/mysk-implement-start` | `impl-plan.md` | プロジェクトコードの変更（myskファイルは更新しない） | なし |
 | `/mysk-review-check` | Git diff または指定パス | `review.json` | なし |
 | `/mysk-review-fix` | `review.json` | `fix-plan.md` | なし |
-| `/mysk-review-diffcheck` | `review.json`, `verify.json`（存在時） | `diffcheck.json` | なし |
-| `/mysk-review-verify` | `review.json`, `diffcheck.json` | `verify.json` | なし |
+| `/mysk-review-diffcheck` | `review.json`, `verify-rerun.json`（優先）または`verify.json`（存在時） | `diffcheck.json` | なし |
+| `/mysk-review-verify` | `review.json`, `diffcheck.json` | `verify.json`（再実行時は`verify-rerun.json`） | なし |
 
 ## 使用例
 

@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Verify Result Schema",
-  "description": "verify状態機械の定義。review-verify-prompt.md、review-verify-monitor.md、mysk-workflow.mdで共通使用。",
+  "description": "verify結果の状態遷移定義。verifyコマンドの出力結果を分類し、後続アクションを決定する。review-verify-prompt.md、review-verify-monitor.md、mysk-workflow.mdで共通使用。",
   "type": "object",
   "properties": {
     "verification_result": {
@@ -18,17 +18,18 @@
           "すべての指摘statusがfixed",
           "new_findingsが空",
           "high_remaining == 0",
-          "medium_remaining == 0"
+          "medium_remaining == 0",
+          "low_remaining == 0"
         ],
         "next_action": "終了"
       },
       "partially_passed": {
-        "description": "medium未解決または新規mediumあり（high残存なし）",
+        "description": "non-high（medium/low）未解決または新規non-highあり（high残存なし）",
         "conditions": [
-          "high_remaining == 0 かつ medium_remaining > 0",
-          "または new_findingsにmedium/lowのみ存在"
+          "high_remaining == 0 かつ (medium_remaining > 0 または low_remaining > 0)",
+          "または new_findingsにseverityがmedium/lowのもののみ存在"
         ],
-        "next_action": "/mysk-review-fix → /mysk-review-diffcheck → 終了"
+        "next_action": "/mysk-review-fix → /mysk-review-diffcheck → verify再実行 → 終了"
       },
       "failed": {
         "description": "high未解決、新規high発見、または検証エラー",
@@ -51,7 +52,7 @@
         {
           "from": "in_progress",
           "to": "partially_passed",
-          "condition": "medium未解決あり、high残存なし"
+          "condition": "non-high（medium/low）未解決あり、high残存なし"
         },
         {
           "from": "in_progress",
@@ -61,7 +62,7 @@
         {
           "from": "partially_passed",
           "to": "passed",
-          "condition": "fix → diffcheckで全指摘fixed"
+          "condition": "fix → diffcheck → verify再実行で全指摘fixed"
         }
       ]
     }
@@ -70,6 +71,7 @@
     "prompt_integration": "review-verify-prompt.mdの冒頭で本schemaを読み込み、判定ロジックに使用する",
     "monitor_integration": "review-verify-monitor.mdの終了判定で本schemaの条件を使用する",
     "workflow_integration": "mysk-workflow.mdから本schemaを参照してドキュメントを生成する",
-    "note": "verifyはrun_idごとに1回のみ実行。partially_passedでも再verifyせずfix→diffcheckへ。"
+    "rerun_policy": "初回はverify.jsonに保存。verify.jsonが既存の場合はverify-rerun.jsonに保存。どちらも同じschemaで判定する。",
+    "source_of_truth": "verify-rerun.jsonが存在する場合はverify-rerun.jsonを最新の真実とする。存在しない場合はverify.jsonを使用する。"
   }
 }

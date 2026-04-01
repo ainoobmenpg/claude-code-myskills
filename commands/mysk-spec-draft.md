@@ -6,7 +6,7 @@ user-invocable: true
 
 # mysk-spec-draft
 
-別ペインでOpus・max effortのサブエージェントを起動し、仕様策定を行う。
+別ペインでOpus・medium effortのサブエージェントを起動し、仕様策定を行う。
 
 ## ディレクトリ構造
 

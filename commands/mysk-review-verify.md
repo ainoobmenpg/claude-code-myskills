@@ -6,7 +6,7 @@ user-invocable: true
 
 # mysk-review-verify
 
-`/mysk-review-diffcheck` で全highが修正された後の最終確認。別ペインでOpusサブエージェント起動し、verify.jsonを保存して要約を返す。
+`/mysk-review-diffcheck` で全highが修正された後の最終確認。別ペインでOpusサブエージェント起動し、verify.json（再実行時はverify-rerun.json）を保存して要約を返す。
 
 **重要**: verifyの実行にはユーザー確認が必要です。diffcheck結果を確認し、ユーザーの指示を待ってから実行してください。
 
@@ -18,9 +18,10 @@ user-invocable: true
 
 ## 保存先
 
-`~/.local/share/claude-mysk/{run_id}/verify.json`
+- 初回: `~/.local/share/claude-mysk/{run_id}/verify.json`
+- 再実行: `~/.local/share/claude-mysk/{run_id}/verify-rerun.json`
 
-**再実行時**: verify.jsonが既に存在する場合、verify-rerun.jsonに保存する
+**最新の真実**: verify-rerun.jsonが存在すればそちらを優先する（verify-schema.jsonのsource_of_truth参照）。
 
 ## 前提
 
@@ -45,17 +46,22 @@ user-invocable: true
 - review.json存在確認
 - diffcheck.jsonが存在する場合は読み込み、次ステップ判定の参考にする
 
-### 2. 出力パス決定
+### 2. 出力パス決定（source_of_truth 解決）
 
-verify.json の既存状態に基づいて出力パスを決定:
+verify-rerun.json を優先して「最新の真実」を決定し、その結果に基づいて出力パスを決める。
 
 **手順**:
-1. `VERIFY_JSON_PATH="$RUN_DIR/verify.json"` を初期値とする
-2. verify.json が存在しない → `VERIFY_JSON_PATH` をそのまま使用
-3. verify.json が存在する場合:
-   - `jq` で `verification_result` を取得
+1. 以下の順序で最新の真実を探す:
+   - verify-rerun.json が存在 → そちらを `TRUTH_PATH` とする
+   - verify.json が存在 → そちらを `TRUTH_PATH` とする
+   - どちらも不存在 → `TRUTH_PATH` なし（初回実行）
+2. 初回実行（TRUTH_PATH なし）:
+   - `VERIFY_JSON_PATH="$RUN_DIR/verify.json"` に設定
+3. 過去結果あり（TRUTH_PATH が存在）:
+   - `jq` で TRUTH_PATH の `verification_result` を取得
    - `result == "passed"` → AskUserQuestion でユーザー確認（自然な対話）
-   - `result != "passed"` → `VERIFY_JSON_PATH="$RUN_DIR/verify-rerun.json"` に変更
+     - 承認 → `VERIFY_JSON_PATH="$RUN_DIR/verify-rerun.json"` に設定
+   - `result != "passed"` → `VERIFY_JSON_PATH="$RUN_DIR/verify-rerun.json"` に設定
 4. ユーザーが再実行を拒否した場合 → 処理を中止
 
 **注意**: bash の `read` コマンドは Claude の Bash ツールでは動作しないため、必ず AskUserQuestion または自然な対話で確認すること。
@@ -110,26 +116,18 @@ verify 完了は待たずに終了する。
 - 保存先
 - 状態: `started`
 
-verify.json の生成完了後、monitor 側が終了判定ロジックに従い結果を返す。
+VERIFY_JSON_PATH の生成完了後、monitor 側が終了判定ロジックに従い結果を返す。
 
-## monitor 側の終了判定（verify.json 生成後）
-
-verify.jsonが既に存在する場合の再実行ロジック:
-- verify.jsonのverification_resultが`passed`の場合: 「既にpassedのverify結果があります。再実行しますか？」と確認
-- verification_resultが`passed`以外の場合: verify-rerun.jsonに出力する旨を表示して続行
+## monitor 側の終了判定（VERIFY_JSON_PATH 生成後）
 
 **※出力パス決定ロジック（step 2）で既に判定済み**: monitor側では判定済みの出力パス（VERIFY_JSON_PATH）を使用します。
 
-出力パスの決定ロジック:
-- verify.jsonが存在しない → verify.json
-- verify.jsonが存在する場合:
-  - verification_result == "passed" → 確認プロンプト表示
-  - それ以外 → verify-rerun.json
+source_of_truth の解決は step 2 で完了しているため、monitor側で再度判定する必要はありません。
 
 | 条件 | 次アクション |
 |------|-------------|
 | passed | 終了 |
 | failed（検証エラー） | エラー報告→終了 |
 | high残存・新規high | エラー報告→終了 |
-| mediumのみ | ユーザー確認 |
+| non-high（medium/low）のみ | ユーザー確認 |
 

@@ -103,7 +103,7 @@ argument-hint: なし
 開始
   │
   ├─ 別cmuxペインを作成
-  ├─ サブエージェント（Opus・最大effort）を起動
+  ├─ サブエージェント（Opus・medium effort）を起動
   ├─ ユーザーと対話しながら仕様を策定
   │   └─ AskUserQuestionで質問
   │
@@ -215,7 +215,7 @@ argument-hint: なし
 ```
 確認内容:
   - review.json の各指摘が修正されているか
-  - verify.json の new_findings も確認（存在する場合）
+  - verify.json（またはverify-rerun.json）の new_findings も確認（存在する場合）
 
 判定:
   - high 未修正あり → /mysk-review-fix に戻る
@@ -239,7 +239,7 @@ argument-hint: なし
   - 副作用確認: 関連コードに影響がないか
 ```
 
-出力: `verify.json`
+出力: `verify.json`（再実行時は `verify-rerun.json`）
 
 ### fix-diffcheck ループ
 
@@ -269,10 +269,11 @@ diffcheck 実行
 
 ### review-verify（最終確認）
 
-verify は1 run_id につき1回のみ。partially_passed でも再 verify は行わない。
+verify は初回で verify.json に保存。再実行時は verify-rerun.json に保存（ユーザー確認が必要）。
+後続コマンドは verify-rerun.json を優先して読み込む（存在しない場合は verify.json）。
 
 ```
-verify 実行（Opus/max）※1回のみ
+verify 実行（Opus/max）※初回はverify.json、再実行時はverify-rerun.json
        ↓
   verification_result == "passed" ?
   ├─ Yes → 【終了】
@@ -283,14 +284,14 @@ verify 実行（Opus/max）※1回のみ
   └─ No → 続行
        ↓
   新たな high あり？
-  ├─ Yes → /mysk-review-fix → diffcheck → 【終了】
+  ├─ Yes → エラー報告 → 【終了】
   └─ No → 続行
        ↓
   未修正の high あり？
-  ├─ Yes → /mysk-review-fix → diffcheck → 【終了】
+  ├─ Yes → エラー報告 → 【終了】
   └─ No → 続行
        ↓
-  medium あり？
+  non-high（medium/low）あり？
   ├─ Yes → ユーザー確認（既定は終了）
   └─ No → 【終了】
 ```
@@ -302,11 +303,11 @@ verify 実行（Opus/max）※1回のみ
 | diffcheck: high 全 fixed | ユーザー確認 → `/mysk-review-verify` へ |
 | diffcheck: high 未修正あり | `/mysk-review-fix` ループ継続 |
 | verify: passed | **終了** |
-| verify: failed | エラー報告 → **終了** |
-| verify: 新たな high 発生 | `/mysk-review-fix` → diffcheck → **終了** |
-| verify: 未修正の high あり | `/mysk-review-fix` → diffcheck → **終了** |
-| verify: high なし、medium あり | ユーザー確認（既定は終了） |
-| verify: high なし、medium なし | **終了** |
+| verify: failed（検証エラー） | エラー報告 → **終了** |
+| verify: 新たな high 発生 | エラー報告 → **終了** |
+| verify: 未修正の high あり | エラー報告 → **終了** |
+| verify: high なし、non-high（medium/low）あり | ユーザー確認（既定は終了） |
+| verify: high なし、未解決なし | **終了** |
 
 ---
 
@@ -428,7 +429,8 @@ verify 実行（Opus/max）※1回のみ
     "remaining_count": 1,
     "new_issues_count": 0,
     "high_remaining": 0,
-    "medium_remaining": 1
+    "medium_remaining": 1,
+    "low_remaining": 0
   },
   "verifications": [
     {
@@ -454,7 +456,7 @@ verify 実行（Opus/max）※1回のみ
 
 **総合判定基準**:
 - `passed`: すべての指摘がfixed。新たな問題も見つからない。
-- `partially_passed`: mediumの未解決または新規mediumあり。high残存なし。
+- `partially_passed`: non-high（medium/low）の未解決または新規non-highあり。high残存なし。
 - `failed`: high severityの未解決指摘が残っている、または新たなhigh severityの問題が見つかった場合、または検証エラー。
 
 ### diffcheck.json（差分確認）

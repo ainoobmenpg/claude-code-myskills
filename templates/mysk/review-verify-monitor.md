@@ -9,10 +9,11 @@ If the file does not exist yet:
 サブエージェントがJSON契約に完全準拠しない場合があるため、以下のフォールバックで読み取る:
 
 - **status**: `.status` → ない場合、`"in_progress"` として扱う（フォールバックしない）
-- **verification_result**: `.verification_result` → ない場合 findingsから推定:
-  - 全て fixed/passed → "passed"
-  - 一部 not_fixed/open/unresolved → "partially_passed"
-  - エラーのみ → "failed"
+- **verification_result**: `.verification_result` → ない場合以下の順序で推定（schemaと同じ優先順位）:
+  1. high_remaining > 0 または new_findingsにseverity=="high"が存在 → "failed"
+  2. medium_remaining > 0 または low_remaining > 0 または new_findingsにseverity=="medium"/"low"が存在 → "partially_passed"
+  3. 全て fixed/passed → "passed"
+  4. エラーのみ → "failed"
 - **verifications配列**: `.verifications` → ない場合 `.findings` も試す
 - **各verification**:
   - original_finding_id: `.original_finding_id` → ない場合 `.id` → ない場合 `.finding_id`
@@ -24,6 +25,7 @@ If the file does not exist yet:
   - remaining_count: `.summary.remaining_count` → ない場合 verified_count - fixed_count
   - high_remaining: `.summary.high_remaining` → ない場合 verificationsからseverity=="high"かつstatus!="fixed"を数える
   - medium_remaining: `.summary.medium_remaining` → ない場合 verificationsからseverity=="medium"かつstatus!="fixed"を数える
+  - low_remaining: `.summary.low_remaining` → ない場合 verificationsからseverity=="low"かつstatus!="fixed"を数える
   - new_issues_count: `.summary.new_issues_count` → ない場合 0
 - **new_findings**: `.new_findings` → ない場合空配列
 
@@ -35,8 +37,8 @@ If status is "completed":
 
 **If the status field does not exist**:
 1. FIRST: Delete review-verify-monitor using CronDelete
-2. Display error: "エラー: verify.json に必須の 'status' フィールドがありません。サブエージェントがプロンプトの指示に従いませんでした。"
-3. Display verify.json content for debugging: `cat {VERIFY_JSON_PATH}`
+2. Display error: "エラー: {VERIFY_JSON_PATH} に必須の 'status' フィールドがありません。サブエージェントがプロンプトの指示に従いませんでした。"
+3. Display file content for debugging: `cat {VERIFY_JSON_PATH}`
 4. Execute cleanup:
    - cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit"
    - cmux send-key --workspace {WS_REF} --surface {SUB_SURFACE} return
@@ -71,7 +73,7 @@ cat ~/.claude/templates/mysk/verify-schema.json
 
 ### Termination Logic (when status is completed)
 
-**Important**: verifyはrun_idごとに1回のみ実行されます。partially_passedでも再検証しないでください。fix → diffcheck → 終了で応答してください。
+**Important**: verifyの再実行ポリシーに従ってください。初回はverify.json、再実行時はverify-rerun.jsonに保存されます。partially_passedの場合はfix → diffcheck → verify再実行で応答してください。verify-rerun.jsonが存在する場合はそちらを最新の真実として扱います。
 
 以下のフローに従って結果を表示し、次のアクションを決定してください。
 
@@ -103,7 +105,7 @@ cat ~/.claude/templates/mysk/verify-schema.json
 └──────────────────────────────────┘
        ↓
 ┌──────────────────────────────────┐
-│ any medium?                      │
+│ any non-high (medium/low)?       │
 │ → Yes: ask user                  │
 │ → No: 【End】                    │
 └──────────────────────────────────┘
@@ -117,8 +119,8 @@ cat ~/.claude/templates/mysk/verify-schema.json
 | 検証失敗 | `failed` | エラーレポート → **終了** |
 | 新規`high`発見 | `failed` | エラーレポート → **終了** |
 | 未修正の`high`あり | `failed` | エラーレポート → **終了** |
-| `high`なし、`medium`あり | `partially_passed` | ユーザーに確認（デフォルト：終了） |
-| `high`なし、`medium`なし | `passed` | **終了** |
+| `high`なし、non-high（medium/low）あり | `partially_passed` | ユーザーに確認（デフォルト：終了） |
+| `high`なし、未解決なし | `passed` | **終了** |
 
 **When ending**:
 
@@ -136,7 +138,7 @@ passed
 - 新規問題: なし
 
 ## 保存先
-~/.local/share/claude-mysk/{RUN_ID}/verify.json
+{VERIFY_JSON_PATH}
 
 レビューサイクルが完了しました。
 ```
@@ -162,7 +164,7 @@ failed
 - [未修正] F003: src/auth/jwt.ts:10 - nullチェックなし
 
 ## 保存先
-~/.local/share/claude-mysk/{RUN_ID}/verify.json
+{VERIFY_JSON_PATH}
 
 高優先度の未解決問題があるため、レビューサイクルを終了します。
 ```
@@ -172,7 +174,7 @@ Then perform cleanup:
 cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit" && sleep 1 && cmux send-key --workspace {WS_REF} --surface {SUB_SURFACE} return && sleep 2 && cmux close-surface --workspace {WS_REF} --surface {SUB_SURFACE}
 ```
 
-**When medium only (asking)**:
+**When non-high (medium/low) only (asking)**:
 
 ```
 検証が完了しました。
@@ -186,12 +188,12 @@ partially_passed
 ## 高優先度
 - なし ✓
 
-## 中優先度（2件）
+## 中優先度・低優先度（2件）
 - M001: src/auth/jwt.ts:30 - 変数名が長すぎる
 - M002: src/auth/jwt.ts:45 - コメントが不足している
 
 ## 保存先
-~/.local/share/claude-mysk/{RUN_ID}/verify.json
+{VERIFY_JSON_PATH}
 ```
 
 Then use AskUserQuestion with the following options:
@@ -199,7 +201,7 @@ Then use AskUserQuestion with the following options:
 - Option 2: "いいえ" (label: "いいえ（レビューサイクル完了）")
 
 Handle the response:
-- **はい**: Display "次のステップ: /mysk-review-fix {RUN_ID} → /mysk-review-diffcheck {RUN_ID}" then perform cleanup
+- **はい**: Display "次のステップ: /mysk-review-fix {RUN_ID} → /mysk-review-diffcheck {RUN_ID} → /mysk-review-verify {RUN_ID}" then perform cleanup
 - **いいえ**: Display "レビューサイクルが完了しました。" then perform cleanup
 
 Cleanup (in both cases):

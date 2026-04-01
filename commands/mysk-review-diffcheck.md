@@ -18,7 +18,8 @@ user-invocable: true
 ## 読み込み対象
 
 1. `~/.local/share/claude-mysk/{run_id}/review.json` — 必須
-2. `~/.local/share/claude-mysk/{run_id}/verify.json` — 存在する場合はnew_findingsも確認対象
+2. `~/.local/share/claude-mysk/{run_id}/verify-rerun.json` — 存在する場合はnew_findingsも確認対象（優先）
+3. `~/.local/share/claude-mysk/{run_id}/verify.json` — verify-rerun.jsonがない場合にnew_findingsを確認
 
 ## 保存先
 
@@ -35,7 +36,7 @@ user-invocable: true
    - **project_rootなしの古いrun**: 候補から除外する
    - 該当するrun_idがない場合: エラーで終了し、run_id手動指定を促す
 2. review.jsonから`project_root`を読み取り、これを`WORK_DIR`に設定
-3. review.jsonのfindings読込（フォールバック付き）、verify.jsonのnew_findingsがあれば追加
+3. review.jsonのfindings読込（フォールバック付き）、verify-rerun.json（優先）またはverify.jsonのnew_findingsがあれば追加
 
 ## パススキーマ
 
@@ -74,7 +75,7 @@ user-invocable: true
   - `title`: `.title`
   - `detail`: `.detail` → ない場合 `.description`
   - `id`: `.id`
-- **verify.jsonのnew_findings**: `.new_findings` → ない場合空配列
+- **verify結果のnew_findings**: verify-rerun.json（優先）→ verify.json → ない場合空配列
 - **summary**: `.summary.overall_risk` → ない場合 findingsのseverity分布から推定
 3. 優先順位: high > medium > low（参考）
 4. 各指摘について該当箇所を読み、判定:
@@ -92,11 +93,11 @@ user-invocable: true
 |------|-------------|
 | 未修正highあり | `/mysk-review-fix` で残りの指摘を修正（ループ継続） |
 | 全highがfixed | ユーザー確認「verifyを実行しますか？」→ 承認時のみ `/mysk-review-verify` |
-| highなし、未修正mediumあり | ユーザー確認「verifyを実行しますか？（medium重要度の指摘が残っています）」→ 承認時のみ `/mysk-review-verify` |
+| highなし、未修正non-high（medium/low）あり | ユーザー確認「verifyを実行しますか？（medium/low重要度の指摘が残っています）」→ 承認時のみ `/mysk-review-verify` |
 
 ## JSON形式
 
-version, run_id, created_at, type, summary(total/findings/fixed/not_fixed/unclear/high_remaining/medium_remaining), checks[](finding_id/severity/status/note), next_step
+version, run_id, created_at, type, summary(total/findings/fixed/not_fixed/unclear/high_remaining/medium_remaining/low_remaining), checks[](finding_id/severity/status/note), next_step
 
 **next_stepフィールドの値**:
 - highが残っている場合: "/mysk-review-fix で残りの指摘を修正してください。"
