@@ -31,7 +31,7 @@ else
 fi
 
 cmux send --workspace "$WS_REF" --surface "$SUB_SURFACE" \
-  "cd {WORK_DIR} && claude --model opus --effort medium $PERMISSION_FLAGS"
+  "cd {WORK_DIR} && claude --model opus --effort high $PERMISSION_FLAGS"
 cmux send-key --workspace "$WS_REF" --surface "$SUB_SURFACE" return
 
 echo "LAUNCHED: WS_REF=$WS_REF SUB_SURFACE=$SUB_SURFACE"
