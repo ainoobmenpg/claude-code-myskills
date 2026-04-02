@@ -69,6 +69,11 @@ If status is "in_progress" and updated_at is more than 15 minutes ago:
 2. Display "サブペインを確認: cmux focus-surface --workspace {WS_REF} --surface {SUB_SURFACE}"
 3. Confirm "アクションを選択してください：再開 / 待機続行 / 中止"
 4. Delete review-check-monitor using CronDelete
+5. Execute cleanup:
+   - cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit"
+   - cmux send-key --workspace {WS_REF} --surface {SUB_SURFACE} return
+   - sleep 2
+   - cmux close-surface --workspace {WS_REF} --surface {SUB_SURFACE}
 
 Otherwise (in_progress with recent updated_at):
 Do nothing

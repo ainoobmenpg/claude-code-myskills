@@ -28,6 +28,18 @@ user-invocable: true
 - 入力は `/mysk-review-check` のJSON契約に従うこと
 - Markdownレビュー文書や仕様書は入力として扱わない
 
+## 残存監視ジョブの確認
+
+実行開始時に、前回の `/mysk-review-check` から残存している監視ジョブがないか確認する。
+
+1. CronList で "review-check-monitor" を含むジョブを検索
+2. 該当ジョブがある場合:
+   - 該当ジョブの prompt から `--workspace` と `--surface` の値を正規表現（例: `--workspace\s+(\S+)`）で抽出
+   - 抽出できた場合: サブペインに `/exit` を送信し、2秒待機後に `cmux close-surface` で閉じる
+   - 該当ジョブを CronDelete で削除
+   - "前回の review-check のサブペインをクリーンアップしました" と表示
+3. 該当ジョブがない場合: 何もしない（そのまま次のステップへ）
+
 ## 実行ルール
 
 1. run_id解決、review.jsonから`project_root`を読み取り、これを`WORK_DIR`に設定
