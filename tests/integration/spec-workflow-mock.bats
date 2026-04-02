@@ -396,6 +396,67 @@ META
 }
 
 # ---------------------------------------------------------------------------
+# Normal flow: Implement phase (with confidence-level format)
+# ---------------------------------------------------------------------------
+
+@test "implement: spec.md read -> impl-plan.md with confidence-level format output path correct" {
+    local run_id="20260401-100000Z-user-auth"
+    local run_dir
+    run_dir=$(create_basic_spec_run "$TEST_TMPDIR" "$run_id")
+
+    # Pre-condition: spec.md with all required sections
+    create_valid_spec_md "$run_dir"
+
+    # Verify all required sections are present
+    local required_sections="概要 目的 利用者 ユースケース 入出力 スコープ 受け入れ条件"
+    for section in $required_sections; do
+        run grep -q "## $section" "$run_dir/spec.md"
+        [ "$status" -eq 0 ]
+    done
+
+    # Simulate implement: create impl-plan.md with confidence-level format at correct output path
+    local impl_plan_path="$run_dir/impl-plan.md"
+    cat > "$impl_plan_path" <<'PLAN'
+# Implementation Plan
+
+## Overview
+User authentication module implementation.
+
+## File Structure
+- src/auth.ts (候補): Authentication logic
+- src/session.ts (調査必要): Session management
+
+## Phase 1: Core Auth
+- Task 1.1: Implement login
+  - Target file: src/auth.ts (確定)
+  - Location: login() function
+  - Exploration keywords: auth login
+  - Implementation notes: Check existing patterns in src/*auth*.ts
+
+- Task 1.2: Implement logout
+  - Target file: src/auth.ts (候補)
+  - Location: logout() function
+  - Exploration keywords: auth logout
+- AC: AC1, AC3
+PLAN
+
+    # Verify output path matches spec
+    [ -f "$impl_plan_path" ]
+    run grep -q "Implementation Plan" "$impl_plan_path"
+    [ "$status" -eq 0 ]
+
+    # Verify confidence-level format is parseable
+    run grep -q "確定" "$impl_plan_path"
+    [ "$status" -eq 0 ]
+    run grep -q "候補" "$impl_plan_path"
+    [ "$status" -eq 0 ]
+    run grep -q "調査必要" "$impl_plan_path"
+    [ "$status" -eq 0 ]
+    run grep -q "探索キーワード" "$impl_plan_path"
+    [ "$status" -eq 0 ]
+}
+
+# ---------------------------------------------------------------------------
 # Abnormal flow: Implement detects missing required sections in spec.md
 # ---------------------------------------------------------------------------
 

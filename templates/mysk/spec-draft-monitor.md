@@ -31,7 +31,7 @@ If status is "completed":
      ## 保存先
      {SPEC_PATH}
 
-     次: シンプルな仕様なら /mysk-spec-implement、複雑なら /mysk-spec-review
+     次: /mysk-spec-review で仕様レビューを実施
      ```
 
    - **いいえ**: Display:

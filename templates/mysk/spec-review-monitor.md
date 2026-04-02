@@ -1,3 +1,5 @@
+**TEST MODE**: {TEST_MODE} が "1" の場合、completed 時の AskUserQuestion をスキップし、自動的に「はい」を選択して反映フローを実行してください。
+
 Read {STATUS_FILE} and check the status field and updated_at.
 
 If the file does not exist yet:
@@ -11,11 +13,36 @@ If status is "completed":
    - 評価 headline
    - 指摘数 (finding_count: high/medium/low)
    - 主な指摘 (各findingの id/title/severity/section)
-3. Perform cleanup:
+3. Use AskUserQuestion to Japanese with the following options:
+   - Option 1: "はい" (label: "はい（spec.md に反映）")
+   - Option 2: "いいえ" (label: "いいえ（反映せず終了）")
+4. Handle the response:
+   - **はい**:
+     a. Check if {SPEC_PATH} exists. If not, use {DRAFT_PATH} as the source.
+     b. Create backup: Determine N as the maximum existing spec-v*.md version + 1 (or 1 if none exist), then run `cp {SPEC_PATH} {RUN_DIR}/spec-v{N}.md`
+     c. Read {REVIEW_PATH} and extract findings array (fallback: try `.findings` first, then `.issues`)
+     d. For each finding, read corresponding sections from {SPEC_PATH} and apply Edit tool to update spec.md with minimal diff updates
+     e. Append revision history to the end of {SPEC_PATH} (reverse chronological table format)
+     f. Display:
+       ```
+       仕様書を反映しました。
+
+       ## run_id
+       {RUN_ID}
+
+       ## 保存先
+       {SPEC_PATH}
+
+       ## バックアップ
+       {RUN_DIR}/spec-v{N}.md
+
+       次: /mysk-spec-implement で実装計画を作成
+       ```
+   - **いいえ**: Perform cleanup only (no updates to spec.md)
+5. Perform cleanup in ALL cases:
    ```bash
    cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit" && sleep 1 && cmux send-key --workspace {WS_REF} --surface {SUB_SURFACE} return && sleep 2 && cmux close-surface --workspace {WS_REF} --surface {SUB_SURFACE}
    ```
-4. Display: "次のステップ: /mysk-spec-revise でレビュー指摘を反映するか、終了してください。"
 
 If status is "failed":
 1. FIRST: Find spec-review-monitor job in CronList and delete it using CronDelete
@@ -24,6 +51,11 @@ If status is "failed":
    ```bash
    cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit" && sleep 1 && cmux send-key --workspace {WS_REF} --surface {SUB_SURFACE} return && sleep 2 && cmux close-surface --workspace {WS_REF} --surface {SUB_SURFACE}
    ```
+
+If status is "waiting_for_user":
+1. Display "サブエージェントが質問を待っています。サブペインで回答してください。"
+2. Display "cmux focus-surface --workspace {WS_REF} --surface {SUB_SURFACE}"
+Do nothing else (do not delete job)
 
 If status is "in_progress":
 1. Check if updated_at is more than 15 minutes ago:
@@ -42,3 +74,5 @@ If status is "in_progress":
      2. Confirm "アクションを選択してください：再開 / 待機続行 / 中止"
      3. Delete spec-review-monitor using CronDelete
    - Otherwise: Do nothing
+
+Note: {SPEC_PATH}, {DRAFT_PATH}, {RUN_DIR}, {RUN_ID}, {REVIEW_PATH}, {WS_REF}, and {SUB_SURFACE} are substituted by the command-side sed before this monitor text is used as a CronCreate prompt.

@@ -13,7 +13,6 @@ claude-code-myskills(cc-mysk)/
 +-- commands/                       # スラッシュコマンド定義（.md）
 |   +-- mysk-spec-draft.md          # 仕様書下書き（別ペイン Opus）
 |   +-- mysk-spec-review.md         # 仕様レビュー（別ペイン Opus）
-|   +-- mysk-spec-revise.md         # レビュー指摘の差分更新
 |   +-- mysk-spec-implement.md      # 実装計画作成（計画のみ）
 |   +-- mysk-implement-start.md     # impl-plan.mdを読み込み実装を実行
 |   +-- mysk-review-check.md        # コードレビュー（別ペイン Opus）
@@ -43,8 +42,7 @@ claude-code-myskills(cc-mysk)/
 | コマンド | 説明 | 実行場所 | 引数 |
 |---------|------|---------|------|
 | `/mysk-spec-draft` | 仕様書下書き作成 | 別ペイン(Opus) | `[topic]` |
-| `/mysk-spec-review` | 仕様レビュー | 別ペイン(Opus) | `[run_id]` |
-| `/mysk-spec-revise` | 仕様書に指摘を反映 | メイン | `[run_id]` |
+| `/mysk-spec-review` | 仕様レビュー＋反映確認 | 別ペイン(Opus) | `[run_id]` |
 | `/mysk-spec-implement` | 実装計画作成（計画のみ） | メイン | `[run_id]` |
 | `/mysk-implement-start` | impl-plan.mdを読み込み実装を実行 | メイン | `[run_id]` |
 | `/mysk-review-check` | コードレビュー | 別ペイン(Opus) | `[run_id] [path]` |
