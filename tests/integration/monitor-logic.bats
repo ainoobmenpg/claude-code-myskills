@@ -42,7 +42,7 @@ simulate_draft_monitor() {
             echo "message_no_cleanup"
             ;;
         in_progress)
-            # Check timeout: updated_at more than 15 minutes ago
+            # Check timeout: updated_at more than 30 minutes ago
             local updated_at current_ts updated_ts diff_minutes
             updated_at=$(jq -r '.updated_at // empty' "$status_file" 2>/dev/null)
             if [ -n "$updated_at" ]; then
@@ -51,7 +51,7 @@ simulate_draft_monitor() {
                 updated_ts=$(date -j -u -f "%Y-%m-%dT%H:%M:%SZ" "$updated_at" +%s 2>/dev/null || date -u -d "$updated_at" +%s 2>/dev/null || echo "0")
                 if [ "$updated_ts" != "0" ]; then
                     diff_minutes=$(( (current_ts - updated_ts) / 60 ))
-                    if [ "$diff_minutes" -gt 15 ]; then
+                    if [ "$diff_minutes" -gt 30 ]; then
                         echo "timeout_warning"
                         return
                     fi
@@ -99,7 +99,7 @@ simulate_review_monitor() {
                 updated_ts=$(date -j -u -f "%Y-%m-%dT%H:%M:%SZ" "$updated_at" +%s 2>/dev/null || date -u -d "$updated_at" +%s 2>/dev/null || echo "0")
                 if [ "$updated_ts" != "0" ]; then
                     diff_minutes=$(( (current_ts - updated_ts) / 60 ))
-                    if [ "$diff_minutes" -gt 15 ]; then
+                    if [ "$diff_minutes" -gt 30 ]; then
                         echo "timeout_warning"
                         return
                     fi
@@ -142,7 +142,7 @@ simulate_check_monitor() {
             echo "error_displayed_cleanup"
             ;;
         in_progress)
-            # Check timeout: updated_at more than 15 minutes ago
+            # Check timeout: updated_at more than 30 minutes ago
             local updated_at current_ts updated_ts diff_minutes
             updated_at=$(jq -r '.updated_at // empty' "$review_json" 2>/dev/null)
             if [ -n "$updated_at" ]; then
@@ -150,8 +150,8 @@ simulate_check_monitor() {
                 updated_ts=$(date -j -u -f "%Y-%m-%dT%H:%M:%SZ" "$updated_at" +%s 2>/dev/null || date -u -d "$updated_at" +%s 2>/dev/null || echo "0")
                 if [ "$updated_ts" != "0" ]; then
                     diff_minutes=$(( (current_ts - updated_ts) / 60 ))
-                    if [ "$diff_minutes" -gt 15 ]; then
-                        echo "timeout_warning_cleanup"
+                    if [ "$diff_minutes" -gt 30 ]; then
+                        echo "timeout_warning"
                         return
                     fi
                 fi
@@ -200,7 +200,7 @@ simulate_verify_termination() {
             updated_ts=$(date -j -u -f "%Y-%m-%dT%H:%M:%SZ" "$updated_at" +%s 2>/dev/null || echo "0")
             if [ "$updated_ts" != "0" ]; then
                 diff_minutes=$(( (current_ts - updated_ts) / 60 ))
-                if [ "$diff_minutes" -gt 15 ]; then
+                if [ "$diff_minutes" -gt 30 ]; then
                     echo "timeout_warning"
                     return
                 fi
@@ -325,9 +325,9 @@ EOF
     local run_dir
     run_dir=$(create_mock_run_dir "$TEST_TMPDIR" "$run_id")
 
-    # Create status with updated_at 20 minutes in the past
+    # Create status with updated_at 35 minutes in the past
     local old_ts
-    old_ts=$(date -u -v-20M +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d "20 minutes ago" +%Y-%m-%dT%H:%M:%SZ)
+    old_ts=$(date -u -v-35M +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d "35 minutes ago" +%Y-%m-%dT%H:%M:%SZ)
     cat > "$run_dir/status.json" <<STATUS
 {"status": "in_progress", "progress": "Still working", "updated_at": "${old_ts}"}
 STATUS
@@ -347,6 +347,23 @@ STATUS
     recent_ts=$(date -u -v-1M +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d "1 minute ago" +%Y-%m-%dT%H:%M:%SZ)
     cat > "$run_dir/status.json" <<STATUS
 {"status": "in_progress", "progress": "Working", "updated_at": "${recent_ts}"}
+STATUS
+
+    local action
+    action=$(simulate_draft_monitor "$run_dir/status.json")
+    [ "$action" = "no_action" ]
+}
+
+@test "draft monitor: status=in_progress + 20min updated_at -> no action (under 30min threshold)" {
+    local run_id="20260401-100000Z-test"
+    local run_dir
+    run_dir=$(create_mock_run_dir "$TEST_TMPDIR" "$run_id")
+
+    # Create status with updated_at 20 minutes ago (should NOT trigger 30-min timeout)
+    local old_ts
+    old_ts=$(date -u -v-20M +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d "20 minutes ago" +%Y-%m-%dT%H:%M:%SZ)
+    cat > "$run_dir/status.json" <<STATUS
+{"status": "in_progress", "progress": "Working", "updated_at": "${old_ts}"}
 STATUS
 
     local action
@@ -426,21 +443,21 @@ EOF
     [ "$action" = "error_missing_status_cleanup" ]
 }
 
-@test "check monitor: status=in_progress + old updated_at -> timeout warning with cleanup" {
+@test "check monitor: status=in_progress + old updated_at -> timeout warning" {
     local run_id="20260401-120000Z-test"
     local run_dir
     run_dir=$(create_mock_run_dir "$TEST_TMPDIR" "$run_id")
 
-    # Create review.json with updated_at 20 minutes in the past
+    # Create review.json with updated_at 35 minutes in the past
     local old_ts
-    old_ts=$(date -u -v-20M +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d "20 minutes ago" +%Y-%m-%dT%H:%M:%SZ)
+    old_ts=$(date -u -v-35M +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d "35 minutes ago" +%Y-%m-%dT%H:%M:%SZ)
     cat > "$run_dir/review.json" <<STATUS
 {"status": "in_progress", "progress": "Still reviewing", "updated_at": "${old_ts}", "project_root": "/tmp/test", "findings": []}
 STATUS
 
     local action
     action=$(simulate_check_monitor "$run_dir/review.json")
-    [ "$action" = "timeout_warning_cleanup" ]
+    [ "$action" = "timeout_warning" ]
 }
 
 @test "check monitor: status=in_progress + recent updated_at -> no action" {
@@ -453,6 +470,23 @@ STATUS
     recent_ts=$(date -u -v-1M +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d "1 minute ago" +%Y-%m-%dT%H:%M:%SZ)
     cat > "$run_dir/review.json" <<STATUS
 {"status": "in_progress", "progress": "Working", "updated_at": "${recent_ts}", "project_root": "/tmp/test", "findings": []}
+STATUS
+
+    local action
+    action=$(simulate_check_monitor "$run_dir/review.json")
+    [ "$action" = "no_action" ]
+}
+
+@test "check monitor: status=in_progress + 20min updated_at -> no action (under 30min threshold)" {
+    local run_id="20260401-120000Z-test"
+    local run_dir
+    run_dir=$(create_mock_run_dir "$TEST_TMPDIR" "$run_id")
+
+    # Create review.json with updated_at 20 minutes ago (should NOT trigger 30-min timeout)
+    local old_ts
+    old_ts=$(date -u -v-20M +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d "20 minutes ago" +%Y-%m-%dT%H:%M:%SZ)
+    cat > "$run_dir/review.json" <<STATUS
+{"status": "in_progress", "progress": "Working", "updated_at": "${old_ts}", "project_root": "/tmp/test", "findings": []}
 STATUS
 
     local action

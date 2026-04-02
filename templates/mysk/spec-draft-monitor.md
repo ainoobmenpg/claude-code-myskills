@@ -66,7 +66,7 @@ If status is "waiting_for_user":
 Do nothing else (do not delete job)
 
 If status is "in_progress":
-1. Check if updated_at is more than 15 minutes ago:
+1. Check if updated_at is more than 30 minutes ago:
    - Get current time: `date -u +%Y-%m-%dT%H:%M:%SZ`
    - Parse updated_at and calculate difference using bash:
      ```bash
@@ -76,10 +76,15 @@ If status is "in_progress":
      CURRENT_TS=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$CURRENT_TIME" +%s 2>/dev/null || date -d "$CURRENT_TIME" +%s)
      DIFF_MINUTES=$(( (CURRENT_TS - UPDATED_TS) / 60 ))
      ```
-   - If `$DIFF_MINUTES -gt 15`:
-     1. Display "サブエージェントが15分以上応答していません。タイムアウトの可能性があります。"
-     2. Confirm "アクションを選択してください：再開 / 待機続行 / 中止"
-     3. Delete spec-draft-monitor using CronDelete
+   - If `$DIFF_MINUTES -gt 30`:
+     1. Display "サブエージェントが30分以上応答していません。タイムアウトの可能性があります。"
+     2. Display "サブペインを確認: cmux focus-surface --workspace {WS_REF} --surface {SUB_SURFACE}"
+     3. Use AskUserQuestion with the following options:
+        - "待機続行" → Do nothing (監視を継続)
+        - "中止" → Delete spec-draft-monitor using CronDelete, then execute cleanup:
+          ```bash
+          cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit" && sleep 1 && cmux send-key --workspace {WS_REF} --surface {SUB_SURFACE} return && sleep 2 && cmux close-surface --workspace {WS_REF} --surface {SUB_SURFACE}
+          ```
    - Otherwise: Do nothing
 
 Note: {DRAFT_PATH}, {SPEC_PATH}, {RUN_ID}, {WS_REF}, and {SUB_SURFACE} are substituted by the command-side sed before this monitor text is used as a CronCreate prompt.

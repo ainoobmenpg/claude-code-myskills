@@ -64,16 +64,17 @@ If status is "waiting_for_user":
 2. Display "cmux focus-surface --workspace {WS_REF} --surface {SUB_SURFACE}"
 Do nothing else (do not delete job)
 
-If status is "in_progress" and updated_at is more than 15 minutes ago:
-1. Display "サブエージェントが15分以上応答していません。タイムアウトの可能性があります。"
+If status is "in_progress" and updated_at is more than 30 minutes ago:
+1. Display "サブエージェントが30分以上応答していません。タイムアウトの可能性があります。"
 2. Display "サブペインを確認: cmux focus-surface --workspace {WS_REF} --surface {SUB_SURFACE}"
-3. Confirm "アクションを選択してください：再開 / 待機続行 / 中止"
-4. Delete review-check-monitor using CronDelete
-5. Execute cleanup:
-   - cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit"
-   - cmux send-key --workspace {WS_REF} --surface {SUB_SURFACE} return
-   - sleep 2
-   - cmux close-surface --workspace {WS_REF} --surface {SUB_SURFACE}
+3. Use AskUserQuestion with the following options:
+   - "待機続行" → Do nothing (監視を継続)
+   - "中止" → Delete review-check-monitor using CronDelete, then execute cleanup:
+     - cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit"
+     - sleep 1
+     - cmux send-key --workspace {WS_REF} --surface {SUB_SURFACE} return
+     - sleep 2
+     - cmux close-surface --workspace {WS_REF} --surface {SUB_SURFACE}
 
 Otherwise (in_progress with recent updated_at):
 Do nothing

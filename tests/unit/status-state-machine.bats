@@ -4,7 +4,7 @@
 #   review-verify-monitor.md)
 #
 # Valid statuses: in_progress, waiting_for_user, completed, failed
-# Timeout: 15 minutes
+# Timeout: 30 minutes
 
 load '../helpers/test-common'
 load '../helpers/fixture-loader'
@@ -68,7 +68,7 @@ determine_action() {
         # Parse ISO timestamp to epoch (macOS and Linux compatible)
         updated_ts=$(TZ=UTC date -j -f "%Y-%m-%dT%H:%M:%SZ" "$updated_at" +%s 2>/dev/null || TZ=UTC date -d "$updated_at" +%s 2>/dev/null || echo "$current_ts")
         diff_min=$(( (current_ts - updated_ts) / 60 ))
-        if [ "$diff_min" -gt 15 ]; then
+        if [ "$diff_min" -gt 30 ]; then
           echo "timeout"
           return 0
         fi
@@ -167,8 +167,27 @@ EOF
   [ "$action" = "message_only" ]
 }
 
-@test "15-minute timeout detection (updated_at older than 15 min)" {
-  # Create a timestamp 20 minutes ago
+@test "30-minute timeout detection (updated_at older than 30 min)" {
+  # Create a timestamp 35 minutes ago
+  local old_ts
+  old_ts=$(date -u -v-35M +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d '35 minutes ago' +%Y-%m-%dT%H:%M:%SZ 2>/dev/null)
+
+  cat > "$STATUS_FILE" << EOF
+{
+  "status": "in_progress",
+  "progress": "working",
+  "updated_at": "${old_ts}"
+}
+EOF
+
+  local action
+  action=$(determine_action "$STATUS_FILE")
+
+  [ "$action" = "timeout" ]
+}
+
+@test "20-minute updated_at does not trigger timeout" {
+  # Create a timestamp 20 minutes ago (should NOT trigger 30-min timeout)
   local old_ts
   old_ts=$(date -u -v-20M +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d '20 minutes ago' +%Y-%m-%dT%H:%M:%SZ 2>/dev/null)
 
@@ -183,7 +202,7 @@ EOF
   local action
   action=$(determine_action "$STATUS_FILE")
 
-  [ "$action" = "timeout" ]
+  [ "$action" = "none" ]
 }
 
 @test "recent updated_at produces no timeout" {
