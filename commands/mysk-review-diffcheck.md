@@ -93,7 +93,7 @@ user-invocable: true
 |------|-------------|
 | 未修正highあり | `/mysk-review-fix` で残りの指摘を修正（ループ継続） |
 | 全highがfixed | ユーザー確認「verifyを実行しますか？」→ 承認時のみ `/mysk-review-verify` |
-| highなし、未修正non-high（medium/low）あり | ユーザー確認「verifyを実行しますか？（medium/low重要度の指摘が残っています）」→ 承認時のみ `/mysk-review-verify` |
+| highなし、未修正medium/lowあり | `/mysk-review-fix` に戻る |
 
 ## JSON形式
 
@@ -101,7 +101,8 @@ version, run_id, created_at, type, summary(total/findings/fixed/not_fixed/unclea
 
 **next_stepフィールドの値**:
 - highが残っている場合: "/mysk-review-fix で残りの指摘を修正してください。"
-- high全fixedの場合: "verifyの実行にはユーザー確認が必要です。diffcheck結果を確認し、ユーザーの指示を待ってください。"
+- medium/lowが残っている場合: "/mysk-review-fix で残りの指摘を修正してください。"
+- high全fixedかつmedium/low全fixedの場合: "verifyの実行にはユーザー確認が必要です。diffcheck結果を確認し、ユーザーの指示を待ってください。"
 
 ## 完了後案内
 

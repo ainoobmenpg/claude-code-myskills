@@ -230,7 +230,7 @@ simulate_verify_termination() {
             new_non_high=$(jq '[.new_findings[]? | select(.severity == "medium" or .severity == "low")] | length' "$verify_json" 2>/dev/null)
 
             if [ "$med_rem" -gt 0 ] || [ "$low_rem" -gt 0 ] || [ "$new_non_high" -gt 0 ]; then
-                result="partially_passed"
+                result="failed"
             else
                 result="passed"
             fi
@@ -243,9 +243,6 @@ simulate_verify_termination() {
             ;;
         failed)
             echo "error_end"
-            ;;
-        partially_passed)
-            echo "ask_user"
             ;;
         *)
             echo "end"
@@ -525,7 +522,7 @@ EOF
     [ "$action" = "error_end" ]
 }
 
-@test "verify monitor: status=completed + partially_passed -> ask user" {
+@test "verify monitor: status=completed + failed (medium remaining) -> error_end" {
     local run_id="20260401-120000Z-test"
     local run_dir
     run_dir=$(create_mock_run_dir "$TEST_TMPDIR" "$run_id")
@@ -534,7 +531,7 @@ EOF
 {
   "status": "completed",
   "progress": "Done",
-  "verification_result": "partially_passed",
+  "verification_result": "failed",
   "summary": {
     "verified_count": 2,
     "fixed_count": 1,
@@ -551,5 +548,5 @@ EOF
 
     local action
     action=$(simulate_verify_termination "$run_dir/verify.json")
-    [ "$action" = "ask_user" ]
+    [ "$action" = "error_end" ]
 }

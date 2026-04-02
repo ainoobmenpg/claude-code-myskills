@@ -6,7 +6,7 @@
   "properties": {
     "verification_result": {
       "type": "string",
-      "enum": ["passed", "partially_passed", "failed"],
+      "enum": ["passed", "failed"],
       "description": "検証結果の分類"
     }
   },
@@ -24,21 +24,23 @@
         "next_action": "終了"
       },
       "partially_passed": {
-        "description": "non-high（medium/low）未解決または新規non-highあり（high残存なし）",
+        "description": "DEPRECATED: Use 'failed' for medium/low remaining. See issue15.",
         "conditions": [
           "high_remaining == 0 かつ (medium_remaining > 0 または low_remaining > 0)",
           "または new_findingsにseverityがmedium/lowのもののみ存在"
         ],
-        "next_action": "/mysk-review-fix → /mysk-review-diffcheck → verify再実行 → 終了"
+        "next_action": "OBSOLETE: Use failed instead"
       },
       "failed": {
-        "description": "high未解決、新規high発見、または検証エラー",
+        "description": "high/medium/low未解決、新規high発見、または検証エラー",
         "conditions": [
           "high_remaining > 0",
+          "または medium_remaining > 0",
+          "または low_remaining > 0",
           "または new_findingsにseverity==highが存在",
           "または検証エラー（review.json読めない、project_rootがない）"
         ],
-        "next_action": "エラーレポート → 終了"
+        "next_action": "/mysk-review-fix に戻る"
       }
     },
     "transition_rules": {
@@ -51,19 +53,9 @@
         },
         {
           "from": "in_progress",
-          "to": "partially_passed",
-          "condition": "non-high（medium/low）未解決あり、high残存なし"
-        },
-        {
-          "from": "in_progress",
           "to": "failed",
-          "condition": "high未解決 または 新規high または 検証エラー"
+          "condition": "high/medium/low未解決 または 新規問題 または 検証エラー"
         },
-        {
-          "from": "partially_passed",
-          "to": "passed",
-          "condition": "fix → diffcheck → verify再実行で全指摘fixed"
-        }
       ]
     }
   },

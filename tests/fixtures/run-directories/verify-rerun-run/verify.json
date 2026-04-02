@@ -7,7 +7,7 @@
   "progress": "Verification completed",
   "source_review": "review.json",
   "project_root": "/tmp/test-project",
-  "verification_result": "partially_passed",
+  "verification_result": "failed",
   "summary": {"verified_count": 1, "fixed_count": 1, "remaining_count": 1, "new_issues_count": 1, "high_remaining": 0, "medium_remaining": 1, "low_remaining": 0},
   "verifications": [{"original_finding_id": "F001", "severity": "high", "status": "fixed", "detail": "Fixed correctly"}],
   "new_findings": [{"id": "N001", "severity": "medium", "file": "src/main.ts", "line": 15, "title": "minor issue", "detail": "small issue found", "related_fix": "F001"}]

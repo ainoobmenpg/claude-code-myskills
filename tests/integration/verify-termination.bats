@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 # verify-termination.bats
 # Layer 3 mock E2E: verify termination state machine from verify-schema.json
-#   - Result determination (passed/failed/partially_passed)
+#   - Result determination (passed/failed)
 #   - Transition rules (in_progress -> terminal states)
 #   - Source-of-truth resolution (verify-rerun.json priority)
 #   - Rerun path determination
@@ -48,9 +48,9 @@ determine_verify_result() {
         return 0
     fi
 
-    # Partially passed: non-high remaining OR new non-high findings (no high)
+    # Failed: non-high remaining OR new non-high findings (no high)
     if [ "$med_rem" -gt 0 ] || [ "$low_rem" -gt 0 ] || [ "$new_non_high" -gt 0 ]; then
-        echo "partially_passed"
+        echo "failed"
         return 0
     fi
 
@@ -60,7 +60,7 @@ determine_verify_result() {
 }
 
 # Determine transition from state
-# $1: current state (in_progress, partially_passed)
+# $1: current state (in_progress)
 # $2: verify JSON path
 determine_transition() {
     local from_state="$1" verify_json="$2"
@@ -70,13 +70,6 @@ determine_transition() {
     case "$from_state" in
         in_progress)
             echo "in_progress -> $result"
-            ;;
-        partially_passed)
-            if [ "$result" = "passed" ]; then
-                echo "partially_passed -> passed"
-            else
-                echo "partially_passed -> $result"
-            fi
             ;;
         *)
             echo "$from_state -> $result"
@@ -224,14 +217,14 @@ EOF
     [ "$output" = "failed" ]
 }
 
-@test "result: no high, medium/low remaining -> partially_passed" {
+@test "result: no high, medium/low remaining -> failed" {
     local run_dir="$TEST_TMPDIR/20260401-120000Z-test"
     mkdir -p "$run_dir"
 
     cat > "$run_dir/verify.json" <<'EOF'
 {
   "status": "completed",
-  "verification_result": "partially_passed",
+  "verification_result": "failed",
   "summary": {
     "verified_count": 3,
     "fixed_count": 1,
@@ -251,7 +244,7 @@ EOF
 EOF
 
     run determine_verify_result "$run_dir/verify.json"
-    [ "$output" = "partially_passed" ]
+    [ "$output" = "failed" ]
 }
 
 @test "result: no remaining at all -> passed" {
@@ -335,14 +328,14 @@ EOF
     [ "$output" = "in_progress -> passed" ]
 }
 
-@test "transition: in_progress -> partially_passed (non-high unfixed, no high)" {
+@test "transition: in_progress -> failed (non-high unfixed, no high)" {
     local run_dir="$TEST_TMPDIR/20260401-120000Z-test"
     mkdir -p "$run_dir"
 
     cat > "$run_dir/verify.json" <<'EOF'
 {
   "status": "completed",
-  "verification_result": "partially_passed",
+  "verification_result": "failed",
   "summary": {
     "verified_count": 2, "fixed_count": 1, "remaining_count": 1,
     "new_issues_count": 0, "high_remaining": 0,
@@ -353,7 +346,7 @@ EOF
 EOF
 
     run determine_transition "in_progress" "$run_dir/verify.json"
-    [ "$output" = "in_progress -> partially_passed" ]
+    [ "$output" = "in_progress -> failed" ]
 }
 
 @test "transition: in_progress -> failed (high unfixed)" {
@@ -397,28 +390,6 @@ EOF
 
     run determine_transition "in_progress" "$run_dir/verify.json"
     [ "$output" = "in_progress -> failed" ]
-}
-
-@test "transition: partially_passed -> passed (after fix cycle)" {
-    local run_dir="$TEST_TMPDIR/20260401-120000Z-test"
-    mkdir -p "$run_dir"
-
-    # After fix cycle, all remaining are now fixed
-    cat > "$run_dir/verify.json" <<'EOF'
-{
-  "status": "completed",
-  "verification_result": "passed",
-  "summary": {
-    "verified_count": 3, "fixed_count": 3, "remaining_count": 0,
-    "new_issues_count": 0, "high_remaining": 0,
-    "medium_remaining": 0, "low_remaining": 0
-  },
-  "verifications": [], "new_findings": []
-}
-EOF
-
-    run determine_transition "partially_passed" "$run_dir/verify.json"
-    [ "$output" = "partially_passed -> passed" ]
 }
 
 # ===========================================================================
@@ -547,7 +518,7 @@ EOF
     [ "$output" = "failed" ]
 }
 
-@test "fallback: no verification_result, medium remaining -> partially_passed" {
+@test "fallback: no verification_result, medium remaining -> failed" {
     local run_dir="$TEST_TMPDIR/20260401-120000Z-test"
     mkdir -p "$run_dir"
 
@@ -564,5 +535,5 @@ EOF
 EOF
 
     run determine_verify_result "$run_dir/verify.json"
-    [ "$output" = "partially_passed" ]
+    [ "$output" = "failed" ]
 }

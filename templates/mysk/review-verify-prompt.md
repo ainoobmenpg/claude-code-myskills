@@ -9,8 +9,7 @@ cat ~/.claude/templates/mysk/verify-schema.json
 
 **重要**: `verification_result` の判定は、schemaの `definitions.result_criteria` に従ってください。
 - passed: 全指摘fixed && 新規問題なし
-- partially_passed: 未修正のnon-high（medium/low）あり または 新規non-highあり（high残存なし）
-- failed: high未解決 または 新規high発見 または 検証エラー
+- failed: high/medium/low未解決 または 新規high発見 または 検証エラー
 
 ## 検証対象
 
@@ -59,7 +58,7 @@ cat ~/.claude/templates/mysk/verify-schema.json
    {
      "status": "completed",
      "progress": "検証完了",
-     "verification_result": "passed or partially_passed or failed",
+     "verification_result": "passed or failed",
      "updated_at": "UTCタイムスタンプ",
      ...
    }
@@ -96,8 +95,7 @@ cat ~/.claude/templates/mysk/verify-schema.json
 ## verification_result判定基準
 
 - `passed`: すべての指摘が修正され、新規問題なし
-- `partially_passed`: 未修正のnon-high（medium/low）あり または 新規non-highあり（high残存なし）
-- `failed`: high未解決 または 新規high発見 または 検証自体が失敗
+- `failed`: high/medium/low未解決 または 新規high発見 または 検証自体が失敗
 
 ## 完了時JSON形式
 
@@ -113,7 +111,7 @@ cat ~/.claude/templates/mysk/verify-schema.json
   "progress": "検証完了",
   "source_review": "review.json",
   "project_root": "(review.jsonと同じ)",
-  "verification_result": "passed or partially_passed or failed",
+  "verification_result": "passed or failed",
   "summary": {
     "verified_count": 3,
     "fixed_count": 2,

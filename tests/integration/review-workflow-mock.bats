@@ -245,7 +245,7 @@ EOF
 
 # Create a verify.json with only medium/low remaining
 # $1: run_dir
-create_verify_partially_passed() {
+create_verify_failed_non_high() {
     local run_dir="$1"
     cat > "$run_dir/verify.json" <<'EOF'
 {
@@ -257,7 +257,7 @@ create_verify_partially_passed() {
   "progress": "Verification completed",
   "source_review": "review.json",
   "project_root": "/tmp/test-project",
-  "verification_result": "partially_passed",
+  "verification_result": "failed",
   "summary": {
     "verified_count": 3,
     "fixed_count": 1,
@@ -417,8 +417,8 @@ PLAN
     local run_dir
     run_dir=$(create_basic_review_run "$TEST_TMPDIR" "$run_id")
 
-    # First verify exists (partially_passed)
-    create_verify_result "$run_dir" "partially_passed" 0 1 0 0
+    # First verify exists (failed with medium remaining)
+    create_verify_result "$run_dir" "failed" 0 1 0 0
 
     # Rerun outputs to verify-rerun.json
     create_verify_rerun_result "$run_dir" "passed" 0 0 0
@@ -584,12 +584,12 @@ PLAN
     [ "$output" = "failed" ]
 }
 
-@test "verify judgment: only medium/low remaining -> partially_passed" {
+@test "verify judgment: only medium/low remaining -> failed" {
     local run_id="20260401-120000Z-review"
     local run_dir
     run_dir=$(create_basic_review_run "$TEST_TMPDIR" "$run_id")
 
-    create_verify_partially_passed "$run_dir"
+    create_verify_failed_non_high "$run_dir"
 
     # No high remaining
     run jq '.summary.high_remaining' "$run_dir/verify.json"
@@ -600,5 +600,5 @@ PLAN
     [ "$output" -gt 0 ]
 
     run jq -r '.verification_result' "$run_dir/verify.json"
-    [ "$output" = "partially_passed" ]
+    [ "$output" = "failed" ]
 }

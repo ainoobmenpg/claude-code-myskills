@@ -39,14 +39,14 @@ _validate_json_block() {
 # ----------------------------------------------------------------------
 # Test: verify-schema.json has verification_result enum with correct values
 # ----------------------------------------------------------------------
-@test "verify-schema.json has verification_result enum with passed/partially_passed/failed" {
+@test "verify-schema.json has verification_result enum with passed/failed" {
     local result
     result=$(python3 -c "
 import json
 with open('$TEMPLATES_DIR/verify-schema.json') as f:
     schema = json.load(f)
 enum_values = schema['properties']['verification_result']['enum']
-expected = ['passed', 'partially_passed', 'failed']
+expected = ['passed', 'failed']
 assert enum_values == expected, f'Got {enum_values}, expected {expected}'
 print('OK')
 " 2>&1)
@@ -63,7 +63,6 @@ with open('$TEMPLATES_DIR/verify-schema.json') as f:
     schema = json.load(f)
 assert 'result_criteria' in schema.get('definitions', {}), 'Missing result_criteria'
 assert 'passed' in schema['definitions']['result_criteria']
-assert 'partially_passed' in schema['definitions']['result_criteria']
 assert 'failed' in schema['definitions']['result_criteria']
 print('OK')
 " 2>&1

@@ -188,11 +188,10 @@ argument-hint: なし
 
 ```
 修正対象:
-  - 既定: 高重要度指摘のみ
-  - 中・低重要度は参考として表示
+  - 全指摘（高重要度・中重要度・低重要度）
 
 確認後:
-  - 高重要度指摘を修正
+  - 全指摘を修正
   - 変更内容と検証結果を報告
 ```
 
@@ -210,8 +209,8 @@ argument-hint: なし
   - verify.json（またはverify-rerun.json）の new_findings も確認（存在する場合）
 
 判定:
-  - high 未修正あり → /mysk-review-fix に戻る
-  - high 全て fixed → ユーザー確認 → /mysk-review-verify に進む
+  - high/medium/low 未修正あり → /mysk-review-fix に戻る
+  - 全て fixed → verifyに進む
 ```
 
 **重要**: verifyへの遷移にはユーザー確認が必要です。diffcheck結果を確認し、ユーザーの指示を待ってください。
@@ -283,8 +282,8 @@ verify 実行（Opus/max）※初回はverify.json、再実行時はverify-rerun
   ├─ Yes → エラー報告 → 【終了】
   └─ No → 続行
        ↓
-  non-high（medium/low）あり？
-  ├─ Yes → ユーザー確認（既定は終了）
+  未修正の指摘あり？
+  ├─ Yes → /mysk-review-fix に戻る
   └─ No → 【終了】
 ```
 
@@ -298,7 +297,7 @@ verify 実行（Opus/max）※初回はverify.json、再実行時はverify-rerun
 | verify: failed（検証エラー） | エラー報告 → **終了** |
 | verify: 新たな high 発生 | エラー報告 → **終了** |
 | verify: 未修正の high あり | エラー報告 → **終了** |
-| verify: high なし、non-high（medium/low）あり | ユーザー確認（既定は終了） |
+| verify: 未修正の指摘あり | /mysk-review-fix に戻る |
 | verify: high なし、未解決なし | **終了** |
 
 ---
@@ -413,7 +412,7 @@ verify 実行（Opus/max）※初回はverify.json、再実行時はverify-rerun
   "progress": "Verification completed",
   "source_review": "review.json",
   "project_root": "プロジェクトルートの絶対パス",
-  "verification_result": "passed | partially_passed | failed",
+  "verification_result": "passed | failed",
   "summary": {
     "verified_count": 3,
     "fixed_count": 2,
@@ -447,8 +446,7 @@ verify 実行（Opus/max）※初回はverify.json、再実行時はverify-rerun
 
 **総合判定基準**:
 - `passed`: すべての指摘がfixed。新たな問題も見つからない。
-- `partially_passed`: non-high（medium/low）の未解決または新規non-highあり。high残存なし。
-- `failed`: high severityの未解決指摘が残っている、または新たなhigh severityの問題が見つかった場合、または検証エラー。
+- `failed`: high/medium/low severityの未解決指摘が残っている、または新たな問題が見つかった場合、または検証エラー。
 
 ### diffcheck.json（差分確認）
 
