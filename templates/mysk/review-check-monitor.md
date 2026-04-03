@@ -49,6 +49,7 @@ If status is "completed":
    - 保存先パス
    - "次のステップ: 修正計画を作成するには /mysk-review-fix {RUN_ID}"
 4. Cleanup:
+   - rm -f {GRACE_FILE}
    - cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit"
    - cmux send-key --workspace {WS_REF} --surface {SUB_SURFACE} return
    - sleep 2
@@ -64,12 +65,44 @@ If status is "waiting_for_user":
 2. Display "cmux focus-surface --workspace {WS_REF} --surface {SUB_SURFACE}"
 Do nothing else (do not delete job)
 
-If status is "in_progress" and updated_at is more than 30 minutes ago:
-1. Display "サブエージェントが30分以上応答していません。タイムアウトの可能性があります。"
-2. Display "サブペインを確認: cmux focus-surface --workspace {WS_REF} --surface {SUB_SURFACE}"
-3. Use AskUserQuestion with the following options:
-   - "待機続行" → Do nothing (監視を継続)
+If status is "in_progress":
+1. Check if updated_at is more than 30 minutes ago:
+   - Get current time: `date -u +%Y-%m-%dT%H:%M:%SZ`
+   - Parse updated_at and calculate difference using bash:
+     ```bash
+     UPDATED_AT="{updated_atの値}"
+     CURRENT_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+     UPDATED_TS=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$UPDATED_AT" +%s 2>/dev/null || date -d "$UPDATED_AT" +%s)
+     CURRENT_TS=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$CURRENT_TIME" +%s 2>/dev/null || date -d "$CURRENT_TIME" +%s)
+     DIFF_MINUTES=$(( (CURRENT_TS - UPDATED_TS) / 60 ))
+     ```
+   - If `$DIFF_MINUTES -gt 30`:
+     # 猶予チェック（ここから追加）
+     GRACE_FILE="{GRACE_FILE}"
+     if [ -f "$GRACE_FILE" ]; then
+       GRACE_UNTIL=$(cat "$GRACE_FILE" | grep -o '"grace_until":"[^"]*"' | cut -d'"' -f4)
+       if [ -n "$GRACE_UNTIL" ]; then
+         GRACE_TS=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$GRACE_UNTIL" +%s 2>/dev/null || date -d "$GRACE_UNTIL" +%s)
+         CURRENT_TS=$(date -u +%s)
+         if [ "$CURRENT_TS" -lt "$GRACE_TS" ]; then
+           exit 0
+         fi
+       fi
+     fi
+     # 猶予チェックここまで
+     1. Display "サブエージェントが30分以上応答していません。タイムアウトの可能性があります。"
+     2. Display "サブペインを確認: cmux focus-surface --workspace {WS_REF} --surface {SUB_SURFACE}"
+     3. Use AskUserQuestion with the following options:
+   - "待機続行" → Execute bash to set grace:
+     ```bash
+     GRACE_FILE="{GRACE_FILE}"
+     CURRENT_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+     GRACE_UNTIL=$(date -u -d "+10 minutes" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -v+10M +%Y-%m-%dT%H:%M:%SZ)
+     echo "{\"grace_until\":\"$GRACE_UNTIL\",\"count\":1}" > "$GRACE_FILE"
+     ```
+     Then do nothing (監視を継続)
    - "中止" → Delete review-check-monitor using CronDelete, then execute cleanup:
+     - rm -f {GRACE_FILE}
      - cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit"
      - sleep 1
      - cmux send-key --workspace {WS_REF} --surface {SUB_SURFACE} return

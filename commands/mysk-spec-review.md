@@ -80,7 +80,7 @@ fi
 # 出力パス
 REVIEW_PATH="$RUN_DIR/spec-review.json"
 STATUS_FILE="$RUN_DIR/status.json"
-	DRAFT_PATH="$RUN_DIR/spec-draft.md"
+DRAFT_PATH="$RUN_DIR/spec-draft.md"
 ```
 
 ### 3. セクション確認（参考）
@@ -131,9 +131,11 @@ cmux send-key --workspace "$WS_REF" --surface "$SUB_SURFACE" return
 bashでsedを実行してモニターテキストを生成し、そのテキストを使って **CronCreateツール**（bashコマンドではない）で監視ジョブを登録する。
 
 ```bash
+GRACE_FILE=$(dirname "$STATUS_FILE")/timeout-grace.json
 sed -e "s|{STATUS_FILE}|$STATUS_FILE|g" -e "s|{REVIEW_PATH}|$REVIEW_PATH|g" \
     -e "s|{WS_REF}|$WS_REF|g" -e "s|{SUB_SURFACE}|$SUB_SURFACE|g" \
     -e "s|{SPEC_PATH}|$SPEC_PATH|g" -e "s|{DRAFT_PATH}|$DRAFT_PATH|g" -e "s|{RUN_DIR}|$RUN_DIR|g" \
+    -e "s|{GRACE_FILE}|$GRACE_FILE|g" \
     $HOME/.claude/templates/mysk/spec-review-monitor.md
 ```
 

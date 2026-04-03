@@ -52,13 +52,44 @@ If status is "failed":
    cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit" && sleep 1 && cmux send-key --workspace {WS_REF} --surface {SUB_SURFACE} return && sleep 2 && cmux close-surface --workspace {WS_REF} --surface {SUB_SURFACE}
    ```
 
-If status is "in_progress" and updated_at is more than 30 minutes ago:
-1. Display "サブエージェントが30分以上応答していません。タイムアウトの可能性があります。"
-2. Display "サブペインを確認: cmux focus-surface --workspace {WS_REF} --surface {SUB_SURFACE}"
-3. Use AskUserQuestion with the following options:
-   - "待機続行" → Do nothing (監視を継続)
-   - "中止" → Delete review-verify-monitor using CronDelete, then execute cleanup:
-     - cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit" && sleep 1 && cmux send-key --workspace {WS_REF} --surface {SUB_SURFACE} return && sleep 2 && cmux close-surface --workspace {WS_REF} --surface {SUB_SURFACE}
+If status is "in_progress":
+1. Check if updated_at is more than 30 minutes ago:
+   - Get current time: `date -u +%Y-%m-%dT%H:%M:%SZ`
+   - Parse updated_at and calculate difference using bash:
+     ```bash
+     UPDATED_AT="{updated_atの値}"
+     CURRENT_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+     UPDATED_TS=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$UPDATED_AT" +%s 2>/dev/null || date -d "$UPDATED_AT" +%s)
+     CURRENT_TS=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$CURRENT_TIME" +%s 2>/dev/null || date -d "$CURRENT_TIME" +%s)
+     DIFF_MINUTES=$(( (CURRENT_TS - UPDATED_TS) / 60 ))
+     ```
+   - If `$DIFF_MINUTES -gt 30`:
+     # 猶予チェック（ここから追加）
+     GRACE_FILE="{GRACE_FILE}"
+     if [ -f "$GRACE_FILE" ]; then
+       GRACE_UNTIL=$(cat "$GRACE_FILE" | grep -o '"grace_until":"[^"]*"' | cut -d'"' -f4)
+       if [ -n "$GRACE_UNTIL" ]; then
+         GRACE_TS=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$GRACE_UNTIL" +%s 2>/dev/null || date -d "$GRACE_UNTIL" +%s)
+         CURRENT_TS=$(date -u +%s)
+         if [ "$CURRENT_TS" -lt "$GRACE_TS" ]; then
+           exit 0
+         fi
+       fi
+     fi
+     # 猶予チェックここまで
+     1. Display "サブエージェントが30分以上応答していません。タイムアウトの可能性があります。"
+     2. Display "サブペインを確認: cmux focus-surface --workspace {WS_REF} --surface {SUB_SURFACE}"
+     3. Use AskUserQuestion with the following options:
+        - "待機続行" → Execute bash to set grace:
+         ```bash
+         GRACE_FILE="{GRACE_FILE}"
+         CURRENT_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+         GRACE_UNTIL=$(date -u -d "+10 minutes" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -v+10M +%Y-%m-%dT%H:%M:%SZ)
+         echo "{\"grace_until\":\"$GRACE_UNTIL\",\"count\":1}" > "$GRACE_FILE"
+         ```
+         Then do nothing (監視を継続)
+        - "中止" → Delete review-verify-monitor using CronDelete, then execute cleanup:
+          - cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit" && sleep 1 && cmux send-key --workspace {WS_REF} --surface {SUB_SURFACE} return && sleep 2 && cmux close-surface --workspace {WS_REF} --surface {SUB_SURFACE}
 
 Otherwise (in_progress with recent updated_at):
 Do nothing
@@ -88,12 +119,6 @@ cat ~/.claude/templates/mysk/verify-schema.json
 └──────────────────────────────────┘
        ↓
 ┌──────────────────────────────────┐
-│ verification_result == "failed" ? │
-│ → Yes: error report → 【End】     │
-│ → No: continue                   │
-└──────────────────────────────────┘
-       ↓
-┌──────────────────────────────────┐
 │ new_findings has high?           │
 │ → Yes: error report → 【End】    │
 │ → No: continue                   │
@@ -117,10 +142,9 @@ cat ~/.claude/templates/mysk/verify-schema.json
 | 条件 | verification_result | 次のアクション |
 |-----------|---------------------|-------------|
 | すべて修正済み、新規問題なし | `passed` | **終了** |
-| 検証失敗 | `failed` | エラーレポート → **終了** |
-| 新規`high`発見 | `failed` | エラーレポート → **終了** |
-| 未修正の`high`あり | `failed` | エラーレポート → **終了** |
-| `high`なし、non-high（medium/low）あり | `failed` | /mysk-review-fix に戻る |
+| 新規`high`発見 | （fallbackにより "failed"） | エラーレポート → **終了** |
+| 未修正の`high`あり | （fallbackにより "failed"） | エラーレポート → **終了** |
+| `high`なし、non-high（medium/low）あり | （fallbackにより "failed"） | /mysk-review-fix に戻る |
 | `high`なし、未解決なし | `passed` | **終了** |
 
 **When ending**:
@@ -146,6 +170,7 @@ passed
 
 Then perform cleanup:
 ```bash
+rm -f {GRACE_FILE}
 cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit" && sleep 1 && cmux send-key --workspace {WS_REF} --surface {SUB_SURFACE} return && sleep 2 && cmux close-surface --workspace {WS_REF} --surface {SUB_SURFACE}
 ```
 
@@ -172,6 +197,7 @@ failed
 
 Then perform cleanup:
 ```bash
+rm -f {GRACE_FILE}
 cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit" && sleep 1 && cmux send-key --workspace {WS_REF} --surface {SUB_SURFACE} return && sleep 2 && cmux close-surface --workspace {WS_REF} --surface {SUB_SURFACE}
 ```
 
@@ -190,5 +216,6 @@ cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit" && sleep 1 && cmu
 
 Then perform cleanup:
 ```bash
+rm -f {GRACE_FILE}
 cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit" && sleep 1 && cmux send-key --workspace {WS_REF} --surface {SUB_SURFACE} return && sleep 2 && cmux close-surface --workspace {WS_REF} --surface {SUB_SURFACE}
 ```

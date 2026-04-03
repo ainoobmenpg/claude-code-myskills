@@ -6,6 +6,36 @@ If the file does not exist yet:
 - Do nothing. Do not output any message. Do not run any bash commands.
 - Just wait for the next check.
 
+## JSON読み取り（フォールバック付き）
+
+サブエージェントがJSON契約に完全準拠しない場合があるため、以下のフォールバックで読み取る:
+
+- **status**: `.status` → ない場合、`"in_progress"` として扱う（フォールバックしない）
+- **findings配列**: `.findings` → ない場合 `.issues` も試す
+- **各finding**:
+  - `severity`: `.severity`
+  - `section`: `.section`
+  - `title`: `.title`
+  - `detail`: `.detail` → ない場合 `.description`
+  - `suggestion`: `.suggestion` → ない場合 `.suggested_fix`
+  - `id`: `.id`
+- **summary**:
+  - `overall_quality`: `.summary.overall_quality` → ない場合 `.summary.overall_risk` から推定
+  - `headline`: `.summary.headline`
+  - finding_count: `.summary.finding_count` → ない場合 `.summary.total` → ない場合 `findings.length`
+- **source**: `.source.value` → ない場合 `.target`
+
+**If the status field does not exist**:
+1. FIRST: Find spec-review-monitor job in CronList and delete it using CronDelete
+2. Display error: "エラー: {STATUS_FILE} に必須の 'status' フィールドがありません。サブエージェントがプロンプトの指示に従いませんでした。"
+3. Display {STATUS_FILE} content for debugging: `cat {STATUS_FILE}`
+4. Execute cleanup:
+   - cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit"
+   - cmux send-key --workspace {WS_REF} --surface {SUB_SURFACE} return
+   - sleep 2
+   - cmux close-surface --workspace {WS_REF} --surface {SUB_SURFACE}
+5. Stop processing
+
 If status is "completed":
 1. FIRST: Find spec-review-monitor job in CronList and delete it using CronDelete. This must happen before any output to prevent duplicate firings.
 2. Then read {REVIEW_PATH} and display the following summary in Japanese:
@@ -41,6 +71,7 @@ If status is "completed":
    - **いいえ**: Perform cleanup only (no updates to spec.md)
 5. Perform cleanup in ALL cases:
    ```bash
+   rm -f {GRACE_FILE}
    cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit" && sleep 1 && cmux send-key --workspace {WS_REF} --surface {SUB_SURFACE} return && sleep 2 && cmux close-surface --workspace {WS_REF} --surface {SUB_SURFACE}
    ```
 
@@ -49,6 +80,7 @@ If status is "failed":
 2. Read status.json and display the error content in progress field
 3. Perform cleanup:
    ```bash
+   rm -f {GRACE_FILE}
    cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit" && sleep 1 && cmux send-key --workspace {WS_REF} --surface {SUB_SURFACE} return && sleep 2 && cmux close-surface --workspace {WS_REF} --surface {SUB_SURFACE}
    ```
 
@@ -70,12 +102,33 @@ If status is "in_progress":
      DIFF_MINUTES=$(( (CURRENT_TS - UPDATED_TS) / 60 ))
      ```
    - If `$DIFF_MINUTES -gt 30`:
+     # 猶予チェック（ここから追加）
+     GRACE_FILE="{GRACE_FILE}"
+     if [ -f "$GRACE_FILE" ]; then
+       GRACE_UNTIL=$(cat "$GRACE_FILE" | grep -o '"grace_until":"[^"]*"' | cut -d'"' -f4)
+       if [ -n "$GRACE_UNTIL" ]; then
+         GRACE_TS=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$GRACE_UNTIL" +%s 2>/dev/null || date -d "$GRACE_UNTIL" +%s)
+         CURRENT_TS=$(date -u +%s)
+         if [ "$CURRENT_TS" -lt "$GRACE_TS" ]; then
+           exit 0
+         fi
+       fi
+     fi
+     # 猶予チェックここまで
      1. Display "サブエージェントが30分以上応答していません。タイムアウトの可能性があります。"
      2. Display "サブペインを確認: cmux focus-surface --workspace {WS_REF} --surface {SUB_SURFACE}"
      3. Use AskUserQuestion with the following options:
-        - "待機続行" → Do nothing (監視を継続)
+        - "待機続行" → Execute bash to set grace:
+         ```bash
+         GRACE_FILE="{GRACE_FILE}"
+         CURRENT_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+         GRACE_UNTIL=$(date -u -d "+10 minutes" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -v+10M +%Y-%m-%dT%H:%M:%SZ)
+         echo "{\"grace_until\":\"$GRACE_UNTIL\",\"count\":1}" > "$GRACE_FILE"
+         ```
+         Then do nothing (監視を継続)
         - "中止" → Delete spec-review-monitor using CronDelete, then execute cleanup:
           ```bash
+          rm -f {GRACE_FILE}
           cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit" && sleep 1 && cmux send-key --workspace {WS_REF} --surface {SUB_SURFACE} return && sleep 2 && cmux close-surface --workspace {WS_REF} --surface {SUB_SURFACE}
           ```
    - Otherwise: Do nothing

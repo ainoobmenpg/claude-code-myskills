@@ -83,9 +83,11 @@ cmux send-key --workspace "$WS_REF" --surface "$SUB_SURFACE" return
 bashでsedを実行してモニターテキストを生成し、そのテキストを使って **CronCreateツール**（bashコマンドではない）で監視ジョブを登録する。
 
 ```bash
+GRACE_FILE=$(dirname "$STATUS_FILE")/timeout-grace.json
 sed -e "s|{STATUS_FILE}|$STATUS_FILE|g" -e "s|{DRAFT_PATH}|$DRAFT_PATH|g" -e "s|{SPEC_PATH}|$SPEC_PATH|g" \
     -e "s|{WS_REF}|$WS_REF|g" -e "s|{SUB_SURFACE}|$SUB_SURFACE|g" \
     -e "s|{RUN_ID}|$RUN_ID|g" -e "s|{TEST_MODE}|${MYSK_TEST_MODE:-0}|g" \
+    -e "s|{GRACE_FILE}|$GRACE_FILE|g" \
     $HOME/.claude/templates/mysk/spec-draft-monitor.md
 ```
 
