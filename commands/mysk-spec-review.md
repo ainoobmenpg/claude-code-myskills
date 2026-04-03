@@ -83,17 +83,7 @@ STATUS_FILE="$RUN_DIR/status.json"
 DRAFT_PATH="$RUN_DIR/spec-draft.md"
 ```
 
-### 3. セクション確認（参考）
-
-仕様書に以下のセクションが含まれているか確認：
-- 概要、目的、利用者、ユースケース、入出力、スコープ、受け入れ条件
-
-欠如しているセクションがある場合:
-- エラー終了しない（I/Oエラーのみハードフェイル）
-- 欠如セクションはレビュー観点「完全性」にて high severity 指摘として報告される
-- レビューを通常通り続行する
-
-### 4. サブペインの準備と起動完了待ち
+### 3. サブペインの準備と起動完了待ち
 
 テンプレートファイルの存在確認:
 ```bash
@@ -108,7 +98,7 @@ done
 待機スクリプトはTrust確認をユーザー操作待ちとし、`❯` プロンプトを検出するまでポーリングする。
 `READY:` が出力されるまで次のステップに進まないこと。`TIMEOUT:` の場合はエラーとして扱ってください。
 
-### 5. プロンプトの送信
+### 4. プロンプトの送信
 
 `READY:` が確認できたら、プロンプトを送信する:
 
@@ -126,7 +116,7 @@ cmux send --workspace "$WS_REF" --surface "$SUB_SURFACE" \
 cmux send-key --workspace "$WS_REF" --surface "$SUB_SURFACE" return
 ```
 
-### 6. 状態監視
+### 5. 状態監視
 
 bashでsedを実行してモニターテキストを生成し、そのテキストを使って **CronCreateツール**（bashコマンドではない）で監視ジョブを登録する。
 
@@ -136,6 +126,8 @@ sed -e "s|{STATUS_FILE}|$STATUS_FILE|g" -e "s|{REVIEW_PATH}|$REVIEW_PATH|g" \
     -e "s|{WS_REF}|$WS_REF|g" -e "s|{SUB_SURFACE}|$SUB_SURFACE|g" \
     -e "s|{SPEC_PATH}|$SPEC_PATH|g" -e "s|{DRAFT_PATH}|$DRAFT_PATH|g" -e "s|{RUN_DIR}|$RUN_DIR|g" \
     -e "s|{GRACE_FILE}|$GRACE_FILE|g" \
+    -e "s|{RUN_ID}|$RUN_ID|g" \
+    -e "s|{TEST_MODE}|${MYSK_TEST_MODE:-0}|g" \
     $HOME/.claude/templates/mysk/spec-review-monitor.md
 ```
 
@@ -143,7 +135,7 @@ sed -e "s|{STATUS_FILE}|$STATUS_FILE|g" -e "s|{REVIEW_PATH}|$REVIEW_PATH|g" \
 - cron: `*/1 * * * *`
 - recurring: true
 
-### 7. このコマンドで返す内容
+### 6. このコマンドで返す内容
 
 このコマンドでは、レビュー開始と監視ジョブ登録までを行う。
 レビュー完了前にユーザー確認へ進めてはならない。

@@ -64,28 +64,76 @@ If status is "in_progress":
      DIFF_MINUTES=$(( (CURRENT_TS - UPDATED_TS) / 60 ))
      ```
    - If `$DIFF_MINUTES -gt 30`:
-     # 猶予チェック（ここから追加）
+     # 猶予チェック（Claude プロンプトレベル）
      GRACE_FILE="{GRACE_FILE}"
+
+     # Step 1: Grace file の存在確認と読み取り
+     Use Bash to check if file exists and read content:
+     ```bash
      if [ -f "$GRACE_FILE" ]; then
-       GRACE_UNTIL=$(cat "$GRACE_FILE" | grep -o '"grace_until":"[^"]*"' | cut -d'"' -f4)
-       if [ -n "$GRACE_UNTIL" ]; then
-         GRACE_TS=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$GRACE_UNTIL" +%s 2>/dev/null || date -d "$GRACE_UNTIL" +%s)
-         CURRENT_TS=$(date -u +%s)
-         if [ "$CURRENT_TS" -lt "$GRACE_TS" ]; then
-           exit 0
-         fi
-       fi
+       cat "$GRACE_FILE"
+     else
+       echo "NO_GRACE_FILE"
      fi
-     # 猶予チェックここまで
-     1. Display "サブエージェントが30分以上応答していません。タイムアウトの可能性があります。"
-     2. Display "サブペインを確認: cmux focus-surface --workspace {WS_REF} --surface {SUB_SURFACE}"
-     3. Use AskUserQuestion with the following options:
-        - "待機続行" → Execute bash to set grace:
+     ```
+
+     # Step 2: 猶予期限内かどうかを判定
+     If grace file exists and has grace_until:
+     - Use Bash to convert grace_until to timestamp:
+       ```bash
+       GRACE_UNTIL=$(cat "$GRACE_FILE" | grep -o '"grace_until":"[^"]*"' | cut -d'"' -f4)
+       date -j -f "%Y-%m-%dT%H:%M:%SZ" "$GRACE_UNTIL" +%s 2>/dev/null || date -d "$GRACE_UNTIL" +%s
+       ```
+     - Use Bash to get current timestamp:
+       ```bash
+       date -u +%s
+       ```
+     - If current_timestamp < grace_timestamp: Do nothing (猶予期限内、監視を継続)
+     - If current_timestamp >= grace_timestamp: Continue to timeout display
+
+     (grace file doesn't exist or grace period expired)
+
+     # Read count for warning message
+     Use Bash to get count:
+     ```bash
+     if [ -f "$GRACE_FILE" ]; then
+       cat "$GRACE_FILE" | grep -o '"count":[0-9]*' | cut -d: -f2
+     else
+       echo "0"
+     fi
+     ```
+
+     If count >= 3:
+       1. Display "サブエージェントが30分以上応答していません（{count}回目の確認）。長時間の extended thinking が続いている可能性があります。"
+       2. Display "サブペインを確認: cmux focus-surface --workspace {WS_REF} --surface {SUB_SURFACE}"
+       3. Use AskUserQuestion with the following options:
+     Else:
+       1. Display "サブエージェントが30分以上応答していません。タイムアウトの可能性があります。"
+       2. Display "サブペインを確認: cmux focus-surface --workspace {WS_REF} --surface {SUB_SURFACE}"
+       3. Use AskUserQuestion with the following options:
+        - "待機続行" → Execute bash to set grace with progressive extension:
          ```bash
          GRACE_FILE="{GRACE_FILE}"
-         CURRENT_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-         GRACE_UNTIL=$(date -u -d "+10 minutes" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -v+10M +%Y-%m-%dT%H:%M:%SZ)
-         echo "{\"grace_until\":\"$GRACE_UNTIL\",\"count\":1}" > "$GRACE_FILE"
+
+         # Read current count (default 0)
+         if [ -f "$GRACE_FILE" ]; then
+           CURRENT_COUNT=$(cat "$GRACE_FILE" | grep -o '"count":[0-9]*' | cut -d: -f2)
+           CURRENT_COUNT=${CURRENT_COUNT:-0}
+         else
+           CURRENT_COUNT=0
+         fi
+
+         # Calculate new count and grace duration
+         NEW_COUNT=$((CURRENT_COUNT + 1))
+         case $NEW_COUNT in
+           1) EXTEND_MINUTES=10 ;;
+           2) EXTEND_MINUTES=15 ;;
+           *) EXTEND_MINUTES=20 ;;
+         esac
+
+         # Calculate grace_until with macOS/Linux fallback
+         GRACE_UNTIL=$(date -u -d "+${EXTEND_MINUTES} minutes" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -v+${EXTEND_MINUTES}M +%Y-%m-%dT%H:%M:%SZ)
+         echo "{\"grace_until\":\"$GRACE_UNTIL\",\"count\":$NEW_COUNT}" > "$GRACE_FILE"
          ```
          Then do nothing (監視を継続)
         - "中止" → Delete review-verify-monitor using CronDelete, then execute cleanup:
