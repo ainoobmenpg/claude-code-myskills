@@ -23,14 +23,6 @@
         ],
         "next_action": "終了"
       },
-      "partially_passed": {
-        "description": "DEPRECATED: Use 'failed' for medium/low remaining. See issue15.",
-        "conditions": [
-          "high_remaining == 0 かつ (medium_remaining > 0 または low_remaining > 0)",
-          "または new_findingsにseverityがmedium/lowのもののみ存在"
-        ],
-        "next_action": "OBSOLETE: Use failed instead"
-      },
       "failed": {
         "description": "high/medium/low未解決、新規high発見、または検証エラー",
         "conditions": [
@@ -55,7 +47,7 @@
           "from": "in_progress",
           "to": "failed",
           "condition": "high/medium/low未解決 または 新規問題 または 検証エラー"
-        },
+        }
       ]
     }
   },
