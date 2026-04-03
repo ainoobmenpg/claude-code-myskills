@@ -204,41 +204,26 @@ cp -r templates/mysk/* ~/.claude/templates/mysk/
 
 ## ワークフロー
 
-```
-仕様策定                                              コードレビュー
-    |                                                      |
-    v                                                      v
-  +------------------+                          +------------------+
-  | mysk-spec-draft  |                          |mysk-review-check |
-  |  別ペイン(Opus)  |                          |  別ペイン(Opus)  |
-  |   仕様書下書き    |                          |   コードレビュー   |
-  +----+------------+                          +--------+---------+
-       |                                                |
-       v                                                v
-  +------------------+                          +------------------+
-  | mysk-spec-review |                          | mysk-review-fix  |
-  |  別ペイン(Opus)  |                          |  修正計画 + 修正   |
-  | 仕様レビュー＋    |                          +--------+---------+
-  |  反映確認         |                                   |
-  +----+------------+                                   v
-       |                                      +-------------------+
-       v                                      |mysk-review-diffcheck|
-  +------------------+                       |  差分確認（軽量）   |
-  |mysk-spec-        |                       +---------+---------+
-  |  implement       |                                |
-  |  実装計画作成     |               +------------------------+
-  |  （計画のみ）     |               v                        v
-  +----+------------+     high 全 fixed              high 残り
-       |                  (ユーザー確認)                    |
-       v                       |                        |
-  +------------------+   +-----+-------+                |
-  |mysk-implement-  |   v             v                |
-  |start            | 全了        ┌────────────┐       |
-  |実装を一括実行    |             |mysk-review- |◄──────┘
-  +----+------------+             |fix に戻る   |
-       |                          └────────────┘
-       v
-    完了
+### 全体図
+
+```mermaid
+graph TD
+    subgraph spec["仕様策定フロー"]
+        SD["/mysk-spec-draft<br/>別ペイン Opus<br/>仕様書下書き"] --> SR["/mysk-spec-review<br/>別ペイン Opus<br/>仕様レビュー + 反映確認"]
+        SR --> SI["/mysk-spec-implement<br/>メイン Sonnet<br/>実装計画作成"]
+        SI --> IS["/mysk-implement-start<br/>メイン Sonnet<br/>実装を実行"]
+    end
+
+    subgraph review["コードレビューフロー"]
+        RC["/mysk-review-check<br/>別ペイン Opus<br/>コードレビュー"] --> RF["/mysk-review-fix<br/>メイン Sonnet<br/>修正計画 + 修正"]
+        RF --> DC["/mysk-review-diffcheck<br/>メイン Sonnet<br/>差分確認"]
+        DC -->|high 未修正| RF
+        DC -->|high 全 fixed<br/>ユーザー確認| RV["/mysk-review-verify<br/>別ペイン Opus<br/>最終確認"]
+        RV -->|未修正の指摘あり| RF
+        RV -->|passed| DONE["完了"]
+    end
+
+    IS --> DONE
 ```
 
 **注記**: 各コマンドの完了後は、コマンド内の案内行に従って次のステップへ進んでください。
@@ -247,9 +232,28 @@ cp -r templates/mysk/* ~/.claude/templates/mysk/
 
 コードレビューでは、修正と差分確認を繰り返す。中間確認はメインセッション（Sonnet）で軽量実行する。
 
+```mermaid
+graph LR
+    A["check<br/>Opus"] --> B["fix<br/>Sonnet"]
+    B --> C["diffcheck<br/>Sonnet"]
+    C -->|"high 残り"| B
+    C -->|"high 全 fixed"| D["verify<br/>Opus"]
 ```
-check(Opus) -> fix(Sonnet) -> diffcheck(Sonnet) -> fix -> diffcheck -> ... -> verify(Opus)
-```
+
+### 終了条件
+
+| 条件 | アクション |
+|------|----------|
+| diffcheck: high 全 fixed | ユーザー確認 → `/mysk-review-verify` へ |
+| diffcheck: high 未修正あり | `/mysk-review-fix` ループ継続 |
+| verify: passed | **終了** |
+| verify: failed（検証エラー） | エラー報告 → **終了** |
+| verify: 新たな high 発生 | エラー報告 → **終了** |
+| verify: 未修正の high あり | エラー報告 → **終了** |
+| verify: 未修正の指摘あり | /mysk-review-fix に戻る |
+| verify: high なし、未解決なし | **終了** |
+
+> 終了条件のフロー図は [docs/workflow.md](docs/workflow.md) を参照してください。
 
 ## テンプレート一覧
 

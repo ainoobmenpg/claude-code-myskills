@@ -32,6 +32,8 @@ claude-code-myskills(cc-mysk)/
 |   +-- review-verify-prompt.md     # 最終検証プロンプト
 |   +-- review-verify-monitor.md    # 最終検証監視
 |   +-- verify-schema.json          # verify判定基準のJSON Schema
++-- docs/                           # ドキュメント
+|   +-- workflow.md                 # ワークフローの詳細ドキュメント
 +-- README.md                       # 利用者向けドキュメント
 +-- CLAUDE.md                       # このファイル
 +-- LICENSE                         # MIT License
