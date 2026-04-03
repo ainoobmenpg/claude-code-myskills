@@ -1,4 +1,8 @@
-Read {VERIFY_JSON_PATH} and check the status field.
+Use Bash to read the verify file and check the status field:
+```bash
+cat {VERIFY_JSON_PATH} 2>/dev/null || echo "NOT_FOUND"
+```
+Parse the JSON output to extract the status field.
 
 If the file does not exist yet:
 - Do nothing. Do not output any message. Do not run any bash commands.
@@ -30,7 +34,10 @@ If the file does not exist yet:
 
 If status is "completed":
 1. FIRST: Find review-verify-monitor job in CronList and delete it using CronDelete. This must happen before any output to prevent duplicate firings.
-2. Read {VERIFY_JSON_PATH} and extract data using fallback rules above
+2. Use Bash to read the verify file and extract data using fallback rules above:
+   ```bash
+   cat {VERIFY_JSON_PATH} 2>/dev/null || echo "NOT_FOUND"
+   ```
 3. Determine verification_result using fallback rules
 4. Execute termination logic (see below). Each path includes cleanup at the end.
 
@@ -46,7 +53,11 @@ If status is "completed":
 
 If status is "failed":
 1. FIRST: Find review-verify-monitor job in CronList and delete it using CronDelete
-2. Read {VERIFY_JSON_PATH} and display the error content in progress field
+2. Use Bash to read the error content and display it:
+   ```bash
+   cat {VERIFY_JSON_PATH} 2>/dev/null || echo "NOT_FOUND"
+   ```
+   Display the progress field content.
 3. Perform cleanup:
    ```bash
    cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit" && sleep 1 && cmux send-key --workspace {WS_REF} --surface {SUB_SURFACE} return && sleep 2 && cmux close-surface --workspace {WS_REF} --surface {SUB_SURFACE}

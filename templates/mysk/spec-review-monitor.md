@@ -1,6 +1,10 @@
 **TEST MODE**: {TEST_MODE} が "1" の場合、completed 時の AskUserQuestion をスキップし、自動的に「はい」を選択して反映フローを実行してください。
 
-Read {STATUS_FILE} and check the status field and updated_at.
+Use Bash to read the status file and check the status field and updated_at:
+```bash
+cat {STATUS_FILE} 2>/dev/null || echo "NOT_FOUND"
+```
+Parse the JSON output to extract status and updated_at fields.
 
 If the file does not exist yet:
 - Do nothing. Do not output any message. Do not run any bash commands.
@@ -38,7 +42,11 @@ If the file does not exist yet:
 
 If status is "completed":
 1. FIRST: Find spec-review-monitor job in CronList and delete it using CronDelete. This must happen before any output to prevent duplicate firings.
-2. Then read {REVIEW_PATH} and display the following summary in Japanese:
+2. Use Bash to read the review file and display the following summary in Japanese:
+```bash
+cat {REVIEW_PATH} 2>/dev/null || echo "NOT_FOUND"
+```
+Display the summary from the review content.
    - 全体品質 (overall_quality)
    - 評価 headline
    - 指摘数 (finding_count: high/medium/low)
@@ -50,7 +58,11 @@ If status is "completed":
    - **はい**:
      a. Check if {SPEC_PATH} exists. If not, use {DRAFT_PATH} as the source.
      b. Create backup: Determine N as the maximum existing spec-v*.md version + 1 (or 1 if none exist), then run `cp {SPEC_PATH} {RUN_DIR}/spec-v{N}.md`
-     c. Read {REVIEW_PATH} and extract findings array (fallback: try `.findings` first, then `.issues`)
+     c. Use Bash to read the review file and extract findings array:
+     ```bash
+     cat {REVIEW_PATH} 2>/dev/null || echo "NOT_FOUND"
+     ```
+     Extract findings array (fallback: try `.findings` first, then `.issues`)
      d. For each finding, read corresponding sections from {SPEC_PATH} and apply Edit tool to update spec.md with minimal diff updates
      e. Append revision history to the end of {SPEC_PATH} (reverse chronological table format)
      f. Display:
@@ -77,7 +89,11 @@ If status is "completed":
 
 If status is "failed":
 1. FIRST: Find spec-review-monitor job in CronList and delete it using CronDelete
-2. Read status.json and display the error content in progress field
+2. Use Bash to read the error content and display it:
+   ```bash
+   cat {STATUS_FILE} 2>/dev/null || echo "NOT_FOUND"
+   ```
+   Display the progress field content.
 3. Perform cleanup:
    ```bash
    rm -f {GRACE_FILE}

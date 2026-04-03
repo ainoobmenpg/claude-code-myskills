@@ -1,4 +1,8 @@
-Read {REVIEW_JSON_PATH} and check the status field.
+Use Bash to read the review file and check the status field:
+```bash
+cat {REVIEW_JSON_PATH} 2>/dev/null || echo "NOT_FOUND"
+```
+Parse the JSON output to extract the status field.
 
 If the file does not exist yet:
 - Do nothing. Do not output any message. Do not run any bash commands.
@@ -40,7 +44,10 @@ If the file does not exist yet:
 
 If status is "completed":
 1. FIRST: Find review-check-monitor job in CronList and delete it using CronDelete. This must happen before any output to prevent duplicate firings.
-2. Read {REVIEW_JSON_PATH} and extract data using fallback rules above
+2. Use Bash to read the review file and extract data using fallback rules above:
+   ```bash
+   cat {REVIEW_JSON_PATH} 2>/dev/null || echo "NOT_FOUND"
+   ```
 3. Display the following summary in Japanese:
    - run_id (from .run_id or "{RUN_ID}")
    - Target (source.value or .target)
