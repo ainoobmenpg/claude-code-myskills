@@ -1,6 +1,6 @@
 #!/usr/bin/env bats
 # spec-workflow-mock.bats
-# Layer 3 mock E2E: spec workflow state transitions (draft -> review -> revise -> implement)
+# Layer 3 mock E2E: spec workflow state transitions (draft -> review -> implement)
 
 load '../helpers/test-common'
 
@@ -238,10 +238,10 @@ teardown() {
 }
 
 # ---------------------------------------------------------------------------
-# Normal flow: Revise phase
+# Normal flow: Review integration phase
 # ---------------------------------------------------------------------------
 
-@test "revise: spec-review.json findings applied to spec.md; backup spec-v1.md created" {
+@test "review integration: spec-review.json findings applied to spec.md; backup spec-v1.md created" {
     local run_id="20260401-100000Z-user-auth"
     local run_dir
     run_dir=$(create_basic_spec_run "$TEST_TMPDIR" "$run_id")
@@ -253,11 +253,11 @@ teardown() {
     [ -f "$run_dir/spec.md" ]
     [ -f "$run_dir/spec-review.json" ]
 
-    # Simulate revise: backup original as spec-v1.md
+    # Simulate review integration: backup original as spec-v1.md
     cp "$run_dir/spec.md" "$run_dir/spec-v1.md"
     [ -f "$run_dir/spec-v1.md" ]
 
-    # Simulate revise: update spec.md with review findings
+    # Simulate review integration: update spec.md with review findings
     create_valid_spec_md "$run_dir"
 
     # Verify spec.md now contains error handling (F1 fix)
@@ -350,10 +350,10 @@ META
 }
 
 # ---------------------------------------------------------------------------
-# Abnormal flow: Revise fails when spec-review.json missing
+# Abnormal flow: Review fails when spec-review.json missing
 # ---------------------------------------------------------------------------
 
-@test "revise fails: spec-review.json missing" {
+@test "review fails: spec-review.json missing" {
     local run_id="20260401-100000Z-user-auth"
     local run_dir
     run_dir=$(create_basic_spec_run "$TEST_TMPDIR" "$run_id")
@@ -363,20 +363,20 @@ META
     [ -f "$run_dir/spec.md" ]
     [ ! -f "$run_dir/spec-review.json" ]
 
-    # Revise requires both files; missing spec-review.json is an error
+    # Review requires both files; missing spec-review.json is an error
     local has_spec=0 has_review=0
     [ -f "$run_dir/spec.md" ] && has_spec=1
     [ -f "$run_dir/spec-review.json" ] && has_review=1
 
-    # Not both present -> cannot revise
+    # Not both present -> cannot proceed
     [ "$((has_spec + has_review))" -ne 2 ]
 }
 
 # ---------------------------------------------------------------------------
-# Abnormal flow: Revise fails when spec.md missing
+# Abnormal flow: Review fails when spec.md missing
 # ---------------------------------------------------------------------------
 
-@test "revise fails: spec.md missing" {
+@test "review fails: spec.md missing" {
     local run_id="20260401-100000Z-user-auth"
     local run_dir
     run_dir=$(create_basic_spec_run "$TEST_TMPDIR" "$run_id")
@@ -386,12 +386,12 @@ META
     [ ! -f "$run_dir/spec.md" ]
     [ -f "$run_dir/spec-review.json" ]
 
-    # Revise requires both files; missing spec.md is an error
+    # Review requires both files; missing spec.md is an error
     local has_spec=0 has_review=0
     [ -f "$run_dir/spec.md" ] && has_spec=1
     [ -f "$run_dir/spec-review.json" ] && has_review=1
 
-    # Not both present -> cannot revise
+    # Not both present -> cannot proceed
     [ "$((has_spec + has_review))" -ne 2 ]
 }
 
@@ -430,7 +430,7 @@ User authentication module implementation.
 - Task 1.1: Implement login
   - Target file: src/auth.ts (確定)
   - Location: login() function
-  - Exploration keywords: auth login
+  - 探索キーワード: auth login
   - Implementation notes: Check existing patterns in src/*auth*.ts
 
 - Task 1.2: Implement logout

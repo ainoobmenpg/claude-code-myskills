@@ -32,7 +32,7 @@ command_references_template() {
 # Extract all {VARIABLE} tokens from a file
 extract_template_vars() {
     local file="$1"
-    grep -oE '\{[A-Z_]+\}' "$file" | sort -u
+    grep -oE '\{[A-Z_]+\}' "$file" | sort -u | grep -vE '^\{(EXTEND_MINUTES|N)\}$'
 }
 
 # Extract sed substitution variable names from a command file

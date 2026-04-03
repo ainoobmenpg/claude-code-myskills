@@ -98,12 +98,6 @@ _extract_all_fm_keys() {
     [ "$hint" = "[run_id]" ]
 }
 
-@test "mysk-spec-revise has argument-hint [run_id]" {
-    local hint
-    hint=$(extract_frontmatter "$COMMANDS_DIR/mysk-spec-revise.md" "argument-hint")
-    [ "$hint" = "[run_id]" ]
-}
-
 @test "mysk-spec-implement has argument-hint [run_id]" {
     local hint
     hint=$(extract_frontmatter "$COMMANDS_DIR/mysk-spec-implement.md" "argument-hint")

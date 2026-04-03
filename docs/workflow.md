@@ -29,7 +29,7 @@ graph TD
         RC["/mysk-review-check<br/>別ペイン Opus<br/>コードレビュー"] --> RF["/mysk-review-fix<br/>メイン Sonnet<br/>修正計画 + 修正"]
         RF --> DC["/mysk-review-diffcheck<br/>メイン Sonnet<br/>差分確認"]
         DC -->|high 未修正| RF
-        DC -->|high 全 fixed<br/>ユーザー確認| RV["/mysk-review-verify<br/>別ペイン Opus<br/>最終確認"]
+        DC -->|ユーザー確認| RV["/mysk-review-verify<br/>別ペイン Opus<br/>最終確認"]
         RV -->|未修正の指摘あり| RF
         RV -->|passed| DONE["完了"]
     end
@@ -81,15 +81,12 @@ graph TD
   │   └─ spec-draft.md
   │
   └─ ユーザー確認
-      ├─ はい → spec.md にコピー
-      │   └─ 次のステップ（複雑さで分岐）:
-      │       ├─ シンプル → /mysk-spec-implement（レビュー省略可）
-      │       └─ 複雑 → /mysk-spec-review（レビュー推奨）
+      ├─ はい → spec.md にコピー → /mysk-spec-review（仕様レビュー + 反映確認）
       ├─ いいえ → 破棄
       └─ 修正して → 直接編集
 ```
 
-**完了後**: 次は シンプルなら `/mysk-spec-implement`、複雑なら `/mysk-spec-review`
+**完了後**: 次は `/mysk-spec-review`（仕様レビュー + 反映確認）
 
 ### ステップ2: 仕様レビュー `/mysk-spec-review [run_id]`
 
@@ -187,7 +184,7 @@ graph TD
 
 **重要**: verifyへの遷移にはユーザー確認が必要です。diffcheck結果を確認し、ユーザーの指示を待ってください。
 
-**判定結果の要約**: high未修正→fixへ戻る、high全fixed→verifyへ
+**判定結果の要約**: high未修正→fixへ戻る、ユーザー確認→verifyへ
 
 出力: `diffcheck.json`
 
@@ -213,7 +210,7 @@ graph LR
     A["check<br/>Opus"] --> B["fix<br/>Sonnet"]
     B --> C["diffcheck<br/>Sonnet"]
     C -->|"high 残り"| B
-    C -->|"high 全 fixed"| D["verify<br/>Opus"]
+    C -->|"ユーザー確認"| D["verify<br/>Opus"]
 ```
 
 ---
@@ -231,7 +228,7 @@ diffcheck 実行
   ├─ Yes → /mysk-review-fix（ループ継続）
   └─ No → 続行
        ↓
-  全 high fixed → ユーザー確認 → /mysk-review-verify（最終確認）
+  ユーザー確認 → /mysk-review-verify（最終確認）
 ```
 
 ### review-verify（最終確認）
@@ -258,7 +255,7 @@ graph TD
 
 | 条件 | アクション |
 |------|----------|
-| diffcheck: high 全 fixed | ユーザー確認 → `/mysk-review-verify` へ |
+| diffcheck: ユーザー確認あり | `/mysk-review-verify` へ |
 | diffcheck: high 未修正あり | `/mysk-review-fix` ループ継続 |
 | verify: passed | **終了** |
 | verify: failed（検証エラー） | エラー報告 → **終了** |

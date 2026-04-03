@@ -135,7 +135,7 @@ _get_template_refs_from_command() {
 # Test: non-subpane commands do not reference cmux templates
 # ----------------------------------------------------------------------
 @test "non-subpane commands do not reference cmux-launch-procedure" {
-    local non_subpane="mysk-spec-revise mysk-spec-implement mysk-implement-start mysk-review-fix mysk-review-diffcheck mysk-workflow mysk-cleanup"
+    local non_subpane="mysk-spec-implement mysk-implement-start mysk-review-fix mysk-review-diffcheck mysk-workflow mysk-cleanup"
     for cmd in $non_subpane; do
         if [ -f "$COMMANDS_DIR/${cmd}.md" ]; then
             run grep -q 'cmux-launch-procedure.md' "$COMMANDS_DIR/${cmd}.md"

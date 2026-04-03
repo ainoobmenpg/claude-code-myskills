@@ -25,7 +25,7 @@ All notable changes to mysk will be documented in this file.
 ## [1.0.0] - 2026-03-31
 
 ### Added
-- 仕様策定ワークフロー（spec-draft, spec-review, spec-revise, spec-implement）
+- 仕様策定ワークフロー（spec-draft, spec-review, spec-implement）
 - コードレビューワークフロー（review-check, review-fix, diffcheck, verify）
 - cmux連携による別ペイン実行
 - run-meta.jsonによるrun_id解決の統一

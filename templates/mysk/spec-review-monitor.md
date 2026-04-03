@@ -145,6 +145,36 @@ If status is "in_progress":
        1. Display "サブエージェントが30分以上応答していません（{count}回目の確認）。長時間の extended thinking が続いている可能性があります。"
        2. Display "サブペインを確認: cmux focus-surface --workspace {WS_REF} --surface {SUB_SURFACE}"
        3. Use AskUserQuestion with the following options:
+        - "待機続行" → Execute bash to set grace with progressive extension:
+         ```bash
+         GRACE_FILE="{GRACE_FILE}"
+
+         # Read current count (default 0)
+         if [ -f "$GRACE_FILE" ]; then
+           CURRENT_COUNT=$(cat "$GRACE_FILE" | grep -o '"count":[0-9]*' | cut -d: -f2)
+           CURRENT_COUNT=${CURRENT_COUNT:-0}
+         else
+           CURRENT_COUNT=0
+         fi
+
+         # Calculate new count and grace duration
+         NEW_COUNT=$((CURRENT_COUNT + 1))
+         case $NEW_COUNT in
+           1) EXTEND_MINUTES=10 ;;
+           2) EXTEND_MINUTES=15 ;;
+           *) EXTEND_MINUTES=20 ;;
+         esac
+
+         # Calculate grace_until with macOS/Linux fallback
+         GRACE_UNTIL=$(date -u -d "+${EXTEND_MINUTES} minutes" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -v+${EXTEND_MINUTES}M +%Y-%m-%dT%H:%M:%SZ)
+         echo "{\"grace_until\":\"$GRACE_UNTIL\",\"count\":$NEW_COUNT}" > "$GRACE_FILE"
+         ```
+         Then do nothing (監視を継続)
+        - "中止" → Delete spec-review-monitor using CronDelete, then execute cleanup:
+          ```bash
+          rm -f {GRACE_FILE}
+          cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit" && sleep 1 && cmux send-key --workspace {WS_REF} --surface {SUB_SURFACE} return && sleep 2 && cmux close-surface --workspace {WS_REF} --surface {SUB_SURFACE}
+          ```
      Else:
        1. Display "サブエージェントが30分以上応答していません。タイムアウトの可能性があります。"
        2. Display "サブペインを確認: cmux focus-surface --workspace {WS_REF} --surface {SUB_SURFACE}"

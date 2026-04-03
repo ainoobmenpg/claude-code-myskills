@@ -6,7 +6,7 @@ user-invocable: true
 
 # mysk-review-verify
 
-`/mysk-review-diffcheck` で全highが修正された後の最終確認。別ペインでOpusサブエージェント起動し、verify.json（再実行時はverify-rerun.json）を保存して要約を返す。
+`/mysk-review-diffcheck` の結果を確認し、ユーザーの指示を受けてから実行する最終確認。別ペインでOpusサブエージェント起動し、verify.json（再実行時はverify-rerun.json）を保存して要約を返す。
 
 **重要**: verifyの実行にはユーザー確認が必要です。diffcheck結果を確認し、ユーザーの指示を待ってから実行してください。
 

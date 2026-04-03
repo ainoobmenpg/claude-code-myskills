@@ -1,6 +1,6 @@
 #!/usr/bin/env bats
 # json-fallback.bats - Tests for JSON fallback parsing logic
-# Extracted from: mysk-review-fix.md, mysk-review-diffcheck.md, mysk-spec-revise.md
+# Extracted from: mysk-review-fix.md, mysk-review-diffcheck.md
 #
 # Fallback chain:
 #   findings -> issues

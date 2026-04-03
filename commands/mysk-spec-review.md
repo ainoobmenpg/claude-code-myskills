@@ -71,7 +71,8 @@ RUN_DIR="$HOME/.local/share/claude-mysk/$RUN_ID"
 if [ -f "$RUN_DIR/spec.md" ]; then
   SPEC_PATH="$RUN_DIR/spec.md"
 elif [ -f "$RUN_DIR/spec-draft.md" ]; then
-  SPEC_PATH="$RUN_DIR/spec-draft.md"
+  cp "$RUN_DIR/spec-draft.md" "$RUN_DIR/spec.md"
+  SPEC_PATH="$RUN_DIR/spec.md"
 else
   echo "Error: Spec not found for run_id: $RUN_ID"
   exit 1

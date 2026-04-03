@@ -6,7 +6,7 @@
 
 ### Q: cmux が未導入です。どうすればよいですか？
 
-**A**: cmux が未導入の場合、別ペイン実行コマンド（`/mysk-spec-draft`、`/mysk-spec-review`、`/mysk-review-check`、`/mysk-review-verify`）は使用できません。メイン実行のコマンド（`/mysk-spec-revise`、`/mysk-spec-implement`、`/mysk-implement-start`、`/mysk-review-fix`、`/mysk-review-diffcheck`、`/mysk-workflow`）のみ利用可能です。
+**A**: cmux が未導入の場合、別ペイン実行コマンド（`/mysk-spec-draft`、`/mysk-spec-review`、`/mysk-review-check`、`/mysk-review-verify`）は使用できません。メイン実行のコマンド（`/mysk-spec-implement`、`/mysk-implement-start`、`/mysk-review-fix`、`/mysk-review-diffcheck`、`/mysk-workflow`、`/mysk-cleanup`）のみ利用可能です。
 
 cmux のインストール:
 ```bash
@@ -46,12 +46,7 @@ export CMUX_SOCKET_PATH="$HOME/.config/cmux/cmux.sock"
 
 ### Q: `review.json` や `spec-draft.md` が見つからないエラーが出ます
 
-**A**: run_id が正しいか確認してください。run_id を忘れた場合は、最新のディレクトリを確認することで解決できます。
-
-```bash
-# 最新の run_id を確認
-ls -t ~/.local/share/claude-mysk/ | head -1
-```
+**A**: run_id を省略した場合、現在のプロジェクト（`git rev-parse --show-toplevel`）に一致する `project_root` を持つ最新の run_id を自動選択します。手動で確認する場合は、各 run ディレクトリの `run-meta.json` を確認してください。
 
 ### Q: `~/.local/share/claude-mysk/` の中身を誤って消しました
 
@@ -104,7 +99,7 @@ ls ~/.claude/templates/mysk/
 ファイルがない場合は、リポジトリからコピーしてください。
 
 ```bash
-mkdir -p ~/.claude/templates/mysk && cp -r templates/mysk/* ~/.claude/templates/mysk/
+ln -sfn "$(pwd)/templates/mysk" ~/.claude/templates/mysk
 ```
 
 ### Q: 別ペインが閉じられません
