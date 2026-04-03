@@ -164,9 +164,9 @@ ln -sf "$(pwd)/commands/"*.md ~/.claude/commands/
 ln -sfn "$(pwd)/templates/mysk" ~/.claude/templates/mysk
 
 # またはコピー（既存ファイルがある場合はこちらが安全）
-mkdir -p ~/.claude/commands ~/.claude/templates/mysk
+mkdir -p ~/.claude/commands ~/.claude/templates
 cp commands/*.md ~/.claude/commands/
-cp -r templates/mysk/* ~/.claude/templates/mysk/
+rm -rf ~/.claude/templates/mysk && cp -r templates/mysk ~/.claude/templates/mysk
 ```
 
 **注意**:
@@ -364,7 +364,7 @@ cp commands/mysk-workflow.md ~/.claude/commands/
 
 # 全スキルを一括更新
 cp commands/mysk-*.md ~/.claude/commands/
-mkdir -p ~/.claude/templates/mysk && cp -r templates/mysk/* ~/.claude/templates/mysk/
+rm -rf ~/.claude/templates/mysk && cp -r templates/mysk ~/.claude/templates/mysk
 ```
 
 ### コマンド例
@@ -376,7 +376,7 @@ vim commands/mysk-workflow.md
 # 2. シンボリックリンクの場合は何もしなくてOK
 #    コピーの場合は以下を実行
 cp commands/mysk-*.md ~/.claude/commands/
-mkdir -p ~/.claude/templates/mysk && cp -r templates/mysk/* ~/.claude/templates/mysk/
+rm -rf ~/.claude/templates/mysk && cp -r templates/mysk ~/.claude/templates/mysk
 ```
 
 **注意**: `~/.claude/commands/` 内のファイルを直接編集すると、リポジトリ側との同期が取れなくなります。必ずリポジトリ側で修正してください。
