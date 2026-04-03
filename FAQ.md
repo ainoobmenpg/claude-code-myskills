@@ -99,7 +99,7 @@ ls ~/.claude/templates/mysk/
 ファイルがない場合は、リポジトリからコピーしてください。
 
 ```bash
-ln -sfn "$(pwd)/templates/mysk" ~/.claude/templates/mysk
+rm -rf ~/.claude/templates/mysk && ln -sfn "$(pwd)/templates/mysk" ~/.claude/templates/mysk
 ```
 
 ### Q: 別ペインが閉じられません

@@ -125,7 +125,7 @@ cp ~/.claude/commands/mysk-*.md backup/
 # 3. スキルを配置
 mkdir -p ~/.claude/commands ~/.claude/templates
 cp commands/*.md ~/.claude/commands/
-ln -sfn "$(pwd)/templates/mysk" ~/.claude/templates/mysk
+rm -rf ~/.claude/templates/mysk && ln -sfn "$(pwd)/templates/mysk" ~/.claude/templates/mysk
 
 # 4. 動作確認
 claude --model opus
