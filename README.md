@@ -125,6 +125,14 @@ echo "CMUX_SOCKET_PATH: ${CMUX_SOCKET_PATH:-未設定}"
 
 Claude Code で `/mysk-workflow` を実行
 
+## 詳細ドキュメント
+
+- [docs/workflow.md](docs/workflow.md): default lane / discovery lane / review gate の全体フロー
+- [docs/implementation-survey.md](docs/implementation-survey.md): 2026-04-04 時点の現状実装調査と責務分割
+- [docs/testing.md](docs/testing.md): テストレイヤ、実行方法、更新時の観点
+- [FAQ.md](FAQ.md): よくあるエラーと運用上の対処
+- [docs/MIGRATION.md](docs/MIGRATION.md): 権限制御と verify 状態機械の移行情報
+
 ## 環境変数
 
 ### MYSK_SKIP_PERMISSIONS
@@ -181,7 +189,7 @@ rm -rf ~/.claude/templates/mysk && cp -r templates/mysk ~/.claude/templates/mysk
 |---------|------|---------|------|
 | `/mysk-fixed-spec-draft` | 別ペインで fixed-spec を下書き作成 | 別ペイン(Opus) | `[topic]` |
 | `/mysk-fixed-spec-review` | fixed-spec をレビューして凍結 | 別ペイン(Opus) | `[run_id]` |
-| `/mysk-implement-start` | fixed-spec.md または impl-plan.md を使って実装を実行 | メイン | `[run_id]` |
+| `/mysk-implement-start` | fixed-spec.md / spec.md を主入力に実装を実行（impl-plan.md は任意） | メイン | `[run_id]` |
 | `/mysk-spec-implement` | 任意で実装計画を作成（大規模変更向け） | メイン | `[run_id]` |
 
 ### discovery lane
@@ -215,20 +223,20 @@ rm -rf ~/.claude/templates/mysk && cp -r templates/mysk ~/.claude/templates/mysk
 
 ```mermaid
 graph TD
-    subgraph default["default lane"]
+    subgraph lane_default["default lane"]
         FSD["/mysk-fixed-spec-draft<br/>別ペイン planner"] --> FSR["/mysk-fixed-spec-review<br/>別ペイン reviewer"]
         FSR --> IS["/mysk-implement-start<br/>メイン executor"]
         FSR --> SI["/mysk-spec-implement<br/>任意"]
         SI --> IS
     end
 
-    subgraph discovery["discovery lane"]
+    subgraph lane_discovery["discovery lane"]
         SD["/mysk-spec-draft<br/>別ペイン Opus"] --> SR["/mysk-spec-review<br/>別ペイン Opus"]
         SR --> IS
         SR --> SI
     end
 
-    subgraph review["review gate"]
+    subgraph lane_review["review gate"]
         RC["/mysk-review-check<br/>別ペイン Opus<br/>コードレビュー"] --> RF["/mysk-review-fix<br/>メイン Sonnet<br/>修正計画 + 修正"]
         RF --> DC["/mysk-review-diffcheck<br/>メイン Sonnet<br/>差分確認"]
         DC -->|high 未修正| RF
@@ -313,6 +321,7 @@ graph LR
     +-- diffcheck.json            # 差分確認結果
     +-- verify.json               # 最終検証結果
     +-- verify-rerun.json         # 再検証結果
+    +-- timeout-grace.json        # monitor 猶予延長メタデータ（必要時のみ）
     +-- run-meta.json             # run_id自動解決用メタデータ
     +-- status.json               # 進捗管理（汎用/spec-review専用）
 ```
@@ -333,6 +342,8 @@ graph LR
 | `/mysk-review-fix` | `review.json` | `fix-plan.md` | なし |
 | `/mysk-review-diffcheck` | `review.json`, `verify-rerun.json`（優先）または`verify.json`（存在時） | `diffcheck.json` | なし |
 | `/mysk-review-verify` | `review.json`, `diffcheck.json` | `verify.json`（再実行時は`verify-rerun.json`） | なし |
+
+`review.json` には `project_root` が保存され、`/mysk-review-fix`、`/mysk-review-diffcheck`、`/mysk-review-verify` が finding の相対パス解決に利用します。
 
 ## 使用例
 
@@ -366,6 +377,23 @@ graph LR
 /mysk-spec-implement   # 任意
 /mysk-implement-start
 ```
+
+## テスト
+
+mysk には Bats ベースのテスト群があり、コマンド定義、テンプレート変数、JSON 契約、モック統合フローを検証します。
+
+```bash
+# ユニットテスト
+bats tests/unit/*.bats
+
+# モック統合テスト
+bats tests/integration/*.bats
+
+# 全テスト
+bats tests/unit/*.bats tests/integration/*.bats
+```
+
+詳細は [docs/testing.md](docs/testing.md) を参照してください。
 
 ## スキルの更新
 

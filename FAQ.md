@@ -6,7 +6,7 @@
 
 ### Q: cmux が未導入です。どうすればよいですか？
 
-**A**: cmux が未導入の場合、別ペイン実行コマンド（`/mysk-spec-draft`、`/mysk-spec-review`、`/mysk-review-check`、`/mysk-review-verify`）は使用できません。メイン実行のコマンド（`/mysk-spec-implement`、`/mysk-implement-start`、`/mysk-review-fix`、`/mysk-review-diffcheck`、`/mysk-workflow`、`/mysk-cleanup`）のみ利用可能です。
+**A**: cmux が未導入の場合、別ペイン実行コマンド（`/mysk-fixed-spec-draft`、`/mysk-fixed-spec-review`、`/mysk-spec-draft`、`/mysk-spec-review`、`/mysk-review-check`、`/mysk-review-verify`）は使用できません。メイン実行のコマンド（`/mysk-spec-implement`、`/mysk-implement-start`、`/mysk-review-fix`、`/mysk-review-diffcheck`、`/mysk-workflow`、`/mysk-cleanup`）のみ利用可能です。
 
 cmux のインストール:
 ```bash
@@ -48,6 +48,10 @@ export CMUX_SOCKET_PATH="$HOME/.config/cmux/cmux.sock"
 
 **A**: run_id を省略した場合、現在のプロジェクト（`git rev-parse --show-toplevel`）に一致する `project_root` を持つ最新の run_id を自動選択します。手動で確認する場合は、各 run ディレクトリの `run-meta.json` を確認してください。
 
+### Q: `review.json` に `project_root` がないと言われます
+
+**A**: その `review.json` は旧バージョン形式です。`/mysk-review-fix` と `/mysk-review-verify` は `project_root` を使って finding の相対パスを解決するため、このフィールドが必須です。現在のプロジェクトで `/mysk-review-check` を再実行し、新しい `review.json` を作成してください。
+
 ### Q: `~/.local/share/claude-mysk/` の中身を誤って消しました
 
 **A**: このディレクトリには成果物が保存されます。削除してもコマンド自体には影響しませんが、過去の実行結果が失われます。再度コマンドを実行して新しい run_id を作成してください。
@@ -65,6 +69,10 @@ export CMUX_SOCKET_PATH="$HOME/.config/cmux/cmux.sock"
 # 最新の run_id を確認
 ls -lt ~/.local/share/claude-mysk/ | head -5
 ```
+
+### Q: `verify.json` と `verify-rerun.json` の違いは何ですか？
+
+**A**: 初回の最終確認は `verify.json`、再実行は `verify-rerun.json` に保存されます。両方が存在する場合、後続コマンドは `verify-rerun.json` を最新の真実として扱います。
 
 ## CronCreate 関連
 

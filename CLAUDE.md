@@ -4,17 +4,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## プロジェクト概要
 
-mysk は Claude Code のスキル集。仕様策定、レビュー、実装計画のワークフローを 9 つのスラッシュコマンドと対応するテンプレートで半自動化する。cmux（tmux ラッパー）と連携し、サブペインで Opus モデルのサブエージェントを起動する。
+mysk は Claude Code のスキル集。default lane、discovery lane、review gate からなる **12 個のスラッシュコマンド** と対応テンプレートで、仕様策定からコードレビューまでを半自動化する。cmux（tmux ラッパー）と連携し、サブペインで Opus モデルのサブエージェントを起動する。
 
 ## ディレクトリ構成
 
 ```
 claude-code-myskills(cc-mysk)/
 +-- commands/                       # スラッシュコマンド定義（.md）
+|   +-- mysk-fixed-spec-draft.md    # fixed-spec 下書き（別ペイン planner）
+|   +-- mysk-fixed-spec-review.md   # fixed-spec レビュー（別ペイン reviewer）
 |   +-- mysk-spec-draft.md          # 仕様書下書き（別ペイン Opus）
 |   +-- mysk-spec-review.md         # 仕様レビュー（別ペイン Opus）
-|   +-- mysk-spec-implement.md      # 実装計画作成（計画のみ）
-|   +-- mysk-implement-start.md     # impl-plan.mdを読み込み実装を実行
+|   +-- mysk-spec-implement.md      # 任意の実装計画作成
+|   +-- mysk-implement-start.md     # fixed-spec/spec を主入力に実装
 |   +-- mysk-review-check.md        # コードレビュー（別ペイン Opus）
 |   +-- mysk-review-fix.md          # 修正計画 + 修正
 |   +-- mysk-review-diffcheck.md    # 差分確認（軽量）
@@ -23,6 +25,10 @@ claude-code-myskills(cc-mysk)/
 |   +-- mysk-cleanup.md             # 残存監視ジョブ・サブペインのクリーンアップ
 +-- templates/mysk/                 # cmux 用プロンプト・モニターテンプレート
 |   +-- cmux-launch-procedure.md    # サブペイン起動手順
+|   +-- fixed-spec-draft-prompt.md  # fixed-spec 作成プロンプト
+|   +-- fixed-spec-draft-monitor.md # fixed-spec 作成監視
+|   +-- fixed-spec-review-prompt.md # fixed-spec レビュープロンプト
+|   +-- fixed-spec-review-monitor.md # fixed-spec レビュー監視
 |   +-- spec-draft-prompt.md        # 仕様策定プロンプト
 |   +-- spec-draft-monitor.md       # 仕様策定監視
 |   +-- spec-review-prompt.md       # 仕様レビュープロンプト
@@ -34,19 +40,25 @@ claude-code-myskills(cc-mysk)/
 |   +-- verify-schema.json          # verify判定基準のJSON Schema
 +-- docs/                           # ドキュメント
 |   +-- workflow.md                 # ワークフローの詳細ドキュメント
+|   +-- implementation-survey.md    # 実装調査と責務分割
+|   +-- testing.md                  # テスト方針と実行方法
++-- tests/                          # Bats テスト、fixture、補助スクリプト
++-- experiments/                    # fixed-spec ベンチマーク雛形
 +-- README.md                       # 利用者向けドキュメント
 +-- CLAUDE.md                       # このファイル
 +-- LICENSE                         # MIT License
 ```
 
-## スキル一覧
+## コマンド一覧
 
 | コマンド | 説明 | 実行場所 | 引数 |
 |---------|------|---------|------|
+| `/mysk-fixed-spec-draft` | fixed-spec 下書き作成 | 別ペイン(Opus) | `[topic]` |
+| `/mysk-fixed-spec-review` | fixed-spec レビュー＋凍結 | 別ペイン(Opus) | `[run_id]` |
 | `/mysk-spec-draft` | 仕様書下書き作成 | 別ペイン(Opus) | `[topic]` |
 | `/mysk-spec-review` | 仕様レビュー＋反映確認 | 別ペイン(Opus) | `[run_id]` |
 | `/mysk-spec-implement` | 実装計画作成（計画のみ） | メイン | `[run_id]` |
-| `/mysk-implement-start` | impl-plan.mdを読み込み実装を実行 | メイン | `[run_id]` |
+| `/mysk-implement-start` | fixed-spec/spec を主入力に実装を実行 | メイン | `[run_id]` |
 | `/mysk-review-check` | コードレビュー | 別ペイン(Opus) | `[run_id] [path]` |
 | `/mysk-review-fix` | 修正計画と修正 | メイン | `[run_id]` |
 | `/mysk-review-diffcheck` | 差分確認（軽量） | メイン | `[run_id]` |
@@ -69,6 +81,7 @@ claude-code-myskills(cc-mysk)/
 1. 変更したコマンドファイルの frontmatter（description, argument-hint）が正しいか
 2. テンプレート変数（`{RUN_ID}`, `{WORK_DIR}` など）に漏れがないか
 3. コマンドとテンプレートの整合性（コマンドが参照するテンプレートが存在するか）
+4. 関連する `docs/` と `tests/` が更新されているか
 
 ### コミットメッセージ規約
 
@@ -93,16 +106,28 @@ fix: spec-draft のスラッグ生成でハイフン重複を修正
 docs: README にテンプレート一覧を追記
 ```
 
+### テスト
+
+コマンドやテンプレートを変更した場合は、少なくとも関連する Bats テストを実行すること。
+
+```bash
+bats tests/unit/*.bats
+bats tests/integration/*.bats
+```
+
+テストレイヤの詳細は `docs/testing.md` を参照。
+
 ## ドキュメント同期
 
 コマンドやテンプレートを変更した際、該当ドキュメントの更新が必要か確認する：
 
 | 変更内容 | 確認するドキュメント |
 |----------|---------------------|
-| コマンドの追加・削除 | `README.md`（コマンド一覧）、`CLAUDE.md`（スキル一覧） |
-| コマンドの引数変更 | `README.md`、`CLAUDE.md`、`mysk-workflow.md` |
-| テンプレートの追加・削除 | `README.md`（テンプレート一覧）、`CLAUDE.md`（ディレクトリ構成） |
-| ワークフローの変更 | `README.md`（ワークフロー図）、`mysk-workflow.md` |
+| コマンドの追加・削除 | `README.md`（コマンド一覧）、`CLAUDE.md`（コマンド一覧）、`docs/workflow.md`、`docs/implementation-survey.md` |
+| コマンドの引数変更 | `README.md`、`CLAUDE.md`、`docs/workflow.md`、`docs/implementation-survey.md` |
+| テンプレートの追加・削除 | `README.md`（テンプレート一覧）、`CLAUDE.md`（ディレクトリ構成）、`docs/implementation-survey.md` |
+| ワークフローの変更 | `README.md`（ワークフロー図）、`docs/workflow.md`、`docs/implementation-survey.md` |
+| テスト方針の変更 | `docs/testing.md`、必要に応じて `README.md` と `CONTRIBUTING.md` |
 
 ## Issue 管理
 

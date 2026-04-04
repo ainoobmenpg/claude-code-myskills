@@ -6,7 +6,7 @@
 
 ```mermaid
 graph TD
-    subgraph default["default lane"]
+    subgraph lane_default["default lane"]
         FSD["/mysk-fixed-spec-draft<br/>別ペイン planner"] --> FSR["/mysk-fixed-spec-review<br/>別ペイン reviewer"]
         FSR --> IS["/mysk-implement-start<br/>メイン executor"]
         FSR --> SI["/mysk-spec-implement<br/>任意"]
@@ -14,13 +14,13 @@ graph TD
         IS --> RC["/mysk-review-check<br/>review gate"]
     end
 
-    subgraph discovery["discovery lane"]
+    subgraph lane_discovery["discovery lane"]
         SD["/mysk-spec-draft<br/>別ペイン・対話型"] --> SR["/mysk-spec-review<br/>別ペイン・対話型"]
         SR --> IS
         SR --> SI
     end
 
-    subgraph review["review gate"]
+    subgraph lane_review["review gate"]
         RC --> RF["/mysk-review-fix"]
         RF --> DC["/mysk-review-diffcheck"]
         DC -->|high 未修正| RF
@@ -29,6 +29,16 @@ graph TD
         RV -->|passed| DONE["完了"]
     end
 ```
+
+## 実装メモ
+
+- 別ペイン実行コマンドはすべて `templates/mysk/cmux-launch-procedure.md` を共有し、cmux 上でサブペインを起動する
+- サブペイン起動後は CronCreate で monitor prompt を登録し、`status.json` / `review.json` / `verify.json` を監視する
+- run_id を省略したコマンドは、各 run ディレクトリの `run-meta.json` にある `project_root` と現在のプロジェクトを照合して最新 run を選ぶ
+- review 系の後続コマンドは `review.json.project_root` を基準に finding の相対パスを解決する
+- verify は `verify-rerun.json` が存在する場合そちらを最新の真実として扱う
+
+詳細な責務分割と JSON 契約は [implementation-survey.md](implementation-survey.md) を参照。
 
 ## default lane: fixed-spec planner / executor / reviewer
 
@@ -94,11 +104,14 @@ discovery lane は残すが、**default は fixed-spec lane** とする。
 ├── diffcheck.json
 ├── verify.json
 ├── verify-rerun.json
+├── timeout-grace.json
 ├── run-meta.json
 └── status.json
 ```
 
 `run_id` の形式: `YYYYMMDD-HHMMSSZ-{slug}`
+
+`timeout-grace.json` は monitor が長時間実行に対する猶予時間を延長したときだけ作成される任意ファイル。
 
 ## コードレビューフロー
 

@@ -84,10 +84,11 @@ docs: README にテンプレート一覧を追記
 
 | 変更内容 | 確認するドキュメント |
 |----------|---------------------|
-| コマンドの追加・削除 | `README.md`、`CLAUDE.md` |
-| コマンドの引数変更 | `README.md`、`CLAUDE.md`、`mysk-workflow.md` |
-| テンプレートの追加・削除 | `README.md`、`CLAUDE.md` |
-| ワークフローの変更 | `README.md`、`mysk-workflow.md` |
+| コマンドの追加・削除 | `README.md`、`CLAUDE.md`、`docs/workflow.md`、`docs/implementation-survey.md` |
+| コマンドの引数変更 | `README.md`、`CLAUDE.md`、`docs/workflow.md`、`docs/implementation-survey.md` |
+| テンプレートの追加・削除 | `README.md`、`CLAUDE.md`、`docs/implementation-survey.md` |
+| ワークフローの変更 | `README.md`、`docs/workflow.md`、`docs/implementation-survey.md` |
+| テスト方針・fixture の変更 | `docs/testing.md`、必要に応じて `README.md` |
 
 ## ラベル運用
 
@@ -170,12 +171,29 @@ rm -rf ~/.claude/templates/mysk && cp -r templates/mysk ~/.claude/templates/mysk
 
 **注意**: `~/.claude/commands/` 内のファイルを直接編集すると、リポジトリ側との同期が取れなくなります。必ずリポジトリ側で修正してください。
 
+## テスト
+
+コマンドやテンプレートを変更した場合は、少なくとも関連する Bats テストを実行してください。
+
+```bash
+# ユニットテスト
+bats tests/unit/*.bats
+
+# モック統合テスト
+bats tests/integration/*.bats
+
+# 全体確認
+bats tests/unit/*.bats tests/integration/*.bats
+```
+
+テストレイヤや fixture の役割は [docs/testing.md](docs/testing.md) を参照してください。
+
 ## コードレビュー
 
 すべての PR はコードレビューを経てからマージされます。レビュアーからのフィードバックには迅速に対応してください。
 
 ## 行動規範
 
-- 建的なフィードバックを心がけてください
+- 建設的なフィードバックを心がけてください
 - 他の貢献者を尊重してください
 - 不適切な行為が見つかった場合は、メンテナに報告してください
