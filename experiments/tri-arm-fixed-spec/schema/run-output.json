@@ -1,0 +1,41 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": ["completed", "blocked", "failed"]
+    },
+    "summary": {
+      "type": "string"
+    },
+    "clarification_questions": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "user_interventions": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "changed_files": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "status",
+    "summary",
+    "clarification_questions",
+    "user_interventions",
+    "changed_files",
+    "notes"
+  ]
+}

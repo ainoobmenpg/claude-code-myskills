@@ -1,0 +1,28 @@
+{
+  "benchmark_version": "v2",
+  "task_id": "TEMPLATE",
+  "title": "Replace with a heavier implementation task",
+  "repo_path": "/absolute/path/to/target-repo",
+  "time_budget_minutes": 45,
+  "max_clarification_questions": 0,
+  "allowed_paths_file": "experiments/tri-arm-fixed-spec/tasks/TEMPLATE/allowed-paths.txt",
+  "allowed_files": [
+    "commands/example.md",
+    "templates/mysk/example.json"
+  ],
+  "review_paths": [
+    "commands/example.md",
+    "templates/mysk/example.json"
+  ],
+  "acceptance_criteria": [
+    "Task-specific behavior is implemented.",
+    "Existing behavior outside scope is preserved.",
+    "Repo regression tests still pass."
+  ],
+  "public_test_command": "bash experiments/tri-arm-fixed-spec/tasks/TEMPLATE/public-tests.sh",
+  "task_test_command": "bash experiments/tri-arm-fixed-spec/tasks/TEMPLATE/public-tests.sh",
+  "repo_test_command_override": "bats tests/unit/ tests/integration/",
+  "hidden_test_id": "TEMPLATE",
+  "no_op_is_failure": true,
+  "wrong_files_is_failure": true
+}

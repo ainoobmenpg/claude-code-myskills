@@ -1,0 +1,26 @@
+{
+  "experiment_id": "tri-arm-fixed-spec",
+  "description": "Non-interactive tri-arm comparison for heavier implementation tasks.",
+  "repo_test_command": "bats tests/unit/ tests/integration/",
+  "review_model": "glm-5.1",
+  "arms": [
+    {
+      "id": "arm-1-glm47-direct",
+      "label": "GLM4.7 direct",
+      "model": "glm-4.7",
+      "prompt_kind": "direct"
+    },
+    {
+      "id": "arm-2-glm47-fixed-spec",
+      "label": "GLM4.7 + fixed spec",
+      "model": "glm-4.7",
+      "prompt_kind": "fixed_spec"
+    },
+    {
+      "id": "arm-3-glm51-direct",
+      "label": "GLM5.1 direct",
+      "model": "glm-5.1",
+      "prompt_kind": "direct"
+    }
+  ]
+}

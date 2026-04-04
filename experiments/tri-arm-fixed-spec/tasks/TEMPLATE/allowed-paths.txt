@@ -1,0 +1,2 @@
+commands/example.md
+templates/mysk/example.json

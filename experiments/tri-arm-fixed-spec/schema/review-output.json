@@ -1,0 +1,70 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "acceptance_met": {
+      "type": "boolean"
+    },
+    "review_high_remaining": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "review_medium_remaining": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "review_low_remaining": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "failure_type": {
+      "type": ["string", "null"],
+      "enum": [
+        "no_op",
+        "wrong_files",
+        "public_pass_hidden_fail",
+        "repo_regression_fail",
+        "timeout",
+        "tool_error",
+        "requirement_misunderstanding",
+        "repo_navigation_miss",
+        "logic_defect",
+        "missing_tests",
+        "partial_implementation",
+        null
+      ]
+    },
+    "summary": {
+      "type": "string"
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "severity": {
+            "type": "string",
+            "enum": ["high", "medium", "low"]
+          },
+          "title": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          }
+        },
+        "required": ["severity", "title", "detail"]
+      }
+    }
+  },
+  "required": [
+    "acceptance_met",
+    "review_high_remaining",
+    "review_medium_remaining",
+    "review_low_remaining",
+    "failure_type",
+    "summary",
+    "findings"
+  ]
+}
