@@ -2,32 +2,14 @@
 
 仕様策定からコードレビューまでを管理するスキル群。現行 workflow は **default lane** と **discovery lane** の 2 本を持つ。
 
-## 全体像
+## 標準フロー
 
 ```mermaid
-graph TD
-    subgraph lane_default["default lane"]
-        FSD["/mysk-fixed-spec-draft<br/>別ペイン planner"] --> FSR["/mysk-fixed-spec-review<br/>別ペイン reviewer"]
-        FSR --> IS["/mysk-implement-start<br/>メイン executor"]
-        FSR --> SI["/mysk-spec-implement<br/>任意"]
-        SI --> IS
-        IS --> RC["/mysk-review-check<br/>review gate"]
-    end
-
-    subgraph lane_discovery["discovery lane"]
-        SD["/mysk-spec-draft<br/>別ペイン・対話型"] --> SR["/mysk-spec-review<br/>別ペイン・対話型"]
-        SR --> IS
-        SR --> SI
-    end
-
-    subgraph lane_review["review gate"]
-        RC --> RF["/mysk-review-fix"]
-        RF --> DC["/mysk-review-diffcheck"]
-        DC -->|high 未修正| RF
-        DC -->|ユーザー確認| RV["/mysk-review-verify"]
-        RV -->|未修正あり| RF
-        RV -->|passed| DONE["完了"]
-    end
+graph LR
+    A["/mysk-fixed-spec-draft"] --> B["/mysk-fixed-spec-review"]
+    B --> C["/mysk-implement-start"]
+    C --> D["/mysk-review-check"]
+    D --> E["完了<br/>レビュー指摘なし"]
 ```
 
 ## 実装メモ
@@ -56,6 +38,11 @@ graph TD
 4. `/mysk-review-check [run_id]`
 5. 必要なら `/mysk-review-fix -> /mysk-review-diffcheck -> /mysk-review-verify`
 
+### optional な補助
+
+- `/mysk-spec-implement` は大規模変更や段階実装時だけ挟む
+- discovery lane は default ではなく、要件整理が足りないときだけ使う
+
 ### default lane の原則
 
 - `fixed-spec.md` を first-class artifact とする
@@ -75,6 +62,18 @@ graph TD
 - Test Notes
 - Assumptions
 
+## review gate: 指摘が出たときだけ
+
+```mermaid
+graph LR
+    A["/mysk-review-check"] --> B["/mysk-review-fix"]
+    B --> C["/mysk-review-diffcheck"]
+    C -->|"未修正あり"| B
+    C -->|"ユーザー確認後"| D["/mysk-review-verify"]
+    D -->|"未修正あり"| B
+    D -->|"passed"| E["完了"]
+```
+
 ## discovery lane: interactive spec
 
 要件収集や greenfield の論点整理が必要なときだけ使う。
@@ -87,6 +86,12 @@ graph TD
 4. `/mysk-implement-start [run_id]`
 
 discovery lane は残すが、**default は fixed-spec lane** とする。
+
+```mermaid
+graph LR
+    A["/mysk-spec-draft"] --> B["/mysk-spec-review"]
+    B --> C["/mysk-implement-start"]
+```
 
 ## run directory
 

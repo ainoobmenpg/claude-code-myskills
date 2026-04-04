@@ -219,49 +219,32 @@ rm -rf ~/.claude/templates/mysk && cp -r templates/mysk ~/.claude/templates/mysk
 
 ## ワークフロー
 
-### 全体図
+### 標準フロー
 
 ```mermaid
-graph TD
-    subgraph lane_default["default lane"]
-        FSD["/mysk-fixed-spec-draft<br/>別ペイン planner"] --> FSR["/mysk-fixed-spec-review<br/>別ペイン reviewer"]
-        FSR --> IS["/mysk-implement-start<br/>メイン executor"]
-        FSR --> SI["/mysk-spec-implement<br/>任意"]
-        SI --> IS
-    end
-
-    subgraph lane_discovery["discovery lane"]
-        SD["/mysk-spec-draft<br/>別ペイン Opus"] --> SR["/mysk-spec-review<br/>別ペイン Opus"]
-        SR --> IS
-        SR --> SI
-    end
-
-    subgraph lane_review["review gate"]
-        RC["/mysk-review-check<br/>別ペイン Opus<br/>コードレビュー"] --> RF["/mysk-review-fix<br/>メイン Sonnet<br/>修正計画 + 修正"]
-        RF --> DC["/mysk-review-diffcheck<br/>メイン Sonnet<br/>差分確認"]
-        DC -->|high 未修正| RF
-        DC -->|ユーザー確認| RV["/mysk-review-verify<br/>別ペイン Opus<br/>最終確認"]
-        RV -->|未修正の指摘あり| RF
-        RV -->|passed| DONE["完了"]
-    end
-
-    IS --> DONE
+graph LR
+    A["/mysk-fixed-spec-draft"] --> B["/mysk-fixed-spec-review"]
+    B --> C["/mysk-implement-start"]
+    C --> D["/mysk-review-check"]
+    D --> E["完了<br/>レビュー指摘なし"]
 ```
 
 **既定フロー**: `/mysk-fixed-spec-draft -> /mysk-fixed-spec-review -> /mysk-implement-start -> /mysk-review-check`
 
-**注記**: discovery lane は要件整理が必要なときだけ使ってください。各コマンドの完了後は、コマンド内の案内行に従って次のステップへ進んでください。
+通常はこの 4 ステップだけを見れば十分です。`/mysk-spec-implement` は大規模変更のときだけ挟む任意コマンドです。
 
-### fix-diffcheck ループ
+### レビュー指摘が出たときだけ
 
-コードレビューでは、修正と差分確認を繰り返す。中間確認はメインセッション（Sonnet）で軽量実行する。
+`/mysk-review-check` で指摘が出た場合だけ、次の修正ループに入ります。
 
 ```mermaid
 graph LR
-    A["check<br/>Opus"] --> B["fix<br/>Sonnet"]
-    B --> C["diffcheck<br/>Sonnet"]
-    C -->|"high 残り"| B
-    C -->|"ユーザー確認"| D["verify<br/>Opus"]
+    A["/mysk-review-check"] --> B["/mysk-review-fix"]
+    B --> C["/mysk-review-diffcheck"]
+    C -->|"未修正あり"| B
+    C -->|"ユーザー確認後"| D["/mysk-review-verify"]
+    D -->|"未修正あり"| B
+    D -->|"passed"| E["完了"]
 ```
 
 ### 終了条件
@@ -278,6 +261,18 @@ graph LR
 | verify: high なし、未解決なし | **終了** |
 
 > 終了条件のフロー図は [docs/workflow.md](docs/workflow.md) を参照してください。
+
+### discovery lane は任意
+
+要件整理が必要なときだけ、対話型の discovery lane を使います。
+
+```mermaid
+graph LR
+    A["/mysk-spec-draft"] --> B["/mysk-spec-review"]
+    B --> C["/mysk-implement-start"]
+```
+
+必要なら `B` と `C` の間に `/mysk-spec-implement` を挟みます。
 
 ## テンプレート一覧
 
