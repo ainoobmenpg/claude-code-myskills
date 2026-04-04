@@ -1,433 +1,167 @@
 # mysk - Claude Code Workflow Skills
 
-mysk は Claude Code で仕様策定からコードレビューまでを半自動化するスキル集。既定フローは **fixed-spec を作る planner / 実装する executor / 品質を止める reviewer** の3役分担で、cmux（tmux ラッパー）と連携して別ペインで重い作業を任せる。interactive に仕様を詰める discovery lane も引き続き利用できる。
+mysk は、初心者向けに `仕様策定 -> 実装 -> レビュー` を単純な 3 段階で進める Claude Code 用スキル集です。公開コマンドは最小限に絞り、旧コマンド群は `templates/mysk/legacy-commands/` に退避して `/` 補完に出ないようにしています。
 
-## クイックスタート（3分）
+## クイックスタート
 
-前提: Claude Code CLI がインストール済み
+前提:
 
-**用語説明**:
-- `~/.claude/`: Claude Code の設定ディレクトリ。スキルやテンプレートを配置する場所
-- スラッシュコマンド（`/mysk-workflow` など）: Claude Code のプロンプト内で入力するコマンド
-
-```
-1. リポジトリをクローン
-   git clone https://github.com/ainoobmenpg/claude-code-myskills.git && cd claude-code-myskills
-
-2. スキルを配置
-   mkdir -p ~/.claude/commands ~/.claude/templates  # -p で既存ディレクトリは無視
-   cp commands/*.md ~/.claude/commands/
-   rm -rf ~/.claude/templates/mysk && ln -sfn "$(pwd)/templates/mysk" ~/.claude/templates/mysk
-
-3. 確認
-   Claude Code で /mysk-workflow を実行
-```
-
-**cmux が未導入の場合**:
-別ペイン実行コマンド（`/mysk-fixed-spec-draft`、`/mysk-fixed-spec-review`、`/mysk-spec-draft`、`/mysk-spec-review`、`/mysk-review-check`、`/mysk-review-verify`）は使用できません。メイン実行のコマンドのみ利用可能です。
-また、cmux の前提として tmux が必要です。
-
-## 前提条件
-
-### 依存関係
-
-```
-Claude Code CLI (必須)
-  ├── cmux (オプション: 別ペイン実行に必要)
-  │     ├── tmux (cmuxの前提)
-  │     └── python3 (JSON解析用)
-  ├── jq (JSON解析用)
-  ├── date (BSD/GNU差異あり)
-  └── CronCreate/CronDelete ツール (Claude Code組み込み: 監視自動化時は必須)
-```
-
-### 各依存関係の詳細
-
-#### Claude Code CLI (必須)
-
-- **役割**: mysk の実行環境
-- **確認コマンド**: `claude --version`
-- **導入手順**: [Claude Code](https://docs.anthropic.com/en/docs/claude-code) 参照
-
-#### tmux (cmux使用時は必須)
-
-- **役割**: cmux の前提ターミナルマルチプレクサ
-- **確認コマンド**: `which tmux && echo "tmux: OK"`
-- **導入手順**: macOS: `brew install tmux`、Linux: ディストリビューションのパッケージマネージャ
-
-#### cmux (オプション)
-
-- **役割**: 別ペイン実行に使用。未導入でもメインセッションで動作するコマンドは利用可能
-- **確認コマンド**: `which cmux && echo "cmux: OK"`
-- **導入手順**:
-  - macOS: `brew install cmux` または [cmux リポジトリ](https://github.com/anthropics/cmux) 参照
-  - Linux: ソースからビルド
-
-#### CronCreate ツール (監視自動化時は必須)
-
-- **役割**: 進捗監視に使用。Claude Code で有効になっていることを確認
-- **確認コマンド**: Claude Code の設定を確認
-- **導入手順**: Claude Code の標準機能（CronList/CronDelete も組み込み）
-
-#### python3 (JSON解析用)
-
-- **役割**: JSON データの解析に使用
-- **確認コマンド**: `which python3 && echo "python3: OK"`
-- **導入手順**: macOS: `brew install python3`、Linux: ディストリビューションのパッケージマネージャ
-
-#### jq (JSON解析用)
-
-- **役割**: JSON データの解析に使用
-- **確認コマンド**: `which jq && echo "jq: OK"`
-- **導入手順**: macOS: `brew install jq`、Linux: `apt install jq` 等
-
-#### date (BSD/GNU差異あり)
-
-- **役割**: 日時処理に使用
-- **注意**: macOS(BSD) と Linux(GNU) でオプション形式が異なる
-
-### データ保存先
-
-成果物は `~/.local/share/claude-mysk/` に保存されます（詳細は[データ保存先](#データ保存先)参照）。
-
-### 別ペイン実行に必要な設定
-
-以下のコマンドは別ペインでの実行のため、追加の設定が必要です：
-
-- `/mysk-fixed-spec-draft`、`/mysk-fixed-spec-review`、`/mysk-spec-draft`、`/mysk-spec-review`、`/mysk-review-check`、`/mysk-review-verify`
-
-**必須環境変数**:
-```bash
-export CMUX_SOCKET_PATH="$HOME/Library/Application Support/cmux/cmux.sock"  # macOS
-# または
-export CMUX_SOCKET_PATH="$HOME/.config/cmux/cmux.sock"  # Linux
-```
-
-**CronCreate ツール**: 進捗監視に CronCreate ツールを使用します。Claude Code で有効になっていることを確認してください。
-
-### セットアップ確認
+- Claude Code CLI
+- `jq`
+- `python3`
+- `cmux` と `tmux` を使う場合は `/mysk-spec` と `/mysk-review` が利用可能
 
 ```bash
-# 1. ディレクトリ作成
-mkdir -p ~/.claude/commands ~/.claude/templates
+# 1. clone
+git clone https://github.com/ainoobmenpg/claude-code-myskills.git
+cd claude-code-myskills
 
-# 2. tmux の確認
-which tmux && echo "tmux: OK" || echo "tmux: 未インストール（cmux使用時に必要）"
+# 2. 既存の mysk コマンドを退避して公開面を置き換える
+mkdir -p ~/.claude/commands ~/.claude/templates backup
+find ~/.claude/commands -maxdepth 1 -type f -name 'mysk-*.md' -exec cp {} backup/ \; 2>/dev/null || true
+find ~/.claude/commands -maxdepth 1 -type f -name 'mysk-*.md' -delete
 
-# 3. cmux の確認
-which cmux && echo "cmux: OK" || echo "cmux: 未インストール（別ペイン実行時に必要）"
+# 3. 新しい公開コマンドだけを配置
+cp commands/*.md ~/.claude/commands/
+rm -rf ~/.claude/templates/mysk && ln -sfn "$(pwd)/templates/mysk" ~/.claude/templates/mysk
 
-# 4. 環境変数確認
-echo "CMUX_SOCKET_PATH: ${CMUX_SOCKET_PATH:-未設定}"
+# 4. 確認
+# Claude Code で /mysk-help を実行
 ```
 
-## ワークフロー確認
+コピーではなくシンボリックリンクで使いたい場合も、先に `find ~/.claude/commands ... -delete` で旧コマンドを消してから `ln -sf "$(pwd)/commands/"*.md ~/.claude/commands/` を実行してください。
 
-Claude Code で `/mysk-workflow` を実行
+## 公開コマンド
 
-## 詳細ドキュメント
+| コマンド | 役割 | 引数 |
+|---------|------|------|
+| `/mysk-spec` | Opus で対話しながら仕様を固める。再実行で続きから再開できる | `[topic_or_run_id]` |
+| `/mysk-implement` | `spec.md` を主入力に実装する | `[run_id]` |
+| `/mysk-review` | Opus review を開始または再開する。内部で fix / diffcheck / verify を回す | `[run_id]` |
+| `/mysk-help` | 今の公開フローを表示する | なし |
+| `/mysk-reset` | 残存 monitor とサブペインを片付ける | `[--force]` |
 
-- [docs/workflow.md](docs/workflow.md): default lane / discovery lane / review gate の全体フロー
-- [docs/implementation-survey.md](docs/implementation-survey.md): 2026-04-04 時点の現状実装調査と責務分割
-- [docs/testing.md](docs/testing.md): テストレイヤ、実行方法、更新時の観点
-- [FAQ.md](FAQ.md): よくあるエラーと運用上の対処
-- [docs/MIGRATION.md](docs/MIGRATION.md): 権限制御と verify 状態機械の移行情報
+旧コマンドは公開廃止です。`/mysk-spec-draft` や `/mysk-review-check` のような名前は `commands/` には存在せず、`/` 補完にも出ません。
+
+## 基本フロー
+
+```mermaid
+graph LR
+    A["/mysk-spec"] --> B["/mysk-implement"]
+    B --> C["/mysk-review"]
+    C --> D["完了"]
+```
+
+### 使い方の目安
+
+1. `/mysk-spec ユーザー認証機能`
+2. `/mysk-implement`
+3. `/mysk-review`
+
+`/mysk-spec` と `/mysk-review` は 1 回で全工程を完了しないことがあります。その場合でも、ユーザーは同じコマンドをもう一度実行するだけで続きを進められます。
+
+## コマンドごとの考え方
+
+### `/mysk-spec`
+
+- Opus で対話的に要件を固めます
+- 成果物は `spec.md` と `spec-review.json` です
+- 仕様が未確定なら、同じ `/mysk-spec {run_id}` で再開します
+
+### `/mysk-implement`
+
+- `spec.md` を source of truth として実装します
+- 旧フローの `fixed-spec.md` と `impl-plan.md` は legacy 互換の補助入力としてのみ参照します
+- 完了後は `/mysk-review` に進みます
+
+### `/mysk-review`
+
+- 初回は review を開始します
+- 以後は run の状態を見て、内部で修正、差分確認、最終確認を切り替えます
+- ユーザーに見える操作は最後まで `/mysk-review` だけです
+
+### `/mysk-reset`
+
+- Claude Code や cmux が途中で止まったときの後始末です
+- 再開前に一度実行して環境を空にできます
+
+## 依存関係
+
+| 依存 | 必須 | 用途 |
+|------|------|------|
+| Claude Code CLI | はい | 実行環境 |
+| `jq` | はい | JSON 読み取り |
+| `python3` | はい | 補助的な JSON / text 処理 |
+| `tmux` | `/mysk-spec` と `/mysk-review` で必要 | cmux の前提 |
+| `cmux` | `/mysk-spec` と `/mysk-review` で必要 | 別ペイン実行 |
+| CronCreate / CronDelete | `/mysk-spec` と `/mysk-review` で必要 | monitor 登録 |
+
+cmux が未導入の場合:
+
+- `/mysk-spec` と `/mysk-review` は利用できません
+- `/mysk-implement`、`/mysk-help`、`/mysk-reset` は使えます
 
 ## 環境変数
 
-### MYSK_SKIP_PERMISSIONS
-
-サブエージェントの権限制限を制御します。
-
-- **既定値**: `false`（権限制限あり）
-- **設定値**: `true` | `false`
-- **用途**: `true` の場合、従来の権限スキップ動作（`--dangerously-skip-permissions`相当）
-
-**設定方法**:
-```bash
-export MYSK_SKIP_PERMISSIONS=true  # 権限スキップ（従来動作）
-export MYSK_SKIP_PERMISSIONS=false # 権限制限（既定）
-```
-
-**注意**:
-- 既定値（`false`）では、trust確認時にユーザー操作が必要です
-- 自動実行が必要な場合は `MYSK_SKIP_PERMISSIONS=true` を設定してください
-
-## インストール
-
-`commands/` と `templates/` の中身を `~/.claude/` 配下に配置する。
+### `CMUX_SOCKET_PATH`
 
 ```bash
-# 1. 既存ファイルのバックアップ（必要な場合のみ）
-# ~/.claude/commands/ に mysk-*.md が既にある場合:
-mkdir -p backup
-cp ~/.claude/commands/mysk-*.md backup/
+# macOS
+export CMUX_SOCKET_PATH="$HOME/Library/Application Support/cmux/cmux.sock"
 
-# 2. ディレクトリ準備
-mkdir -p ~/.claude/commands ~/.claude/templates
-
-# 3. ファイル配置（シンボリックリンク推奨）
-mkdir -p ~/.claude/templates
-ln -sf "$(pwd)/commands/"*.md ~/.claude/commands/
-rm -rf ~/.claude/templates/mysk && ln -sfn "$(pwd)/templates/mysk" ~/.claude/templates/mysk
-
-# またはコピー（既存ファイルがある場合はこちらが安全）
-mkdir -p ~/.claude/commands ~/.claude/templates
-cp commands/*.md ~/.claude/commands/
-rm -rf ~/.claude/templates/mysk && cp -r templates/mysk ~/.claude/templates/mysk
+# Linux
+export CMUX_SOCKET_PATH="$HOME/.config/cmux/cmux.sock"
 ```
 
-**注意**:
-- シンボリックリンク先に同名ファイルが既にある場合、意図せず上書きされる。他のスキルを既に導入している場合は、コピー方式を使うか、既存ファイルをバックアップしてから実行すること。
-- バックアップ先はリポジトリ内の `backup/` ディレクトリを指定してください（例: `mkdir -p backup && cp ~/.claude/commands/mysk-*.md backup/`）
+### `MYSK_SKIP_PERMISSIONS`
 
-## コマンド一覧
+- 既定値は `false`
+- `true` にすると legacy sub-pane 手順が従来寄りの権限スキップ動作を使います
 
-### default lane
-
-| コマンド | 説明 | 実行場所 | 引数 |
-|---------|------|---------|------|
-| `/mysk-fixed-spec-draft` | 別ペインで fixed-spec を下書き作成 | 別ペイン(Opus) | `[topic]` |
-| `/mysk-fixed-spec-review` | fixed-spec をレビューして凍結 | 別ペイン(Opus) | `[run_id]` |
-| `/mysk-implement-start` | fixed-spec.md / spec.md を主入力に実装を実行（impl-plan.md は任意） | メイン | `[run_id]` |
-| `/mysk-spec-implement` | 任意で実装計画を作成（大規模変更向け） | メイン | `[run_id]` |
-
-### discovery lane
-
-| コマンド | 説明 | 実行場所 | 引数 |
-|---------|------|---------|------|
-| `/mysk-spec-draft` | 別ペインで仕様書を策定 | 別ペイン(Opus) | `[topic]` |
-| `/mysk-spec-review` | 仕様書をレビューし反映確認まで実施 | 別ペイン(Opus) | `[run_id]` |
-
-### コードレビュー
-
-| コマンド | 説明 | 実行場所 | 引数 |
-|---------|------|---------|------|
-| `/mysk-review-check` | 差分または指定パスをレビュー | 別ペイン(Opus) | `[run_id] [path]` |
-| `/mysk-review-fix` | レビュー指摘の修正計画と修正 | メイン | `[run_id]` |
-| `/mysk-review-diffcheck` | 修正状況を軽量確認 | メイン | `[run_id]` |
-| `/mysk-review-verify` | 最終確認で修正サイクル完了 | 別ペイン(Opus) | `[run_id]` |
-
-### 全体
-
-| コマンド | 説明 | 引数 |
-|---------|------|------|
-| `/mysk-workflow` | 全体ワークフローの参照・管理 | なし |
-| `/mysk-cleanup` | 残存する監視ジョブとサブペインを一括クリーンアップ | なし |
-
-引数省略時は最新の run_id を自動選択する（`/mysk-review-check` は新規 run_id を生成）。
-
-## ワークフロー
-
-### 標準フロー
-
-```mermaid
-graph LR
-    A["/mysk-fixed-spec-draft"] --> B["/mysk-fixed-spec-review"]
-    B --> C["/mysk-implement-start"]
-    C --> D["/mysk-review-check"]
-    D --> E["完了<br/>レビュー指摘なし"]
+```bash
+export MYSK_SKIP_PERMISSIONS=true
 ```
 
-**既定フロー**: `/mysk-fixed-spec-draft -> /mysk-fixed-spec-review -> /mysk-implement-start -> /mysk-review-check`
+## run directory
 
-通常はこの 4 ステップだけを見れば十分です。`/mysk-spec-implement` は大規模変更のときだけ挟む任意コマンドです。
+成果物は `~/.local/share/claude-mysk/{run_id}/` に保存されます。代表的なファイル:
 
-### レビュー指摘が出たときだけ
+- `run-meta.json`
+- `spec-draft.md`
+- `spec.md`
+- `spec-review.json`
+- `review.json`
+- `fix-plan.md`
+- `diffcheck.json`
+- `verify.json`
+- `verify-rerun.json`
+- `status.json`
+- `timeout-grace.json`
 
-`/mysk-review-check` で指摘が出た場合だけ、次の修正ループに入ります。
+`run_id` を省略した `/mysk-implement` と `/mysk-review` は、現在の `project_root` に一致する最新 run を自動選択します。
 
-```mermaid
-graph LR
-    A["/mysk-review-check"] --> B["/mysk-review-fix"]
-    B --> C["/mysk-review-diffcheck"]
-    C -->|"未修正あり"| B
-    C -->|"ユーザー確認後"| D["/mysk-review-verify"]
-    D -->|"未修正あり"| B
-    D -->|"passed"| E["完了"]
-```
+## 内部アーキテクチャ
 
-### 終了条件
+- `commands/` は公開コマンドだけを置く
+- `templates/mysk/legacy-commands/` に旧コマンド手順を退避する
+- `templates/mysk/*.md` と `verify-schema.json` が cmux prompt / monitor / verify 契約を持つ
 
-| 条件 | アクション |
-|------|----------|
-| diffcheck: ユーザー確認あり | `/mysk-review-verify` へ |
-| diffcheck: high 未修正あり | `/mysk-review-fix` ループ継続 |
-| verify: passed | **終了** |
-| verify: failed（検証エラー） | エラー報告 → **終了** |
-| verify: 新たな high 発生 | エラー報告 → **終了** |
-| verify: 未修正の high あり | エラー報告 → **終了** |
-| verify: 未修正の指摘あり | /mysk-review-fix に戻る |
-| verify: high なし、未解決なし | **終了** |
-
-> 終了条件のフロー図は [docs/workflow.md](docs/workflow.md) を参照してください。
-
-### discovery lane は任意
-
-要件整理が必要なときだけ、対話型の discovery lane を使います。
-
-```mermaid
-graph LR
-    A["/mysk-spec-draft"] --> B["/mysk-spec-review"]
-    B --> C["/mysk-implement-start"]
-```
-
-必要なら `B` と `C` の間に `/mysk-spec-implement` を挟みます。
-
-## テンプレート一覧
-
-`templates/mysk/` に格納されているファイル。
-
-| ファイル | 役割 |
-|---------|------|
-| `cmux-launch-procedure.md` | cmux サブペイン起動 + Claude Code 待機手順 |
-| `fixed-spec-draft-prompt.md` | fixed-spec 下書き作成プロンプト |
-| `fixed-spec-draft-monitor.md` | fixed-spec 下書きの進捗監視 |
-| `fixed-spec-review-prompt.md` | fixed-spec レビュープロンプト |
-| `fixed-spec-review-monitor.md` | fixed-spec レビューの進捗監視 |
-| `spec-draft-prompt.md` | 仕様策定プロンプト |
-| `spec-draft-monitor.md` | 仕様策定の進捗監視 |
-| `spec-review-prompt.md` | 仕様レビュープロンプト |
-| `spec-review-monitor.md` | 仕様レビューの進捗監視 |
-| `review-check-prompt.md` | コードレビュープロンプト |
-| `review-check-monitor.md` | コードレビューの進捗監視 |
-| `review-verify-prompt.md` | 最終検証プロンプト |
-| `review-verify-monitor.md` | 最終検証の進捗監視 |
-| `verify-schema.json` | verify判定基準のJSON Schema定義 |
-
-## データ保存先
-
-すべての成果物は `~/.local/share/claude-mysk/` に保存される。
-
-**run_id について**: `{YYYYMMDD-HHMMSSZ}-{slug}` 形式の一意識別子。各実行の成果物をディレクトリ単位で管理する。run_id を省略した場合は `run-meta.json` の `project_root` と現在のプロジェクトを照合して自動選択する。手動確認は各 run ディレクトリの `run-meta.json` を参照。
-
-```
-~/.local/share/claude-mysk/
-+-- {YYYYMMDD-HHMMSSZ}-{slug}/    # run_id
-    +-- fixed-spec-draft.md       # fixed-spec 下書き
-    +-- fixed-spec.md             # fixed-spec 確定版
-    +-- fixed-spec-review.json    # fixed-spec レビュー結果
-    +-- spec.md                   # 仕様書（確定版）
-    +-- spec-draft.md             # 仕様書（下書き）
-    +-- spec-review.json          # 仕様レビュー結果
-    +-- impl-plan.md              # 実装計画
-    +-- review.json               # コードレビュー結果
-    +-- fix-plan.md               # 修正計画
-    +-- diffcheck.json            # 差分確認結果
-    +-- verify.json               # 最終検証結果
-    +-- verify-rerun.json         # 再検証結果
-    +-- timeout-grace.json        # monitor 猶予延長メタデータ（必要時のみ）
-    +-- run-meta.json             # run_id自動解決用メタデータ
-    +-- status.json               # 進捗管理（汎用/spec-review専用）
-```
-
-### コマンド間のデータ連携
-
-各コマンドがどのファイルを読み、どのファイルを出力するかを整理する。
-
-| コマンド | 読み込み | 出力 | ステータス |
-|---------|---------|------|----------|
-| `/mysk-fixed-spec-draft` | なし | `fixed-spec-draft.md`, `fixed-spec.md` | `status.json` |
-| `/mysk-fixed-spec-review` | `fixed-spec.md`（存在時）、`fixed-spec-draft.md`（フォールバック） | `fixed-spec-review.json` | `status.json` |
-| `/mysk-spec-draft` | なし | `spec-draft.md`, `spec.md` | `status.json` |
-| `/mysk-spec-review` | `spec.md`（存在時）、`spec-draft.md`（フォールバック） | `spec-review.json` | `status.json` |
-| `/mysk-spec-implement` | `fixed-spec.md`（優先）または `spec.md` | `impl-plan.md`（任意・大規模変更向け） | なし |
-| `/mysk-implement-start` | `fixed-spec.md`（優先）または `spec.md`、`impl-plan.md`（任意） | プロジェクトコードの変更（myskファイルは更新しない） | `status.json` |
-| `/mysk-review-check` | Git diff または指定パス | `review.json` | なし |
-| `/mysk-review-fix` | `review.json` | `fix-plan.md` | なし |
-| `/mysk-review-diffcheck` | `review.json`, `verify-rerun.json`（優先）または`verify.json`（存在時） | `diffcheck.json` | なし |
-| `/mysk-review-verify` | `review.json`, `diffcheck.json` | `verify.json`（再実行時は`verify-rerun.json`） | なし |
-
-`review.json` には `project_root` が保存され、`/mysk-review-fix`、`/mysk-review-diffcheck`、`/mysk-review-verify` が finding の相対パス解決に利用します。
-
-## 使用例
-
-```
-# default lane（既定）
-/mysk-fixed-spec-draft ユーザー認証機能
-
-# （サブエージェントが下書きを作成 → 確認 → fixed-spec.md に確定）
-
-# fixed-spec レビュー
-/mysk-fixed-spec-review
-
-# 実装開始（必要なら /mysk-spec-implement を任意で挟む）
-/mysk-implement-start
-
-# コードレビュー
-/mysk-review-check
-
-# レビュー指摘の修正
-/mysk-review-fix
-
-# 修正状況の確認
-/mysk-review-diffcheck
-
-# 最終確認
-/mysk-review-verify
-
-# discovery lane（要件整理が必要なときだけ）
-/mysk-spec-draft ユーザー認証機能
-/mysk-spec-review
-/mysk-spec-implement   # 任意
-/mysk-implement-start
-```
+つまり、公開面は簡単にしつつ、内部では既存の state machine と JSON 契約を再利用しています。
 
 ## テスト
 
-mysk には Bats ベースのテスト群があり、コマンド定義、テンプレート変数、JSON 契約、モック統合フローを検証します。
-
 ```bash
-# ユニットテスト
 bats tests/unit/*.bats
-
-# モック統合テスト
 bats tests/integration/*.bats
-
-# 全テスト
 bats tests/unit/*.bats tests/integration/*.bats
 ```
 
-詳細は [docs/testing.md](docs/testing.md) を参照してください。
+テスト観点の詳細は [docs/testing.md](docs/testing.md) を参照してください。
 
-## スキルの更新
+## 関連ドキュメント
 
-mysk スキルを更新する場合は、以下のフローで行ってください。
-
-### 基本原則
-
-1. **リポジトリ側で修正**: `commands/` と `templates/mysk/` のファイルを編集
-2. **環境に展開**: 修正を `~/.claude/commands/` と `~/.claude/templates/mysk/` に反映
-3. **確認**: Claude Code でスキルが正しく動作することを確認
-
-### インストール方式による展開方法の違い
-
-**シンボリックリンクで導入済みの場合**:
-- リポジトリ側の修正が自動反映されるため、再展開は不要です
-- 修正したファイルはすぐに反映されます
-
-**コピーで導入した場合**:
-- 以下のコマンドで再展開が必要です:
-
-```bash
-# 個別に更新
-cp commands/mysk-workflow.md ~/.claude/commands/
-
-# 全スキルを一括更新
-cp commands/mysk-*.md ~/.claude/commands/
-rm -rf ~/.claude/templates/mysk && cp -r templates/mysk ~/.claude/templates/mysk
-```
-
-### コマンド例
-
-```bash
-# 1. リポジトリ側で修正（お好みのエディタで）
-vim commands/mysk-workflow.md
-
-# 2. シンボリックリンクの場合は何もしなくてOK
-#    コピーの場合は以下を実行
-cp commands/mysk-*.md ~/.claude/commands/
-rm -rf ~/.claude/templates/mysk && cp -r templates/mysk ~/.claude/templates/mysk
-```
-
-**注意**: `~/.claude/commands/` 内のファイルを直接編集すると、リポジトリ側との同期が取れなくなります。必ずリポジトリ側で修正してください。
+- [docs/workflow.md](docs/workflow.md)
+- [docs/implementation-survey.md](docs/implementation-survey.md)
+- [docs/testing.md](docs/testing.md)
+- [docs/MIGRATION.md](docs/MIGRATION.md)
+- [FAQ.md](FAQ.md)

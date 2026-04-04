@@ -84,78 +84,42 @@ _extract_all_fm_keys() {
 }
 
 # ----------------------------------------------------------------------
-# Test: specific argument-hint values for specific commands
+# Test: public command set and argument-hint values
 # ----------------------------------------------------------------------
-@test "mysk-fixed-spec-draft has argument-hint [topic]" {
-    local hint
-    hint=$(extract_frontmatter "$COMMANDS_DIR/mysk-fixed-spec-draft.md" "argument-hint")
-    [ "$hint" = "[topic]" ]
+@test "public command surface is exactly 5 files" {
+    local count
+    count=$(get_command_files | wc -l | tr -d ' ')
+    [ "$count" -eq 5 ]
 }
 
-@test "mysk-fixed-spec-review has argument-hint [run_id]" {
+@test "mysk-spec has argument-hint [topic_or_run_id]" {
     local hint
-    hint=$(extract_frontmatter "$COMMANDS_DIR/mysk-fixed-spec-review.md" "argument-hint")
+    hint=$(extract_frontmatter "$COMMANDS_DIR/mysk-spec.md" "argument-hint")
+    [ "$hint" = "[topic_or_run_id]" ]
+}
+
+@test "mysk-implement has argument-hint [run_id]" {
+    local hint
+    hint=$(extract_frontmatter "$COMMANDS_DIR/mysk-implement.md" "argument-hint")
     [ "$hint" = "[run_id]" ]
 }
 
-@test "mysk-spec-draft has argument-hint [topic]" {
+@test "mysk-review has argument-hint [run_id]" {
     local hint
-    hint=$(extract_frontmatter "$COMMANDS_DIR/mysk-spec-draft.md" "argument-hint")
-    [ "$hint" = "[topic]" ]
-}
-
-@test "mysk-spec-review has argument-hint [run_id]" {
-    local hint
-    hint=$(extract_frontmatter "$COMMANDS_DIR/mysk-spec-review.md" "argument-hint")
+    hint=$(extract_frontmatter "$COMMANDS_DIR/mysk-review.md" "argument-hint")
     [ "$hint" = "[run_id]" ]
 }
 
-@test "mysk-spec-implement has argument-hint [run_id]" {
+@test "mysk-help has empty argument-hint (nashi)" {
     local hint
-    hint=$(extract_frontmatter "$COMMANDS_DIR/mysk-spec-implement.md" "argument-hint")
-    [ "$hint" = "[run_id]" ]
-}
-
-@test "mysk-implement-start has argument-hint [run_id]" {
-    local hint
-    hint=$(extract_frontmatter "$COMMANDS_DIR/mysk-implement-start.md" "argument-hint")
-    [ "$hint" = "[run_id]" ]
-}
-
-@test "mysk-review-check has argument-hint [run_id] [path]" {
-    local hint
-    hint=$(extract_frontmatter "$COMMANDS_DIR/mysk-review-check.md" "argument-hint")
-    [ "$hint" = "[run_id] [path]" ]
-}
-
-@test "mysk-review-fix has argument-hint [run_id]" {
-    local hint
-    hint=$(extract_frontmatter "$COMMANDS_DIR/mysk-review-fix.md" "argument-hint")
-    [ "$hint" = "[run_id]" ]
-}
-
-@test "mysk-review-diffcheck has argument-hint [run_id]" {
-    local hint
-    hint=$(extract_frontmatter "$COMMANDS_DIR/mysk-review-diffcheck.md" "argument-hint")
-    [ "$hint" = "[run_id]" ]
-}
-
-@test "mysk-review-verify has argument-hint [run_id]" {
-    local hint
-    hint=$(extract_frontmatter "$COMMANDS_DIR/mysk-review-verify.md" "argument-hint")
-    [ "$hint" = "[run_id]" ]
-}
-
-@test "mysk-workflow has empty argument-hint (nashi)" {
-    local hint
-    hint=$(extract_frontmatter "$COMMANDS_DIR/mysk-workflow.md" "argument-hint")
+    hint=$(extract_frontmatter "$COMMANDS_DIR/mysk-help.md" "argument-hint")
     [ "$hint" = "$(printf '\xe3\x81\xaa\xe3\x81\x97')" ]
 }
 
-@test "mysk-cleanup has empty argument-hint (nashi)" {
+@test "mysk-reset has argument-hint [--force]" {
     local hint
-    hint=$(extract_frontmatter "$COMMANDS_DIR/mysk-cleanup.md" "argument-hint")
-    [ "$hint" = "$(printf '\xe3\x81\xaa\xe3\x81\x97')" ]
+    hint=$(extract_frontmatter "$COMMANDS_DIR/mysk-reset.md" "argument-hint")
+    [ "$hint" = "[--force]" ]
 }
 
 # ----------------------------------------------------------------------

@@ -1,25 +1,18 @@
 # FAQ / トラブルシューティング
 
-このページでは mysk の使用中によくある問題とその解決方法を説明します。
+## Q: cmux が未導入です。何が使えませんか？
 
-## cmux 関連
+**A**: `cmux` がないと `/mysk-spec` と `/mysk-review` は使えません。`/mysk-implement`、`/mysk-help`、`/mysk-reset` は引き続き使えます。
 
-### Q: cmux が未導入です。どうすればよいですか？
-
-**A**: cmux が未導入の場合、別ペイン実行コマンド（`/mysk-fixed-spec-draft`、`/mysk-fixed-spec-review`、`/mysk-spec-draft`、`/mysk-spec-review`、`/mysk-review-check`、`/mysk-review-verify`）は使用できません。メイン実行のコマンド（`/mysk-spec-implement`、`/mysk-implement-start`、`/mysk-review-fix`、`/mysk-review-diffcheck`、`/mysk-workflow`、`/mysk-cleanup`）のみ利用可能です。
-
-cmux のインストール:
 ```bash
 # macOS
+brew install tmux
 brew install cmux
-
-# Linux
-# ソースからビルドするか、各ディストリビューションのパッケージマネージャーを使用
 ```
 
-### Q: `CMUX_SOCKET_PATH` が未設定というエラーが出ます
+## Q: `CMUX_SOCKET_PATH` 未設定エラーが出ます
 
-**A**: 以下のように環境変数を設定してください。
+**A**: 次のいずれかを設定してください。
 
 ```bash
 # macOS
@@ -29,99 +22,54 @@ export CMUX_SOCKET_PATH="$HOME/Library/Application Support/cmux/cmux.sock"
 export CMUX_SOCKET_PATH="$HOME/.config/cmux/cmux.sock"
 ```
 
-シェルの設定ファイル（`.zshrc`、`.bashrc` など）に追加することを推奨します。
+## Q: old command names が `/` 補完にまだ出ます
 
-### Q: サブエージェントがタイムアウトしました
-
-**A**: サブエージェントが15分以上応答がない場合、タイムアウトの可能性があります。以下の手順で確認してください。
-
-1. サブペインを確認:
-   ```bash
-   cmux read-screen --workspace {WS_REF} --surface {SUB_SURFACE}
-   ```
-2. thinking ブロックを展開して内容を確認
-3. 必要に応じて手動で結果ファイルをコピーまたは修正
-
-## ファイル関連
-
-### Q: `review.json` や `spec-draft.md` が見つからないエラーが出ます
-
-**A**: run_id を省略した場合、現在のプロジェクト（`git rev-parse --show-toplevel`）に一致する `project_root` を持つ最新の run_id を自動選択します。手動で確認する場合は、各 run ディレクトリの `run-meta.json` を確認してください。
-
-### Q: `review.json` に `project_root` がないと言われます
-
-**A**: その `review.json` は旧バージョン形式です。`/mysk-review-fix` と `/mysk-review-verify` は `project_root` を使って finding の相対パスを解決するため、このフィールドが必須です。現在のプロジェクトで `/mysk-review-check` を再実行し、新しい `review.json` を作成してください。
-
-### Q: `~/.local/share/claude-mysk/` の中身を誤って消しました
-
-**A**: このディレクトリには成果物が保存されます。削除してもコマンド自体には影響しませんが、過去の実行結果が失われます。再度コマンドを実行して新しい run_id を作成してください。
-
-### Q: run_id を忘れました
-
-**A**: run_id の解決ルールは以下の通りです：
-
-1. 引数で run_id が指定されていればそれを使用
-2. 省略時は、現在のプロジェクト（`git rev-parse --show-toplevel`）に一致する project_root を持つ最新の run_id を自動選択
-3. 該当する run_id がない場合はエラー
-
-手動で確認する場合:
-```bash
-# 最新の run_id を確認
-ls -lt ~/.local/share/claude-mysk/ | head -5
-```
-
-### Q: `verify.json` と `verify-rerun.json` の違いは何ですか？
-
-**A**: 初回の最終確認は `verify.json`、再実行は `verify-rerun.json` に保存されます。両方が存在する場合、後続コマンドは `verify-rerun.json` を最新の真実として扱います。
-
-## CronCreate 関連
-
-### Q: CronCreate が無効化されている場合の影響は？
-
-**A**: CronCreate ツールが無効化されている場合、進捗監視が自動で行われません。サブエージェントの完了を手動で確認する必要があります。
-
-## その他
-
-### Q: スキルが見つからないエラーが出ます
-
-**A**: スキルファイルが `~/.claude/commands/` に配置されているか確認してください。
+**A**: 以前の `~/.claude/commands/` に古い `mysk-*.md` が残っています。次で置き換えてください。
 
 ```bash
-ls ~/.claude/commands/mysk-*.md
-```
-
-ファイルがない場合は、リポジトリからコピーしてください。
-
-```bash
+mkdir -p backup
+find ~/.claude/commands -maxdepth 1 -type f -name 'mysk-*.md' -exec cp {} backup/ \; 2>/dev/null || true
+find ~/.claude/commands -maxdepth 1 -type f -name 'mysk-*.md' -delete
 cp commands/*.md ~/.claude/commands/
 ```
 
-### Q: テンプレートが見つからないエラーが出ます
+## Q: run_id を忘れました
 
-**A**: テンプレートファイルが `~/.claude/templates/mysk/` に配置されているか確認してください。
+**A**: `/mysk-implement` と `/mysk-review` は、現在のプロジェクトに一致する `project_root` を持つ最新 run を自動選択します。手動確認するなら次です。
+
+```bash
+ls -lt ~/.local/share/claude-mysk/ | head -5
+```
+
+## Q: `spec.md` が見つからないと言われます
+
+**A**: まだ仕様策定が完了していません。`/mysk-spec` を実行して `spec.md` を確定させてください。
+
+## Q: `review.json` に `project_root` がないと言われます
+
+**A**: その `review.json` は旧形式です。現行フローでは `project_root` が必須です。現在のプロジェクトで `/mysk-review` を再実行して新しい review を作り直してください。
+
+## Q: `verify.json` と `verify-rerun.json` の違いは何ですか？
+
+**A**: 初回 verify は `verify.json`、再実行は `verify-rerun.json` に保存されます。両方ある場合、現行フローは `verify-rerun.json` を最新の真実として扱います。
+
+## Q: monitor やサブペインが残りました
+
+**A**: `/mysk-reset` を実行してください。強制的に確認を飛ばしたい場合は `--force` を使えます。
+
+## Q: `~/.local/share/claude-mysk/` を消してしまいました
+
+**A**: コマンド自体には影響しませんが、過去の run 成果物は失われます。必要なら `/mysk-spec` から新しい run を作り直してください。
+
+## Q: テンプレートが見つからないエラーが出ます
+
+**A**: `~/.claude/templates/mysk/` が配置されているか確認してください。
 
 ```bash
 ls ~/.claude/templates/mysk/
-```
-
-ファイルがない場合は、リポジトリからコピーしてください。
-
-```bash
 rm -rf ~/.claude/templates/mysk && ln -sfn "$(pwd)/templates/mysk" ~/.claude/templates/mysk
 ```
 
-### Q: 別ペインが閉じられません
+## Q: それでも解決しません
 
-**A**: サブペインを強制的に閉じるには以下のコマンドを使用してください。
-
-```bash
-cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit"
-sleep 1
-cmux send-key --workspace {WS_REF} --surface {SUB_SURFACE} return
-sleep 2
-cmux close-surface --workspace {WS_REF} --surface {SUB_SURFACE}
-```
-
-## それでも解決しない場合
-
-バグ報告や質問は、[GitHub Issues](https://github.com/ainoobmenpg/claude-code-myskills/issues) から作成してください。
+**A**: [GitHub Issues](https://github.com/ainoobmenpg/claude-code-myskills/issues) に状況を添えて報告してください。

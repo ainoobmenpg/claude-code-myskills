@@ -5,15 +5,21 @@ _PROJECT_HELPERS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${_PROJECT_HELPERS_DIR}/../.." && pwd)"
 COMMANDS_DIR="$PROJECT_ROOT/commands"
 TEMPLATES_DIR="$PROJECT_ROOT/templates/mysk"
+LEGACY_COMMANDS_DIR="$TEMPLATES_DIR/legacy-commands"
 
 # Get all command files
 get_command_files() {
     find "$COMMANDS_DIR" -name 'mysk-*.md' -type f | sort
 }
 
+# Get archived internal command files
+get_legacy_command_files() {
+    find "$LEGACY_COMMANDS_DIR" -name '*.md' -type f | sort
+}
+
 # Get all template files
 get_template_files() {
-    find "$TEMPLATES_DIR" -type f | sort
+    find "$TEMPLATES_DIR" -maxdepth 1 -type f | sort
 }
 
 # Extract frontmatter from a markdown file

@@ -120,45 +120,46 @@ ${line}"
 }
 
 # ----------------------------------------------------------------------
-# Test: all JSON blocks in mysk-workflow.md are parseable
+# Test: all JSON blocks in archived legacy command files are parseable
 # ----------------------------------------------------------------------
-@test "JSON blocks in mysk-workflow.md are parseable" {
-    local workflow_file="$COMMANDS_DIR/mysk-workflow.md"
+@test "JSON blocks in legacy command files are parseable" {
     local failures=""
+    while IFS= read -r cmd_file; do
+        local basename_
+        basename_=$(basename "$cmd_file")
+        local block_output
+        block_output=$(_extract_json_blocks "$cmd_file")
 
-    local block_output
-    block_output=$(_extract_json_blocks "$workflow_file")
+        [ -z "$block_output" ] && continue
 
-    [ -z "$block_output" ] && return 0
-
-    local current_block=""
-    local block_num=0
-    while IFS= read -r line; do
-        if echo "$line" | grep -q '^---BLOCK[0-9]*---$'; then
-            if [ -n "$current_block" ]; then
-                block_num=$((block_num + 1))
-                if ! _validate_json_block "$current_block"; then
-                    failures="${failures}FAIL: mysk-workflow.md block #${block_num}\n"
+        local current_block=""
+        local block_num=0
+        while IFS= read -r line; do
+            if echo "$line" | grep -q '^---BLOCK[0-9]*---$'; then
+                if [ -n "$current_block" ]; then
+                    block_num=$((block_num + 1))
+                    if ! _validate_json_block "$current_block"; then
+                        failures="${failures}FAIL: ${basename_} block #${block_num}\n"
+                    fi
+                fi
+                current_block=""
+            else
+                if [ -n "$current_block" ]; then
+                    current_block="${current_block}
+${line}"
+                else
+                    current_block="$line"
                 fi
             fi
-            current_block=""
-        else
-            if [ -n "$current_block" ]; then
-                current_block="${current_block}
-${line}"
-            else
-                current_block="$line"
+        done <<< "$block_output"
+
+        if [ -n "$current_block" ]; then
+            block_num=$((block_num + 1))
+            if ! _validate_json_block "$current_block"; then
+                failures="${failures}FAIL: ${basename_} block #${block_num}\n"
             fi
         fi
-    done <<< "$block_output"
-
-    # Handle last block
-    if [ -n "$current_block" ]; then
-        block_num=$((block_num + 1))
-        if ! _validate_json_block "$current_block"; then
-            failures="${failures}FAIL: mysk-workflow.md block #${block_num}\n"
-        fi
-    fi
+    done < <(get_legacy_command_files)
 
     if [ -n "$failures" ]; then
         echo -e "$failures"

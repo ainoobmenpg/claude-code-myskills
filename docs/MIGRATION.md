@@ -1,84 +1,45 @@
-# 移行ガイド: サブエージェント権限制限とverify状態機械統一
+# 移行ガイド
 
-## 変更内容の概要
+この版では、公開コマンド面を初心者向けに簡素化しました。主な変更は `12` 個の公開コマンドを `5` 個へ整理したことです。
 
-Issue #5（サブエージェント権限過多）と Issue #6（verify状態機械不一致）に対処するための変更です。
+## 何が変わったか
 
-### 主な変更点
+### 公開コマンド
 
-1. **サブエージェントの権限制限**
-   - `--dangerously-skip-permissions` フラグは既定で無効化（`MYSK_SKIP_PERMISSIONS=true`でopt-in可能）
-   - trust確認は検知後にユーザー操作を待機（自動承認は廃止）
-   - 環境変数 `MYSK_SKIP_PERMISSIONS` による制御
+| 旧 | 新 |
+|----|----|
+| `/mysk-spec-draft`, `/mysk-spec-review` | `/mysk-spec` |
+| `/mysk-implement-start`, `/mysk-spec-implement` | `/mysk-implement` |
+| `/mysk-review-check`, `/mysk-review-fix`, `/mysk-review-diffcheck`, `/mysk-review-verify` | `/mysk-review` |
+| `/mysk-workflow` | `/mysk-help` |
+| `/mysk-cleanup` | `/mysk-reset` |
 
-2. **verify状態機械の統一**
-   - 単一のJSON schemaファイル (`verify-schema.json`) の作成
-   - 各テンプレートからのschema参照
+### 内部実装
 
-## 互換性情報
+- 旧コマンド定義は削除ではなく `templates/mysk/legacy-commands/` へ archive
+- `spec.md` を公開フローの主入力へ戻した
+- review の fix / diffcheck / verify は `/mysk-review` の内部ルーティングに閉じ込めた
 
-### 既存ワークフローの維持範囲
-
-**維持される機能**:
-- 全てのスラッシュコマンドの引数形式
-- 各コマンドの戻り値形式
-- JSONファイルのデータ構造
-
-**変更される動作**:
-- trust確認: 自動承認 → ユーザー操作待機
-- 権限確認: 常にスキップ → 既定で制限、環境変数でopt-in
-
-### 破壊的変更（無人運用のみ）
-
-手動操作でのワークフローは引き続き機能しますが、**無人実行やtrust前提の自動運用では挙動が変わります**:
-- trust確認時にユーザー操作が必要となるため、自動パイプラインは停止します
-- 無人運用を継続する場合は `MYSK_SKIP_PERMISSIONS=true` を設定するか、Claude Codeのtrust設定を事前に完了してください
-
-## 移行手順
-
-### 1. 環境変数の設定（オプション）
-
-既存の動作（権限スキップ）を維持したい場合:
+## アップグレード手順
 
 ```bash
-export MYSK_SKIP_PERMISSIONS=true
+mkdir -p ~/.claude/commands ~/.claude/templates backup
+find ~/.claude/commands -maxdepth 1 -type f -name 'mysk-*.md' -exec cp {} backup/ \; 2>/dev/null || true
+find ~/.claude/commands -maxdepth 1 -type f -name 'mysk-*.md' -delete
+
+cp commands/*.md ~/.claude/commands/
+rm -rf ~/.claude/templates/mysk && ln -sfn "$(pwd)/templates/mysk" ~/.claude/templates/mysk
 ```
 
-### 2. テンプレートの更新
+これを行わないと、古い `mysk-*.md` が `~/.claude/commands/` に残り、`/` 補完に old command names が出続けます。
 
-新しいテンプレートは自動的に使用されます:
+## 互換性
 
-- `~/.claude/templates/mysk/cmux-launch-procedure.md`
-- `~/.claude/templates/mysk/review-verify-prompt.md`
-- `~/.claude/templates/mysk/review-verify-monitor.md`
-- `~/.claude/templates/mysk/verify-schema.json`
+- run directory の JSON 契約は継続利用
+- `verify-rerun.json` 優先などの verify state machine は継続
+- 旧 run に `fixed-spec.md` や `impl-plan.md` が残っていても、`/mysk-implement` は legacy 互換として参照可能
 
-### 3. 既存ワークフローの確認
+## 注意点
 
-以下のコマンドで動作を確認してください:
-
-```
-/mysk-spec-draft [topic]
-/mysk-review-check [run_id]
-```
-
-## 既知の問題
-
-### trust確認の待機時間
-
-trust確認時にユーザー操作が必要なため、コマンド実行時間が長くなる可能性があります。
-
-### 対処法
-
-- 無人実行が必要な場合は `MYSK_SKIP_PERMISSIONS=true` を設定してください（従来動作）
-- または、Claude Codeのtrust設定を事前に完了してください
-
-## 移行スケジュール
-
-1. **2026-03-31**: 変更のリリース
-2. **警告期間**: 2バージョン間（約2ヶ月間）
-3. **完全移行**: 警告期間経過後、権限スキップオプションの検討
-
-## サポート
-
-移行に関する問題や質問がある場合は、GitHub Issuesにて報告してください。
+- `/mysk-spec` と `/mysk-review` は `cmux`、`tmux`、CronCreate / CronDelete が必要
+- `review.json.project_root` がない旧 review artifact は現行フローで再利用できないため、`/mysk-review` で作り直す

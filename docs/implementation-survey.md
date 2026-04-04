@@ -1,186 +1,110 @@
-# 現状実装調査
+# 実装調査メモ
 
-2026-04-04 時点の `mysk` 実装を、利用者向け説明ではなく「このリポジトリが実際にどう動くか」という観点で整理したメモ。
+2026-04-04 時点の現状実装を、公開面と内部面に分けて整理したメモです。
 
-## リポジトリの性格
+## 全体像
 
-このリポジトリは通常のアプリケーションではなく、Claude Code で読み込ませる **スラッシュコマンド定義とテンプレート集** です。実装の中心はソースコードではなく Markdown にあります。
+| 層 | 場所 | 役割 |
+|----|------|------|
+| 公開コマンド層 | `commands/` | 利用者に見せる最小コマンド面 |
+| legacy 手順層 | `templates/mysk/legacy-commands/` | 旧コマンドの具体手順を archive して再利用 |
+| prompt / monitor 層 | `templates/mysk/` | cmux sub-pane に送る prompt / monitor |
+| 契約層 | `templates/mysk/verify-schema.json` | verify の判定基準 |
+| テスト層 | `tests/` | 公開面、legacy 手順、JSON 契約を Bats で検証 |
 
-主な層:
+## 公開コマンド
 
-| 層 | 主な場所 | 役割 |
-|----|----------|------|
-| コマンド層 | `commands/` | スラッシュコマンドごとの責務、引数、実行手順、入出力を定義する |
-| テンプレート層 | `templates/mysk/` | サブペインへ送る prompt と monitor prompt を定義する |
-| 契約層 | `templates/mysk/verify-schema.json` | verify の判定基準と source-of-truth を統一する |
-| テスト層 | `tests/` | frontmatter、テンプレート変数、run_id、JSON 契約、状態遷移を検証する |
-| 実験層 | `experiments/tri-arm-fixed-spec/` | fixed-spec 運用の比較実験を行う雛形 |
+| コマンド | 役割 | 主な出力 |
+|---------|------|----------|
+| `/mysk-spec` | 仕様策定の開始または再開 | `spec-draft.md`, `spec.md`, `spec-review.json`, `status.json` |
+| `/mysk-implement` | `spec.md` を主入力に実装 | プロジェクトコードの変更, `status.json` |
+| `/mysk-review` | review の開始または再開 | `review.json`, `fix-plan.md`, `diffcheck.json`, `verify*.json` |
+| `/mysk-help` | 公開フロー表示 | なし |
+| `/mysk-reset` | monitor / サブペイン掃除 | なし |
 
-## ワークフロー構成
+## legacy archive
 
-現在のワークフローは 3 つの塊に分かれています。
+`templates/mysk/legacy-commands/` には旧公開コマンドが残っています。
 
-### 1. default lane
+- `spec-draft.md`
+- `spec-review.md`
+- `implement-start.md`
+- `review-check.md`
+- `review-fix.md`
+- `review-diffcheck.md`
+- `review-verify.md`
+- そのほか fixed-spec 系と旧 help / cleanup
 
-固定仕様を先に作る標準フローです。
+これらは slash command ではなく internal playbook としてだけ使います。
 
-1. `/mysk-fixed-spec-draft`
-2. `/mysk-fixed-spec-review`
-3. `/mysk-implement-start`
-4. `/mysk-review-check`
-5. 必要に応じて `/mysk-review-fix -> /mysk-review-diffcheck -> /mysk-review-verify`
+## ルーティングの考え方
 
-### 2. discovery lane
+### `/mysk-spec`
 
-要件整理が必要なときだけ使う対話型フローです。
+- 新規 topic なら spec draft を起動
+- 既存 run に `spec.md` があれば spec review へ進める
+- `spec-review.json` の high / medium が 0 なら完了扱い
 
-1. `/mysk-spec-draft`
-2. `/mysk-spec-review`
-3. 必要なら `/mysk-spec-implement`
-4. `/mysk-implement-start`
+### `/mysk-implement`
 
-### 3. review gate
+判断優先順位は次の通りです。
 
-実装後の品質ゲートです。
+1. ユーザー指示
+2. `spec.md`
+3. repo 実態
+4. legacy 互換の `fixed-spec.md` / `impl-plan.md`
 
-- `/mysk-review-check`: サブペインでレビュー JSON を作成
-- `/mysk-review-fix`: メインセッションで修正計画と修正
-- `/mysk-review-diffcheck`: 既存指摘が直ったかを軽量確認
-- `/mysk-review-verify`: サブペインで再検証
+### `/mysk-review`
 
-## コマンド責務マップ
+- `review.json` がなければ初回 review
+- `diffcheck.json` と `verify*.json` を見て fix / diffcheck / verify を切り替える
+- ユーザー向けには常に `/mysk-review` とだけ見せる
 
-| コマンド | 主入力 | 主出力 | 実装上の要点 |
-|---------|--------|--------|-------------|
-| `/mysk-fixed-spec-draft` | topic | `fixed-spec-draft.md` | planner prompt は `AskUserQuestion` を禁止し、短い fixed-spec を作る |
-| `/mysk-fixed-spec-review` | `fixed-spec.md` か `fixed-spec-draft.md` | `fixed-spec-review.json` | reviewer が fixed-spec を短く実装可能な artifact に整える |
-| `/mysk-spec-draft` | topic | `spec-draft.md` | discovery lane。質問を許可し、`waiting_for_user` 状態を使う |
-| `/mysk-spec-review` | `spec.md` か `spec-draft.md` | `spec-review.json` | spec の完全性、明確性、一貫性、実現可能性、テスト可能性を評価する |
-| `/mysk-spec-implement` | `fixed-spec.md` か `spec.md` | `impl-plan.md` | 任意の補助計画。default lane の必須入力ではない |
-| `/mysk-implement-start` | `fixed-spec.md` / `spec.md` / `impl-plan.md` | プロジェクトコードの変更 | 情報の優先順位は「ユーザー指示 -> fixed-spec/spec -> repo 実態 -> impl-plan」 |
-| `/mysk-review-check` | Git diff または任意パス | `review.json` | `project_root` を必ず記録し、monitor がその後の検証に引き継ぐ |
-| `/mysk-review-fix` | `review.json` | `fix-plan.md` | まず計画を提示して確認を取る。`project_root` がない review はエラー |
-| `/mysk-review-diffcheck` | `review.json` と最新 verify | `diffcheck.json` | `verify-rerun.json` を優先し、`new_findings` も確認対象に含める |
-| `/mysk-review-verify` | `review.json` と任意の `diffcheck.json` | `verify.json` または `verify-rerun.json` | `verify-schema.json` を使って passed/failed を決める |
-| `/mysk-workflow` | なし | なし | `docs/workflow.md` を表示する薄い参照コマンド |
-| `/mysk-cleanup` | Cron ジョブ一覧 | なし | 監視ジョブと残存サブペインを一括で掃除する |
+## run artifacts
 
-## 共通ランタイム
+現行の run directory で重要なのは次のファイルです。
 
-### run directory
+- `run-meta.json`
+- `spec.md`
+- `spec-review.json`
+- `review.json`
+- `fix-plan.md`
+- `diffcheck.json`
+- `verify.json`
+- `verify-rerun.json`
+- `status.json`
 
-成果物は `~/.local/share/claude-mysk/{run_id}/` に保存されます。主要ファイルは次の通りです。
+legacy run では次も存在しえます。
 
-- `run-meta.json`: `run_id`、`project_root`、`created_at`、`topic`
-- `status.json`: draft/review 系 monitor が見る状態ファイル
-- `review.json`: review gate の入力。`project_root` が必須
-- `diffcheck.json`: fix 後の軽量確認結果
-- `verify.json` / `verify-rerun.json`: verify の結果
-- `timeout-grace.json`: 長時間実行時に monitor が猶予時間を延長したときだけ作る補助ファイル
+- `fixed-spec-draft.md`
+- `fixed-spec.md`
+- `fixed-spec-review.json`
+- `impl-plan.md`
 
-### run_id 解決
+## source of truth
 
-複数コマンドが同じアルゴリズムを使います。
+### 実装
 
-1. 明示的な `run_id` 引数があればそれを使う
-2. なければ `git rev-parse --show-toplevel 2>/dev/null || pwd` で `WORK_DIR` を取得する
-3. `~/.local/share/claude-mysk/` を新しい順に見て、`run-meta.json.project_root == WORK_DIR` の最初の run を選ぶ
-4. 該当がなければエラー
+現行公開フローでは `spec.md` が source of truth です。`fixed-spec.md` は legacy 互換の補助入力です。
 
-### サブペイン起動
+### review
 
-別ペイン系コマンドはすべて `templates/mysk/cmux-launch-procedure.md` を共有します。
+`review.json.project_root` が finding の相対パス解決に必要です。これがない旧 review artifact は現行 `/mysk-review` では再作成が前提です。
 
-このテンプレートが行うこと:
+### verify
 
-1. `cmux identify` で現在 workspace を特定
-2. `cmux new-split` で右ペインを作成
-3. `claude --model opus --effort high` を起動
-4. `MYSK_SKIP_PERMISSIONS=true` のときだけ `--dangerously-skip-permissions` を付ける
-5. Trust 確認を監視しつつ、Claude Code の `❯` プロンプトが出るまで待つ
-
-### monitor 登録
-
-サブペイン起動後、各コマンドは monitor テンプレートを sed で埋め込み、CronCreate に渡します。
-
-monitor の共通動作:
-
-- 完了時は **最初に CronDelete** して重複発火を防ぐ
-- その後に要約表示、AskUserQuestion、cleanup を行う
-- 長時間 `in_progress` が続く場合は 30 分基準で警告する
-- 「待機続行」を選ぶと `timeout-grace.json` に猶予期限と回数を保存する
-
-## JSON 契約
-
-### `status.json`
-
-主に draft/review 系で使います。基本状態は次の 4 つです。
-
-- `in_progress`
-- `waiting_for_user`
-- `completed`
-- `failed`
-
-monitor は `status` 欠落をプロトコル違反として扱い、エラーと cleanup に進みます。
-
-### `review.json`
-
-`/mysk-review-check` の成果物です。重要フィールド:
-
-- `status`
-- `progress`
-- `updated_at`
-- `project_root`
-- `source`
-- `summary`
-- `findings`
-
-review monitor と後続コマンドは、厳密契約に加えて `.issues`、`.location`、`.description` などのフォールバック読み取りも持っています。
-
-### `verify.json` / `verify-rerun.json`
-
-`/mysk-review-verify` の成果物です。`verify-rerun.json` が存在する場合、こちらが最新の真実です。
-
-判定基準は `templates/mysk/verify-schema.json` に集約されています。
-
-- `passed`: すべて fixed、`new_findings` なし、remaining 0
-- `failed`: high/medium/low の残存、または新規 finding、または検証エラー
-
-### `diffcheck.json`
-
-`/mysk-review-diffcheck` の成果物です。`checks[]` に既存 finding ごとの `fixed / not_fixed / unclear` 判定を持ちます。`next_step` は verify に自動で進まず、「ユーザー確認待ち」を返す設計です。
-
-## 実装上の重要ポイント
-
-### fixed-spec は first-class artifact
-
-default lane では `fixed-spec.md` が主入力です。`impl-plan.md` は optional で、`/mysk-implement-start` は fixed-spec がある前提で自己決定を優先します。
-
-### `project_root` は review 系の生命線
-
-`/mysk-review-fix`、`/mysk-review-diffcheck`、`/mysk-review-verify` は `review.json.project_root` を使って finding の相対パスを解決します。これがない旧形式 review は、現行フローでは互換扱いではなくエラーです。
-
-### source-of-truth は verify-rerun 優先
-
-verify を再実行すると `verify-rerun.json` が生成されます。後続の diffcheck や運用ドキュメントは、常に rerun を優先して解釈する必要があります。
-
-### discovery lane だけが質問前提
-
-`spec-draft-prompt.md` は質問を許可します。一方、`fixed-spec-draft-prompt.md` は `AskUserQuestion` を禁止し、情報不足は `Assumptions` か `Open Questions` として残す設計です。
+`verify-rerun.json` があれば、それを最新の真実として優先します。判定基準は `templates/mysk/verify-schema.json` に集約されています。
 
 ## テストとの対応
 
-実装の信頼性は主に Bats で担保されています。
+- `tests/unit/frontmatter.bats`: 公開コマンド面
+- `tests/unit/cross-reference.bats`: legacy 手順と template 参照
+- `tests/unit/template-vars.bats`: template 変数の埋め込み漏れ
+- `tests/integration/review-workflow-mock.bats`: review state machine
+- `tests/integration/spec-workflow-mock.bats`: spec artifact の流れ
 
-| レイヤ | 主なテスト | 見ているもの |
-|--------|-----------|-------------|
-| 静的契約 | `tests/unit/frontmatter.bats`, `tests/unit/template-vars.bats`, `tests/unit/json-schema.bats` | frontmatter、テンプレート変数、JSON サンプルの整合 |
-| ロジック単体 | `tests/unit/run-id.bats`, `tests/unit/path-resolution.bats`, `tests/unit/status-state-machine.bats` | run_id 解決、相対パス解決、状態遷移 |
-| モック統合 | `tests/integration/spec-workflow-mock.bats`, `tests/integration/review-workflow-mock.bats`, `tests/integration/verify-termination.bats` | run directory を使ったフローの接続 |
+## 実装上の含意
 
-詳細は [testing.md](testing.md) を参照。
-
-## 補足
-
-- このリポジトリの「実装」は Markdown の手順そのものなので、仕様変更時は `commands/`、`templates/mysk/`、`docs/`、`tests/` をまとめて見る必要がある
-- `README.md` と `docs/workflow.md` は利用者向けの整理であり、厳密な truth source は各コマンド定義とテンプレートにある
+- 公開面を減らしても、内部の JSON 契約と state machine は温存できる
+- 変更時は `commands/` だけでなく `templates/mysk/legacy-commands/` も読む必要がある
+- 利用者向け docs では old command names を出さず、内部 docs でのみ archive を説明するのが前提

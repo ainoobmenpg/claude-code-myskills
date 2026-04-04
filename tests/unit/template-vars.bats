@@ -8,12 +8,12 @@ load '../helpers/test-common'
 # Sub-pane command template mapping (no associative arrays for bash 3 compat)
 # Format: "command:prompt_template monitor_template"
 SUBPANE_MAP="
-mysk-fixed-spec-draft:fixed-spec-draft-prompt.md fixed-spec-draft-monitor.md
-mysk-fixed-spec-review:fixed-spec-review-prompt.md fixed-spec-review-monitor.md
-mysk-spec-draft:spec-draft-prompt.md spec-draft-monitor.md
-mysk-spec-review:spec-review-prompt.md spec-review-monitor.md
-mysk-review-check:review-check-prompt.md review-check-monitor.md
-mysk-review-verify:review-verify-prompt.md review-verify-monitor.md
+fixed-spec-draft:fixed-spec-draft-prompt.md fixed-spec-draft-monitor.md
+fixed-spec-review:fixed-spec-review-prompt.md fixed-spec-review-monitor.md
+spec-draft:spec-draft-prompt.md spec-draft-monitor.md
+spec-review:spec-review-prompt.md spec-review-monitor.md
+review-check:review-check-prompt.md review-check-monitor.md
+review-verify:review-verify-prompt.md review-verify-monitor.md
 "
 
 # ----------------------------------------------------------------------
@@ -66,9 +66,9 @@ _get_all_command_vars() {
 # Test: for each sub-pane command, every template var is substituted
 # ----------------------------------------------------------------------
 @test "fixed-spec-draft: all template vars are substituted by command" {
-    local cmd_file="$COMMANDS_DIR/mysk-fixed-spec-draft.md"
+    local cmd_file="$LEGACY_COMMANDS_DIR/fixed-spec-draft.md"
     local template_vars
-    template_vars=$(_get_all_template_vars_for_command "mysk-fixed-spec-draft")
+    template_vars=$(_get_all_template_vars_for_command "fixed-spec-draft")
 
     local cmd_vars
     cmd_vars=$(_get_all_command_vars "$cmd_file")
@@ -80,9 +80,9 @@ _get_all_command_vars() {
 }
 
 @test "fixed-spec-review: all template vars are substituted by command" {
-    local cmd_file="$COMMANDS_DIR/mysk-fixed-spec-review.md"
+    local cmd_file="$LEGACY_COMMANDS_DIR/fixed-spec-review.md"
     local template_vars
-    template_vars=$(_get_all_template_vars_for_command "mysk-fixed-spec-review")
+    template_vars=$(_get_all_template_vars_for_command "fixed-spec-review")
 
     local cmd_vars
     cmd_vars=$(_get_all_command_vars "$cmd_file")
@@ -94,9 +94,9 @@ _get_all_command_vars() {
 }
 
 @test "spec-draft: all template vars are substituted by command" {
-    local cmd_file="$COMMANDS_DIR/mysk-spec-draft.md"
+    local cmd_file="$LEGACY_COMMANDS_DIR/spec-draft.md"
     local template_vars
-    template_vars=$(_get_all_template_vars_for_command "mysk-spec-draft")
+    template_vars=$(_get_all_template_vars_for_command "spec-draft")
 
     local cmd_vars
     cmd_vars=$(_get_all_command_vars "$cmd_file")
@@ -109,9 +109,9 @@ _get_all_command_vars() {
 }
 
 @test "spec-review: all template vars are substituted by command" {
-    local cmd_file="$COMMANDS_DIR/mysk-spec-review.md"
+    local cmd_file="$LEGACY_COMMANDS_DIR/spec-review.md"
     local template_vars
-    template_vars=$(_get_all_template_vars_for_command "mysk-spec-review")
+    template_vars=$(_get_all_template_vars_for_command "spec-review")
 
     local cmd_vars
     cmd_vars=$(_get_all_command_vars "$cmd_file")
@@ -123,9 +123,9 @@ _get_all_command_vars() {
 }
 
 @test "review-check: all template vars are substituted by command" {
-    local cmd_file="$COMMANDS_DIR/mysk-review-check.md"
+    local cmd_file="$LEGACY_COMMANDS_DIR/review-check.md"
     local template_vars
-    template_vars=$(_get_all_template_vars_for_command "mysk-review-check")
+    template_vars=$(_get_all_template_vars_for_command "review-check")
 
     local cmd_vars
     cmd_vars=$(_get_all_command_vars "$cmd_file")
@@ -137,9 +137,9 @@ _get_all_command_vars() {
 }
 
 @test "review-verify: all template vars are substituted by command" {
-    local cmd_file="$COMMANDS_DIR/mysk-review-verify.md"
+    local cmd_file="$LEGACY_COMMANDS_DIR/review-verify.md"
     local template_vars
-    template_vars=$(_get_all_template_vars_for_command "mysk-review-verify")
+    template_vars=$(_get_all_template_vars_for_command "review-verify")
 
     local cmd_vars
     cmd_vars=$(_get_all_command_vars "$cmd_file")
@@ -155,27 +155,27 @@ _get_all_command_vars() {
 #       4 sub-pane commands
 # ----------------------------------------------------------------------
 @test "fixed-spec-draft substitutes {WORK_DIR} from cmux-launch-procedure" {
-    grep -q '{WORK_DIR}' "$COMMANDS_DIR/mysk-fixed-spec-draft.md"
+    grep -q '{WORK_DIR}' "$LEGACY_COMMANDS_DIR/fixed-spec-draft.md"
 }
 
 @test "fixed-spec-review substitutes {WORK_DIR} from cmux-launch-procedure" {
-    grep -q '{WORK_DIR}' "$COMMANDS_DIR/mysk-fixed-spec-review.md"
+    grep -q '{WORK_DIR}' "$LEGACY_COMMANDS_DIR/fixed-spec-review.md"
 }
 
 @test "spec-draft substitutes {WORK_DIR} from cmux-launch-procedure" {
-    grep -q '{WORK_DIR}' "$COMMANDS_DIR/mysk-spec-draft.md"
+    grep -q '{WORK_DIR}' "$LEGACY_COMMANDS_DIR/spec-draft.md"
 }
 
 @test "spec-review substitutes {WORK_DIR} from cmux-launch-procedure" {
-    grep -q '{WORK_DIR}' "$COMMANDS_DIR/mysk-spec-review.md"
+    grep -q '{WORK_DIR}' "$LEGACY_COMMANDS_DIR/spec-review.md"
 }
 
 @test "review-check substitutes {WORK_DIR} from cmux-launch-procedure" {
-    grep -q '{WORK_DIR}' "$COMMANDS_DIR/mysk-review-check.md"
+    grep -q '{WORK_DIR}' "$LEGACY_COMMANDS_DIR/review-check.md"
 }
 
 @test "review-verify substitutes {WORK_DIR} from cmux-launch-procedure" {
-    grep -q '{WORK_DIR}' "$COMMANDS_DIR/mysk-review-verify.md"
+    grep -q '{WORK_DIR}' "$LEGACY_COMMANDS_DIR/review-verify.md"
 }
 
 # ----------------------------------------------------------------------
@@ -211,7 +211,7 @@ _get_all_command_vars() {
                     found=1
                     break
                 fi
-            done < <(get_command_files)
+            done < <(get_legacy_command_files)
             if [ "$found" -eq 0 ]; then
                 failures="${failures} Unsubstituted: ${var} in ${tmpl_name}"
             fi
@@ -230,5 +230,5 @@ _get_all_command_vars() {
         # Check no sed with / delimiter for template vars
         run grep -E 's/\{[A-Z_]+\}' "$cmd_file"
         [ "$status" -ne 0 ]
-    done < <(get_command_files)
+    done < <(get_legacy_command_files)
 }
