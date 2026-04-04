@@ -1,123 +1,87 @@
 ---
-description: 仕様書を読み実装計画を作成
+description: fixed-spec/specから任意で実装計画を作成（大規模変更向け）
 argument-hint: "[run_id]"
 user-invocable: true
 ---
 
 # mysk-spec-implement
 
-`/mysk-spec-draft` が保存した仕様書を読み、実装計画を作る。このコマンドは計画作成のみを行い、コード変更は責務外。
+`fixed-spec.md` または `spec.md` を読み、**任意で** `impl-plan.md` を作る。default lane では必須ではなく、大規模変更や段階実装時の補助コマンドとして使う。
 
 ## 入力
 
-- run_id指定 or `~/.local/share/claude-mysk/`最新を自動選択
-
+- run_id 指定 or `~/.local/share/claude-mysk/` 最新を自動選択
 - **データ保存先**: `~/.local/share/claude-mysk/`
-- `WORK_DIR`: `git rev-parse --show-toplevel 2>/dev/null || pwd`（プロジェクト作業ディレクトリ）
+- `WORK_DIR`: `git rev-parse --show-toplevel 2>/dev/null || pwd`
 
 ## 読み込み対象
 
-`~/.local/share/claude-mysk/{run_id}/spec.md`
+優先順位:
+
+1. `~/.local/share/claude-mysk/{run_id}/fixed-spec.md`
+2. `~/.local/share/claude-mysk/{run_id}/spec.md`
 
 ## 出力先
 
-`~/.local/share/claude-mysk/{run_id}/impl-plan.md`（実装計画の保存）
+`~/.local/share/claude-mysk/{run_id}/impl-plan.md`
 
 ## 前提
 
-- 仕様書は `/mysk-spec-draft` の出力形式であること
-- 必須セクション: 概要、目的、利用者、ユースケース、入出力、スコープ、受け入れ条件
+- `fixed-spec.md` または `spec.md` のどちらかが存在すること
+- default lane ではこのコマンドは省略可能
+- `impl-plan.md` は fixed-spec の scope / constraints / acceptance を具体化する補助であり、仕様を拡張してはならない
 
 ## 実行ルール
 
 ### 1. run_id 解決
 
 統一アルゴリズムを使用:
-1. 引数で run_id が指定されていればそれを使用（終了）
-2. WORK_DIR を取得: `git rev-parse --show-toplevel 2>/dev/null || pwd`
+1. 引数で run_id が指定されていればそれを使用
+2. `WORK_DIR` を取得: `git rev-parse --show-toplevel 2>/dev/null || pwd`
 3. `~/.local/share/claude-mysk/` 内のディレクトリを降順ソート
-4. 各ディレクトリの run-meta.json を読み込む
-5. run-meta.json が存在しないディレクトリは候補から除外
-6. run-meta.json の project_root が WORK_DIR と一致する最初のディレクトリを選択
-7. 該当なし → エラー終了、run_id 手動指定を促す
+4. 各ディレクトリの `run-meta.json` を読み込む
+5. `project_root == WORK_DIR` の最初のディレクトリを選択
+6. 該当なしならエラー終了
 
-**補足**:
-- **run_id省略時**: カレントプロジェクト（WORK_DIR）に一致するproject_rootを持つ最新のrun_idのみを選択
-- **project_rootなしの古いrun**: 候補から除外する
-- 該当するrun_idがない場合: エラーで終了し、run_id手動指定を促す
+### 2. 仕様書確認
 
-### 2. 仕様書確認と実装計画作成
+- `fixed-spec.md` があればそれを主入力とする
+- `fixed-spec.md` がなく `spec.md` がある場合は fallback として使う
+- 両方ない場合はエラー終了
 
-- 必須セクション欠如ならエラー終了
-- 実装は行わず、実装計画のみ提示する
-- このコマンドの成果物は「実装計画」であり、コード変更は責務外とする
+### 3. 実装計画の作成方針
 
-**実装計画の作成方針（重要）**:
-
-1. **spec.mdの完全読み込み**: 仕様書の全セクションを理解し、制約条件、受け入れ条件、エッジケースをすべて把握する
-
-2. **タスクの分解粒度**: 各タスクはコードブロックレベルまで分解すること
-   - ファイルパスを明示
-   - 変更対象の行番号または関数/クラス名を特定
-   - 具体的な変更内容（追加/修正/削除）を記述
-   - 関数シグネチャ、主要なロジックの擬似コードを含める
-
-3. **実行順序の考慮**: 依存関係に基づいてフェーズ内のタスク順序を決定する
-
-4. **受け入れ条件との紐付け**: 各タスクがどの受け入れ条件に対応するか明示する
+1. 仕様書の全体を読み、制約条件、受け入れ条件、allowed paths、edge cases を把握する
+2. 各タスクはコードブロックレベルまで分解する
+3. タスクごとに対応する受け入れ条件を明示する
+4. 未確認情報は「確定 / 候補 / 調査必要」で表現する
+5. fixed-spec の scope を広げない
 
 ## 初回レスポンス形式
 
-run_id、対象仕様書、実装概要、ファイル構成、実装フェーズ（目標/タスク/受け入れ条件）を表示。
+run_id、対象仕様書、実装概要、ファイル構成、実装フェーズ（目標 / タスク / 受け入れ条件）を表示。
 
-**タスクの記述形式（コードブロックレベル）**:
+各タスクは以下を含むこと:
 
-各タスクは以下の形式で記述すること：
-
-```
+```markdown
 ### タスクN: [タスク名]
 - **対象ファイル**: `path/to/file.ts`（確定 | 候補 | 調査必要）
-- **変更箇所**: L10-30 または `functionName()`（確定 | 候補 | 調査必要）
+- **変更箇所**: `functionName()` または L10-30（確定 | 候補 | 調査必要）
 - **変更内容**: [具体的な変更内容]
 - **対応する受け入れ条件**: [AC番号]
 - **依存タスク**: [タスクID]
-- **探索キーワード**: [実装時に repo 探索で使える語]
+- **探索キーワード**: [repo探索で使う語]
 - **実装メモ**: [実装前に確認すべき点]
 - **詳細手順**:
   1. [手順1]
   2. [手順2]
-- **擬似コード/実装イメージ**:
-   ```typescript
-   // 変更後のイメージ
-   function example() {
-     // ...
-   }
-   ```
 ```
-
-**確度の定義**:
-- **確定**: spec.md または既知情報から確実に分かる（例: spec.mdにファイルパスが明記されている、または当該ファイルがrepo内に1つだけ存在する）
-- **候補**: 推測できるが、repo 探索で確認が必要（例: repo内に2つ以上の候補ファイルがある）
-- **調査必要**: spec.md だけでは分からず、repo 探索が必須（例: spec.mdに記載がなく、repo内でも候補を絞り込めていない）
-
-**重要**: 未確認情報の断定を必須にしない。「確度」フィールドを使って情報の確実性を明示すること。
 
 ## 完了後案内
 
-「実装計画作成完了。run_id: {run_id}。次ステップ: /mysk-implement-start {run_id} で実装を開始してください」と表示。
-
 ```
-次: /mysk-implement-start で実装を開始
+実装計画作成完了。run_id: {run_id}
+次: /mysk-implement-start {run_id} で実装を開始
 ```
 
-- impl-plan.md が生成された場合に出力
-- 上記条件を満たさない（エラー等）場合は案内なし
-
-## impl-plan.md 保存処理
-
-実装計画の表示内容と同じ内容を `impl-plan.md` に保存する。
-
-- 保存先: `~/.local/share/claude-mysk/{run_id}/impl-plan.md`
-- 保存形式: Markdown（表示内容と同一）
-- 保存タイミング: 実装計画作成完了時
-- 保存失敗時の処理: 警告に留め、計画表示は完了扱いとする（戻り値は成功(0)）
+`impl-plan.md` が生成された場合にのみ表示する。

@@ -86,6 +86,18 @@ _extract_all_fm_keys() {
 # ----------------------------------------------------------------------
 # Test: specific argument-hint values for specific commands
 # ----------------------------------------------------------------------
+@test "mysk-fixed-spec-draft has argument-hint [topic]" {
+    local hint
+    hint=$(extract_frontmatter "$COMMANDS_DIR/mysk-fixed-spec-draft.md" "argument-hint")
+    [ "$hint" = "[topic]" ]
+}
+
+@test "mysk-fixed-spec-review has argument-hint [run_id]" {
+    local hint
+    hint=$(extract_frontmatter "$COMMANDS_DIR/mysk-fixed-spec-review.md" "argument-hint")
+    [ "$hint" = "[run_id]" ]
+}
+
 @test "mysk-spec-draft has argument-hint [topic]" {
     local hint
     hint=$(extract_frontmatter "$COMMANDS_DIR/mysk-spec-draft.md" "argument-hint")

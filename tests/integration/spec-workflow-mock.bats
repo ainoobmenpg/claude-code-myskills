@@ -1,6 +1,6 @@
 #!/usr/bin/env bats
 # spec-workflow-mock.bats
-# Layer 3 mock E2E: spec workflow state transitions (draft -> review -> implement)
+# Layer 3 mock E2E: spec workflow state transitions
 
 load '../helpers/test-common'
 
@@ -161,6 +161,49 @@ Provide secure login/logout.
 SPEC
 }
 
+# Create a valid fixed-spec.md
+# $1: run_dir
+create_valid_fixed_spec_md() {
+    local run_dir="$1"
+    cat > "$run_dir/fixed-spec.md" <<'SPEC'
+# User Authentication fixed-spec
+
+## Goal
+Ship login/logout behavior with explicit invalid credential handling.
+
+## In-scope
+- Login
+- Logout
+- Invalid credential handling
+
+## Out-of-scope
+- Authorization
+- Password reset
+
+## Constraints
+- Preserve existing session storage behavior
+
+## Acceptance Criteria
+- AC1: Login returns token on valid credentials
+- AC2: Login returns 401 on invalid credentials
+- AC3: Logout invalidates token
+
+## Edge Cases / Failure Modes
+- Invalid credentials
+- Duplicate logout
+
+## Allowed Paths / Non-goals
+- Allowed: src/auth.ts, src/session.ts
+- Non-goal: schema changes
+
+## Test Notes
+- Existing auth tests should remain green
+
+## Assumptions
+- Token storage already exists
+SPEC
+}
+
 # ---------------------------------------------------------------------------
 # Setup / Teardown
 # ---------------------------------------------------------------------------
@@ -202,6 +245,35 @@ teardown() {
     [ -f "$run_dir/spec-draft.md" ]
 }
 
+@test "fixed-spec draft: status.json goes in_progress -> completed; monitor detects completion" {
+    local run_id="20260401-100000Z-user-auth"
+    local run_dir
+    run_dir=$(create_mock_run_dir "$TEST_TMPDIR" "$run_id")
+
+    cat > "$run_dir/fixed-spec-draft.md" <<'DRAFT'
+# User Authentication fixed-spec
+
+## Goal
+Provide secure login/logout.
+
+## In-scope
+- Login
+- Logout
+DRAFT
+
+    cat > "$run_dir/status.json" <<'STATUS'
+{
+  "status": "completed",
+  "progress": "fixed-spec 下書き作成完了",
+  "updated_at": "2026-04-01T10:02:00Z"
+}
+STATUS
+
+    [ -f "$run_dir/fixed-spec-draft.md" ]
+    run jq -r '.status' "$run_dir/status.json"
+    [ "$output" = "completed" ]
+}
+
 # ---------------------------------------------------------------------------
 # Normal flow: Review phase
 # ---------------------------------------------------------------------------
@@ -235,6 +307,39 @@ teardown() {
     # Monitor: check that findings exist
     run jq '.findings | length' "$run_dir/spec-review.json"
     [ "$output" -eq 2 ]
+}
+
+@test "fixed-spec review: fixed-spec.md exists -> fixed-spec-review.json created" {
+    local run_id="20260401-100000Z-user-auth"
+    local run_dir
+    run_dir=$(create_mock_run_dir "$TEST_TMPDIR" "$run_id")
+
+    create_valid_fixed_spec_md "$run_dir"
+    cat > "$run_dir/fixed-spec-review.json" <<'EOF'
+{
+  "version": 1,
+  "run_id": "20260401-100000Z-user-auth",
+  "summary": {
+    "overall_quality": "high",
+    "headline": "Executor can start without questions",
+    "finding_count": {"high": 0, "medium": 0, "low": 1}
+  },
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "low",
+      "section": "acceptance",
+      "title": "Add one extra test note",
+      "detail": "Could mention logout duplicate behavior",
+      "suggestion": "Add a regression note"
+    }
+  ]
+}
+EOF
+
+    [ -f "$run_dir/fixed-spec-review.json" ]
+    run jq -r '.summary.overall_quality' "$run_dir/fixed-spec-review.json"
+    [ "$output" = "high" ]
 }
 
 # ---------------------------------------------------------------------------
@@ -317,6 +422,26 @@ PLAN
     [ -f "$impl_plan_path" ]
     run grep -q "Implementation Plan" "$impl_plan_path"
     [ "$status" -eq 0 ]
+}
+
+@test "implement-start: fixed-spec.md allows execution without impl-plan.md" {
+    local run_id="20260401-100000Z-user-auth"
+    local run_dir
+    run_dir=$(create_mock_run_dir "$TEST_TMPDIR" "$run_id")
+
+    create_valid_fixed_spec_md "$run_dir"
+
+    [ -f "$run_dir/fixed-spec.md" ]
+    [ ! -f "$run_dir/impl-plan.md" ]
+
+    local executor_input=""
+    if [ -f "$run_dir/fixed-spec.md" ]; then
+        executor_input="$run_dir/fixed-spec.md"
+    elif [ -f "$run_dir/spec.md" ]; then
+        executor_input="$run_dir/spec.md"
+    fi
+
+    [ "$executor_input" = "$run_dir/fixed-spec.md" ]
 }
 
 # ---------------------------------------------------------------------------

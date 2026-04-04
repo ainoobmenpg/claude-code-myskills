@@ -9,12 +9,38 @@ load '../helpers/test-common'
 # ----------------------------------------------------------------------
 _get_template_refs_from_command() {
     local cmd_file="$1"
-    grep -oE '(cmux-launch-procedure|spec-draft-prompt|spec-draft-monitor|spec-review-prompt|spec-review-monitor|review-check-prompt|review-check-monitor|review-verify-prompt|review-verify-monitor)\.md' "$cmd_file" | sort -u
+    grep -oE '(cmux-launch-procedure|fixed-spec-draft-prompt|fixed-spec-draft-monitor|fixed-spec-review-prompt|fixed-spec-review-monitor|spec-draft-prompt|spec-draft-monitor|spec-review-prompt|spec-review-monitor|review-check-prompt|review-check-monitor|review-verify-prompt|review-verify-monitor)\.md' "$cmd_file" | sort -u
 }
 
 # ----------------------------------------------------------------------
 # Test: each sub-pane command references 3 templates that all exist
 # ----------------------------------------------------------------------
+@test "fixed-spec-draft references 3 existing templates" {
+    local refs
+    refs=$(_get_template_refs_from_command "$COMMANDS_DIR/mysk-fixed-spec-draft.md")
+    local ref_count
+    ref_count=$(echo "$refs" | wc -l | tr -d ' ')
+
+    [ "$ref_count" -eq 3 ]
+
+    for ref in $refs; do
+        [ -f "$TEMPLATES_DIR/$ref" ]
+    done
+}
+
+@test "fixed-spec-review references 3 existing templates" {
+    local refs
+    refs=$(_get_template_refs_from_command "$COMMANDS_DIR/mysk-fixed-spec-review.md")
+    local ref_count
+    ref_count=$(echo "$refs" | wc -l | tr -d ' ')
+
+    [ "$ref_count" -eq 3 ]
+
+    for ref in $refs; do
+        [ -f "$TEMPLATES_DIR/$ref" ]
+    done
+}
+
 @test "spec-draft references 3 existing templates" {
     local refs
     refs=$(_get_template_refs_from_command "$COMMANDS_DIR/mysk-spec-draft.md")
@@ -126,7 +152,7 @@ _get_template_refs_from_command() {
 # Test: sub-pane commands reference cmux-launch-procedure.md
 # ----------------------------------------------------------------------
 @test "all sub-pane commands reference cmux-launch-procedure.md" {
-    for cmd in mysk-spec-draft mysk-spec-review mysk-review-check mysk-review-verify; do
+    for cmd in mysk-fixed-spec-draft mysk-fixed-spec-review mysk-spec-draft mysk-spec-review mysk-review-check mysk-review-verify; do
         grep -q 'cmux-launch-procedure.md' "$COMMANDS_DIR/${cmd}.md"
     done
 }

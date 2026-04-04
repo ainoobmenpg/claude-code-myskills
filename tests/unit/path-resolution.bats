@@ -9,6 +9,11 @@
 #   spec.md preferred over spec-draft.md
 #   Falls back to spec-draft.md when spec.md missing
 #   Errors when neither exists
+#
+# Implement-start path resolution:
+#   fixed-spec.md preferred over spec.md
+#   Falls back to spec.md when fixed-spec.md missing
+#   Errors when neither exists
 
 load '../helpers/test-common'
 load '../helpers/fixture-loader'
@@ -34,6 +39,19 @@ find_spec_path() {
     echo "${run_dir}/spec.md"
   elif [ -f "${run_dir}/spec-draft.md" ]; then
     echo "${run_dir}/spec-draft.md"
+  else
+    echo "ERROR"
+    return 1
+  fi
+}
+
+find_executor_spec_path() {
+  local run_dir="$1"
+
+  if [ -f "${run_dir}/fixed-spec.md" ]; then
+    echo "${run_dir}/fixed-spec.md"
+  elif [ -f "${run_dir}/spec.md" ]; then
+    echo "${run_dir}/spec.md"
   else
     echo "ERROR"
     return 1
@@ -123,6 +141,33 @@ teardown() {
 
   local spec_path
   spec_path=$(find_spec_path "$RUN_DIR") && status=0 || status=$?
+
+  [ "$spec_path" = "ERROR" ]
+  [ "$status" -ne 0 ]
+}
+
+@test "implement-start prefers fixed-spec.md over spec.md" {
+  touch "${RUN_DIR}/fixed-spec.md"
+  touch "${RUN_DIR}/spec.md"
+
+  local spec_path
+  spec_path=$(find_executor_spec_path "$RUN_DIR")
+
+  [ "$spec_path" = "${RUN_DIR}/fixed-spec.md" ]
+}
+
+@test "implement-start falls back to spec.md when fixed-spec.md missing" {
+  touch "${RUN_DIR}/spec.md"
+
+  local spec_path
+  spec_path=$(find_executor_spec_path "$RUN_DIR")
+
+  [ "$spec_path" = "${RUN_DIR}/spec.md" ]
+}
+
+@test "implement-start errors when neither fixed-spec.md nor spec.md exists" {
+  local spec_path
+  spec_path=$(find_executor_spec_path "$RUN_DIR") && status=0 || status=$?
 
   [ "$spec_path" = "ERROR" ]
   [ "$status" -ne 0 ]

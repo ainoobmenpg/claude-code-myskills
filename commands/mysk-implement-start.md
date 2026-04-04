@@ -1,237 +1,175 @@
 ---
-description: impl-plan.mdを読み込み実装を実行
+description: fixed-spec.mdまたはimpl-plan.mdを読み実装を実行
 argument-hint: "[run_id]"
 user-invocable: true
 ---
 
 # mysk-implement-start
 
-`/mysk-spec-implement` が保存した impl-plan.md を読み込み、フェーズ順にコード実装を一括実行する。
+`fixed-spec.md` を主入力として実装を開始する executor 専用コマンド。`impl-plan.md` は任意の補助入力として扱う。
 
 ## 入力
 
-- run_id指定 or `~/.local/share/claude-mysk/`最新を自動選択
-
+- run_id 指定 or `~/.local/share/claude-mysk/` 最新を自動選択
 - **データ保存先**: `~/.local/share/claude-mysk/`
-- `WORK_DIR`: `git rev-parse --show-toplevel 2>/dev/null || pwd`（プロジェクト作業ディレクトリ）
+- `WORK_DIR`: `git rev-parse --show-toplevel 2>/dev/null || pwd`
 
 ## 読み込み対象
 
-`~/.local/share/claude-mysk/{run_id}/impl-plan.md`（`/mysk-spec-implement` が保存）
-`~/.local/share/claude-mysk/{run_id}/spec.md`（補助参照）
+優先順位:
+
+1. `~/.local/share/claude-mysk/{run_id}/fixed-spec.md`
+2. `~/.local/share/claude-mysk/{run_id}/spec.md`
+3. `~/.local/share/claude-mysk/{run_id}/impl-plan.md`（存在する場合のみ）
 
 ## 前提
 
-- impl-plan.md が `/mysk-spec-implement` の出力形式であること
-- impl-plan.md にはフェーズ構造（Phase N または フェーズ N）が含まれていること
+- `fixed-spec.md` または `spec.md` のどちらかが存在すること
+- default lane では `fixed-spec.md` を source of truth にする
+- `impl-plan.md` は optional。大規模変更や段階実装時だけ使う
 
 ## 実行ルール
 
 ### 情報の判断優先順位
 
-`/mysk-implement-start` は以下の優先順位で情報を判断する：
+`/mysk-implement-start` は以下の優先順位で情報を判断する:
 
-1. **ユーザーの明示指示** — 実行中の対話でユーザーが直接指示した内容
-2. **repo の実コード** — 実際のファイル、関数、型、テストの実態
-3. **spec.md の要求** — 受け入れ条件、スコープ、制約
-4. **impl-plan.md の詳細記述** — フェーズ構造、タスク意図、ファイル候補
+1. **ユーザーの明示指示**
+2. **fixed-spec.md / spec.md の要求** — scope、constraints、acceptance、allowed paths
+3. **repo の実コード** — 実際のファイル、関数、型、テストの実態
+4. **impl-plan.md の詳細記述** — ある場合のみ、順序と実装ヒントに使う
 
-`impl-plan.md` の情報が repo 実態と矛盾する場合（ファイルが存在しない、関数名が違う、行番号がずれている）、repo 実態を正とする。`impl-plan.md` は着手順序と意図のガイドとして利用するが、コードの詳細を盲信しない。
+`impl-plan.md` の情報が fixed-spec や repo 実態と矛盾する場合、fixed-spec / repo 実態を正とする。
+
+### 質問ルール
+
+- fixed-spec が存在する場合、**`max_clarification_questions = 0` を基本とする**
+- fixed-spec と repo 探索で解決できる範囲は自己決定する
+- 本当に block した場合のみ、どこが fixed-spec に欠けているかを明示して質問する
 
 ### プリフライト手順
 
-各フェーズ（または各タスク）の着手前に、以下の確認を必須とする：
+各タスク着手前に以下を行う:
 
-1. `impl-plan.md` の対象タスクを読む
-2. `spec.md` の対応箇所（受け入れ条件）を読む
+1. `fixed-spec.md` または `spec.md` の該当箇所（scope / constraints / acceptance）を読む
+2. `impl-plan.md` がある場合は対象タスクを読む
 3. repo 内で関連ファイル・類似実装・既存パターンを探す
-4. 「今回触る最小単位のファイル/関数/テスト」を決める
+4. 今回触る最小単位のファイル / 関数 / テストを決める
 5. 必要ならタスクを実行可能な粒度に再分解する
 
-プリフライトの結果、タスクが十分に具体化されていればそのまま実行する。**「そのまま実行可能」の判定**: 自己再分解の4条件（対象ファイルが曖昧、変更箇所が広すぎる、受け入れ条件との対応が弱い、擬似コードが抽象的すぎる）のいずれにも該当しないこと。具体化が不十分なら自己再分解に進む。
-
-**表示**: 再分解結果はコンソールに出力するが、ユーザーの確認は待たずに実装に進む。フェーズ完了時の `status.json` 更新だけで足跡を残す。
+具体化が不十分なら自己再分解してから進む。再分解結果はコンソールに出力するが、ユーザー確認は待たない。
 
 ### メイン実行フロー
 
-1. run_id解決、impl-plan.md 読込・存在確認
-2. impl-plan.md が存在しない場合、エラー終了
-3. **impl-plan.md の解釈と実行**:
-   - フェーズ順にコード実装を一括実行する
-   - フェーズ間のユーザー承認を省略し連続実行する
-   - エラー発生時は当該フェーズで停止しユーザーの指示を待つ
-4. 各フェーズ完了時に status.json を更新する
-5. 全フェーズ完了後、`/mysk-review-check` への案内を表示する
+1. run_id 解決、`fixed-spec.md` / `spec.md` / `impl-plan.md` の存在確認
+2. `fixed-spec.md` があれば primary input として使用
+3. `fixed-spec.md` がなく `spec.md` があれば fallback として使用
+4. `impl-plan.md` がある場合はフェーズ順で実行
+5. `impl-plan.md` がない場合は、受け入れ条件と allowed paths から最小実装 plan をその場で組み立てる
+6. エラー発生時は当該フェーズで停止し、status.json に記録する
+7. 全フェーズ完了後、review gate として `/mysk-review-check` を案内する
 
-### impl-plan.md の解釈ガイドライン
+### implementation hints の解釈
 
-**タスクの実行順序**:
+#### impl-plan.md がある場合
+
 - 依存タスクが指定されている場合、依存先を先に実行する
-- 同一フェーズ内では、記述順序を尊重する
+- 同一フェーズ内では記述順序を尊重する
+- 「調査必要」の項目は repo 探索で具体化する
 
-**粗いタスクの再分解ルール**:
+#### impl-plan.md がない場合
 
-`impl-plan.md` のタスクが以下のいずれかの状態なら、そのまま着手せず再分解する：
+fixed-spec から以下を抽出して最小実装計画を組み立てる:
 
-- 対象ファイルが曖昧（候補のみ、または未記載）
-- 変更箇所が広すぎる（ファイル全体など）
-- 受け入れ条件との対応が弱い、または未記載
-- 擬似コードが抽象的すぎる
+- 受け入れ条件
+- allowed paths
+- edge cases / failure modes
+- test notes
 
-再分解時は最低でも以下を埋める：
+最低でも以下を定めてから実装する:
 
-- 触る候補ファイル（repo 探索で特定）
-- 確認すべき既存実装（類似関数、呼び出し元など）
-- 追加/修正する関数や責務
-- 先に書くべきテストまたは検証方法
+- 変更対象ファイル候補
+- 実装順序
+- 検証方法
 - タスク完了条件
 
-再分解はコンソールに表示して実行する。ユーザーへの確認は行わない。
+### repo 探索手順
 
-**repo 探索手順**:
+- **ファイル探索**: `rg --files`
+- **類似実装探索**: `rg -n`
+- **呼び出し元探索**: 変更対象がどこから使われているかを確認
+- **テスト探索**: 関連テストを読んで期待動作を把握
+- **既存規約確認**: 近いディレクトリの責務の切り方とスタイルを確認
 
-**目的**: 弱いモデルでも自力で探索できるようにするため、以下の手順を明文化する。
+### 不明確な点の扱い
 
-`/mysk-implement-start` に以下の repo 探索手順を明文化する：
+repo 探索と `fixed-spec.md` / `spec.md` 参照でも解決できない場合:
 
-- **ファイル探索**: `rg --files` または `Glob` ツールでプロジェクトのファイル構成を把握する
-- **類似実装探索**: 同名または類似機能を持つ既存コードを `rg -n` または `Grep` ツールで探す
-- **呼び出し元探索**: 変更対象がどこから使われているかを確認する
-- **テスト探索**: 関連テストの有無を確認する。テストがあれば先に読んで期待動作を理解する
-- **既存規約確認**: 近いディレクトリのコードスタイルや責務の切り方を確認する
-
-探索はプリフライト手順の一部として実行する。
-
-**タスクの実行方法**:
-1. 対象ファイルを読み込む
-2. 変更箇所（行番号または関数名）を特定する
-3. 擬似コード/実装イメージを参考に、具体的なコードを実装する
-4. 受け入れ条件を満たしていることを確認する
-5. 次のタスクへ進む
-
-**不明確な点の扱い**:
-
-repo 探索と `spec.md` 参照でも解決できない場合の処理：
-
-1. `spec.md` を再度読み直し、見落としがないか確認する
-2. repo 内のより広い範囲を探索する
-3. 実行可能な部分から先に進め、不明箇所は残す（**「不明箇所は残す」の具体的方法**: status.jsonに「不明箇所あり」を記録し、実装完了時にユーザーへ報告する）
-4. それでも不明な場合はユーザーに質問する
+1. `fixed-spec.md` を再度読み直す
+2. `spec.md` がある場合は補助参照する
+3. repo 内のより広い範囲を探索する
+4. 実行可能な部分から先に進め、不明箇所は `status.json` に記録する
+5. それでも block した場合のみユーザーに質問する
 
 ## run_id 解決
 
 統一アルゴリズムを使用:
-1. 引数で run_id が指定されていればそれを使用（終了）
-2. WORK_DIR を取得: `git rev-parse --show-toplevel 2>/dev/null || pwd`
+1. 引数で run_id が指定されていればそれを使用
+2. `WORK_DIR` を取得: `git rev-parse --show-toplevel 2>/dev/null || pwd`
 3. `~/.local/share/claude-mysk/` 内のディレクトリを降順ソート
-4. 各ディレクトリの run-meta.json を読み込む
-5. run-meta.json が存在しないディレクトリは候補から除外
-6. run-meta.json の project_root が WORK_DIR と一致する最初のディレクトリを選択
-7. 該当なし → エラー終了、run_id 手動指定を促す
+4. 各ディレクトリの `run-meta.json` を読み込む
+5. `project_root == WORK_DIR` の最初のディレクトリを選択
+6. 該当なしならエラー終了
 
 ## エラーハンドリング
 
 - run_id ディレクトリ自体が存在しない → エラー表示して終了
-- impl-plan.md が存在しない → 「impl-plan.md が見つかりません。先に /mysk-spec-implement {run_id} で実装計画を作成してください」と表示して終了
-- impl-plan.md が空 or 読み取り不可 → エラー表示して終了
-- 実装中にエラーが発生した場合 → 当該フェーズで停止、status.json にエラー内容を記録、ユーザーに指示を仰ぐ
-
-## impl-plan.md の期待フォーマット
-
-- フェーズ見出し: `## フェーズ N` または `## Phase N` 形式（N は 1 起算の整数）
-- 各フェーズの必須セクション:
-  - 目標またはGoal
-  - タスクまたはTasks（**コードブロックレベルで分解されたタスク**）
-  - 受け入れ条件またはAcceptance Criteria（箇条書き）
-
-**タスクの記述形式**:
-
-各タスクは以下の情報を含むこと：
-
-```
-### タスクN: [タスク名]
-- **対象ファイル**: `path/to/file.ts`（確定 | 候補 | 調査必要）
-- **変更箇所**: L10-30 または `functionName()`（確定 | 候補 | 調査必要）
-- **変更内容**: [具体的な変更内容]
-- **対応する受け入れ条件**: [AC番号]
-- **依存タスク**: [タスクID]
-- **探索キーワード**: [実装時に repo 探索で使える語]
-- **実装メモ**: [実装前に確認すべき点]
-- **詳細手順**: [手順の羅列]
-- **擬似コード/実装イメージ**: [コードブロック]
-```
-
-**確度フィールドの解釈方法**:
-- 「調査必要」の項目をプリフライト手順の探索対象とする
-- 「候補」は repo 探索で確認後、正しい値に差し替える
-- 「確定」の項目はそのまま使用する
-
-解析処理はこれらのパターンを前提とし、フォーマットが著しく異なる場合は spec.md へのフォールバックまたはエラー終了とする。
+- `fixed-spec.md` と `spec.md` の両方が存在しない → 「fixed-spec.md / spec.md が見つかりません。先に /mysk-fixed-spec-draft または /mysk-spec-draft を実行してください」と表示して終了
+- `impl-plan.md` が空 or 読み取り不可 → 警告に留め、fixed-spec/spec だけで続行してよい
+- 実装中にエラーが発生した場合 → 当該フェーズで停止し、status.json にエラー内容を記録する
 
 ## status.json 進捗記録
 
 保存先: `~/.local/share/claude-mysk/{run_id}/status.json`
 
-**実行中**:
+### 実行中
+
 ```json
 {
   "status": "in_progress",
   "progress": "フェーズ 2/4 完了",
   "current_phase": 2,
   "total_phases": 4,
-  "phases": [
-    { "phase": 1, "status": "completed", "updated_at": "UTCタイムスタンプ" }
-  ],
   "updated_at": "UTCタイムスタンプ"
 }
 ```
 
-**完了時**:
+### 完了時
+
 ```json
 {
   "status": "completed",
-  "progress": "実装完了（全フェーズ完了）",
-  "current_phase": 4,
-  "total_phases": 4,
-  "phases": [
-    { "phase": 1, "status": "completed", "updated_at": "..." },
-    { "phase": 2, "status": "completed", "updated_at": "..." },
-    { "phase": 3, "status": "completed", "updated_at": "..." },
-    { "phase": 4, "status": "completed", "updated_at": "..." }
-  ],
+  "progress": "実装完了",
   "updated_at": "UTCタイムスタンプ"
 }
 ```
 
-**エラー時**:
+### エラー時
+
 ```json
 {
   "status": "failed",
   "progress": "フェーズ 3/4 でエラー: [エラー内容]",
-  "current_phase": 3,
-  "total_phases": 4,
-  "phases": [
-    { "phase": 1, "status": "completed", "updated_at": "..." },
-    { "phase": 2, "status": "completed", "updated_at": "..." },
-    { "phase": 3, "status": "failed", "error": "エラー詳細", "updated_at": "..." }
-  ],
   "updated_at": "UTCタイムスタンプ"
 }
 ```
-
-## 再実行時の挙動
-
-同一コマンド再実行時、status.json の phases 配列を参照し、status が "completed" のフェーズをスキップして次の未完了フェーズから開始する。
 
 ## 完了後案内
 
 全フェーズ完了後、以下を表示する:
 
-```
+```text
 実装完了。run_id: {run_id}
 変更ファイル: [ファイル一覧]
-次ステップ: /mysk-review-check {run_id} でレビューしてください
+次ステップ: /mysk-review-check {run_id} でレビューしてください（review gate）
 ```
-
-- 実装が完了した場合に出力
-- 上記条件を満たさない（エラー等）場合は案内なし
