@@ -65,7 +65,7 @@ graph LR
 
 - `/mysk-spec` の初回実行では `spec.md` を作成し、monitor が確認 (`はい / いいえ / 修正して`) を取ります。確定後に同じ `/mysk-spec {run_id}` を再実行して仕様レビューへ進みます。
 - `spec-review.json` に high または medium が残る場合、monitor が `spec.md` への反映可否を確認します。反映時は `spec-vN.md` バックアップを作成してから `spec.md` を更新します。
-- `/mysk-review` の初回対象は原則として現在の作業ツリー差分です。2 回目以降は `review.json` を source of truth に、修正計画、承認後の修正、`diffcheck.json`、最終 verify を順に進めます。
+- `/mysk-review` の初回対象は原則として現在の作業ツリー差分です。run に `spec.md` があれば、それも scope / acceptance の判断材料として使います。2 回目以降は `review.json` を source of truth に、修正計画、承認後の修正、`diffcheck.json`、最終 verify を順に進めます。
 
 ## コマンドごとの考え方
 
@@ -85,6 +85,7 @@ graph LR
 ### `/mysk-review`
 
 - 初回は現在の作業ツリー差分を対象に `review.json` を生成します
+- run に `spec.md` があれば、spec 逸脱や acceptance 未達も review / verify で確認します
 - 以後は run の状態を見て、内部で `fix-plan.md` 作成、承認後の修正、`diffcheck.json` 更新、最終 verify を切り替えます
 - final verify は `diffcheck.json` の remaining がすべて 0 になった後、ユーザー承認時だけ開始します
 - verify で high の未解決や新規 high が見つかった場合は完了扱いにせず停止します

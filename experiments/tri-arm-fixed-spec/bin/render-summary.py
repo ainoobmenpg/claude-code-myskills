@@ -69,6 +69,10 @@ def all_green(row):
     )
 
 
+def review_executed(row):
+    return row.get("reviewer_model") not in ("", None, "skipped")
+
+
 def metric_cell(row):
     return (
         f"patch={row.get('patch_non_empty', '1')}, "
@@ -116,6 +120,31 @@ def main() -> int:
             "repo_regression_tests_passed": sum(row_int(row, "repo_regression_tests_passed", 0) for row in arm_rows),
             "acceptance_met": sum(row_int(row, "acceptance_met", 0) for row in arm_rows),
             "total_cost_usd": sum(as_float(row.get("total_cost_usd", "")) for row in arm_rows),
+            "review_gate_passed": sum(
+                1
+                for row in arm_rows
+                if review_executed(row)
+                and row_int(row, "review_high_remaining", 99) == 0
+                and row_int(row, "review_medium_remaining", 99) == 0
+            ),
+            "hidden_fail_review_pass": sum(
+                1
+                for row in arm_rows
+                if review_executed(row)
+                and row_int(row, "hidden_tests_passed", 1) == 0
+                and row_int(row, "review_high_remaining", 99) == 0
+                and row_int(row, "review_medium_remaining", 99) == 0
+            ),
+            "hidden_pass_review_block": sum(
+                1
+                for row in arm_rows
+                if review_executed(row)
+                and row_int(row, "hidden_tests_passed", 1) == 1
+                and (
+                    row_int(row, "review_high_remaining", 99) > 0
+                    or row_int(row, "review_medium_remaining", 99) > 0
+                )
+            ),
         }
 
     ranked = sorted(
@@ -157,7 +186,7 @@ def main() -> int:
         recommendation = "No clear winner"
 
     lines = []
-    lines.append("# 3-arm Experiment Summary")
+    lines.append("# Experiment Summary")
     lines.append("")
     lines.append("## Overview")
     lines.append("")
@@ -191,13 +220,14 @@ def main() -> int:
     lines.append("")
     lines.append("## Aggregate Metrics")
     lines.append("")
-    lines.append("| Arm | all_green_tasks | patch_non_empty | allowed_paths_only | hidden_tests_passed | elapsed_minutes | clarification_questions | user_interventions | high_remaining | medium_remaining |")
-    lines.append("|-----|-----------------|-----------------|--------------------|---------------------|-----------------|-------------------------|--------------------|----------------|------------------|")
+    lines.append("| Arm | all_green_tasks | patch_non_empty | allowed_paths_only | hidden_tests_passed | review_gate_passed | hidden_fail_review_pass | hidden_pass_review_block | elapsed_minutes | clarification_questions | user_interventions | high_remaining | medium_remaining |")
+    lines.append("|-----|-----------------|-----------------|--------------------|---------------------|--------------------|--------------------------|-------------------------|-----------------|-------------------------|--------------------|----------------|------------------|")
     for arm in arms:
         metrics = arm_totals[arm["id"]]
         lines.append(
             f"| {metrics['label']} | {metrics['all_green']} | {metrics['patch_non_empty']} | "
-            f"{metrics['allowed_paths_only']} | {metrics['hidden_tests_passed']} | {metrics['elapsed_minutes']} | "
+            f"{metrics['allowed_paths_only']} | {metrics['hidden_tests_passed']} | {metrics['review_gate_passed']} | "
+            f"{metrics['hidden_fail_review_pass']} | {metrics['hidden_pass_review_block']} | {metrics['elapsed_minutes']} | "
             f"{metrics['clarification_questions']} | {metrics['user_interventions']} | "
             f"{metrics['review_high_remaining']} | {metrics['review_medium_remaining']} |"
         )
@@ -205,6 +235,8 @@ def main() -> int:
     lines.append("## Notes")
     lines.append("")
     lines.append("- `all_green_tasks` means patch is non-empty, changed paths stay within scope, visible tests pass, hidden tests pass, repo regression passes, acceptance passes, and remaining high/medium review findings are zero.")
+    lines.append("- `hidden_fail_review_pass` is a review false-negative smell: hidden tests failed but reviewer left no high/medium findings.")
+    lines.append("- `hidden_pass_review_block` is a review false-positive smell: hidden tests passed but reviewer still left high/medium findings.")
     lines.append("- Recommendation is computed by: all_green_tasks desc, patch+allowed+hidden desc, remaining high+medium asc, elapsed_minutes asc, questions+interventions asc.")
     lines.append("- If your CLI returns token/cost metadata, they remain in `scorecard.csv` for downstream analysis.")
     lines.append("")

@@ -1,0 +1,32 @@
+{
+  "experiment_id": "spec-handoff-4arm",
+  "description": "Compare brief-only, spec.md handoff, fixed-spec handoff, and stronger direct implementation.",
+  "repo_test_command": "bats tests/unit/ tests/integration/",
+  "review_model": "glm-5.1",
+  "arms": [
+    {
+      "id": "arm-1-glm47-direct",
+      "label": "GLM4.7 direct",
+      "model": "glm-4.7",
+      "prompt_kind": "direct"
+    },
+    {
+      "id": "arm-2-glm47-spec-md",
+      "label": "GLM4.7 + spec.md",
+      "model": "glm-4.7",
+      "prompt_kind": "spec_md"
+    },
+    {
+      "id": "arm-3-glm47-fixed-spec",
+      "label": "GLM4.7 + fixed spec",
+      "model": "glm-4.7",
+      "prompt_kind": "fixed_spec"
+    },
+    {
+      "id": "arm-4-glm51-direct",
+      "label": "GLM5.1 direct",
+      "model": "glm-5.1",
+      "prompt_kind": "direct"
+    }
+  ]
+}

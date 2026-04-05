@@ -35,6 +35,7 @@ graph LR
 ### `/mysk-review`
 
 - 初回は現在の作業ツリー差分を対象に review を開始する
+- `spec.md` が存在する run では、diff に加えて spec の scope / constraints / acceptance も review / verify の判断材料にする
 - 2 回目以降は `review.json`、`diffcheck.json`、`verify.json`、`verify-rerun.json` を見て続きから再開する
 - 修正フェーズの最初の応答ではコード変更を始めず、`fix-plan.md` を作って日本語で承認を取る
 - final verify は `diffcheck.json` の remaining がすべて 0 になった後、ユーザー承認時だけ開始する
@@ -88,10 +89,11 @@ graph TD
 `/mysk-review` は run の状態に応じて次を切り替えます。
 
 1. 初回 review
-2. `fix-plan.md` 作成とユーザー確認
-3. 承認後の fix
-4. diffcheck
-5. 承認後の verify
+2. spec があれば spec 整合チェック
+3. `fix-plan.md` 作成とユーザー確認
+4. 承認後の fix
+5. diffcheck
+6. 承認後の verify
 
 ユーザー向けには常に `/mysk-review` とだけ見せます。
 

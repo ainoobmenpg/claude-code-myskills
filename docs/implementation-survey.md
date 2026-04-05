@@ -60,6 +60,7 @@
 ### `/mysk-review`
 
 - `review.json` がなければ現在の作業ツリー差分を対象に初回 review
+- `spec.md` があれば、review-check / verify はそれを scope / constraints / acceptance の source of truth として追加参照する
 - 2 回目以降は `review.json` を source of truth に `fix-plan.md` を先に作る
 - 修正はユーザー承認後にだけ行い、結果を `diffcheck.json` に反映する
 - `diffcheck.json` の remaining がすべて 0 のときだけ、承認後に verify を開始する

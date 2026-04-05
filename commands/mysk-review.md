@@ -29,6 +29,7 @@ user-invocable: true
 
 - `DATA_DIR="$HOME/.local/share/claude-mysk"`
 - `RUN_DIR="$DATA_DIR/$RUN_ID"`
+- `SPEC_PATH="$RUN_DIR/spec.md"`
 - `REVIEW_JSON_PATH="$RUN_DIR/review.json"`
 - `DIFFCHECK_JSON_PATH="$RUN_DIR/diffcheck.json"`
 - `VERIFY_JSON_PATH="$RUN_DIR/verify.json"`
@@ -44,6 +45,8 @@ REVIEW_TARGET=$(git diff -- . 2>/dev/null)
 PROJECT_ROOT="$WORK_DIR"
 ```
 
+`SPEC_PATH` が存在する場合は、review と verify の追加コンテキストとして使うこと。差分レビューの主対象は current worktree diff のままだが、scope / constraints / acceptance の判定には `spec.md` を使ってよい。
+
 ## 実行ルーティング
 
 1. run_id を解決する
@@ -52,6 +55,7 @@ PROJECT_ROOT="$WORK_DIR"
 4. `review.json` があり、`verify-rerun.json` または `verify.json` の最新 `verification_result` が `passed` なら完了として扱う
 5. `diffcheck.json` があり、remaining がすべて 0 なら、最終 verify へ進むかユーザーに確認し、承認時だけ final verify を開始する
 6. それ以外は `review.json` を source of truth にして fix-plan 作成、修正、diffcheck 更新を行う
+7. `SPEC_PATH` が存在する場合、spec 逸脱、acceptance 未達、scope 超過の観点も review / verify に含める
 
 ## 初回 review フェーズ
 
@@ -71,6 +75,7 @@ for key, value in {
     "{RUN_ID}": "{RUN_ID}",
     "{REVIEW_JSON_PATH}": "{REVIEW_JSON_PATH}",
     "{PROJECT_ROOT}": "{PROJECT_ROOT}",
+    "{SPEC_PATH}": "{SPEC_PATH}",
 }.items():
     text = text.replace(key, value)
 output.write_text(text)
@@ -164,6 +169,7 @@ for key, value in {
     "{REVIEW_JSON_PATH}": "{REVIEW_JSON_PATH}",
     "{RUN_ID}": "{RUN_ID}",
     "{VERIFY_JSON_PATH}": "{VERIFY_JSON_PATH}",
+    "{SPEC_PATH}": "{SPEC_PATH}",
 }.items():
     text = text.replace(key, value)
 output.write_text(text)

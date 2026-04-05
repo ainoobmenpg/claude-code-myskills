@@ -1,12 +1,19 @@
-# 3-arm 自動比較: direct vs fixed spec vs stronger direct
+# 実装 handoff 比較: direct vs spec.md vs fixed spec vs stronger direct
 
 重ための実装タスクを、完全非対話で 3-arm 比較するための実験雛形。
 
-比較アーム:
+既定 config の比較アーム:
 
 1. `GLM4.7 direct`
 2. `GLM4.7 + fixed spec`
 3. `GLM5.1 direct`
+
+追加 config として `config.spec-handoff.json` も用意している。こちらは次を比較する。
+
+1. `GLM4.7 direct`
+2. `GLM4.7 + spec.md`
+3. `GLM4.7 + fixed spec`
+4. `GLM5.1 direct`
 
 ## benchmark v2 方針
 
@@ -35,7 +42,7 @@
 
 `/mysk-spec-draft` と `/mysk-spec-review` は確認質問が返るため、完全自動比較には向かない。
 
-この実験では `fixed spec` を事前に 1 本だけ作って凍結し、実行時の変動を消す。
+この実験では `fixed spec` または `spec.md` を事前に 1 本だけ作って凍結し、実行時の変動を消す。
 
 ## ディレクトリ構成
 
@@ -58,6 +65,7 @@ experiments/tri-arm-fixed-spec/
 
 - `task.json`
 - `brief.md`
+- `spec.md`
 - `fixed-spec.md`
 - `public-tests.sh`
 - `allowed-paths.txt`
@@ -108,10 +116,18 @@ export MYSK_EXPERIMENT_SKIP_REVIEW=true
 
 モデル名が環境依存なら `config.json` を編集する。
 
-実行:
+既定 config で実行:
 
 ```bash
 experiments/tri-arm-fixed-spec/bin/run-experiment.sh <base_commit> [task_id...]
+```
+
+`spec.md` handoff を含む 4-arm 比較を回す場合:
+
+```bash
+experiments/tri-arm-fixed-spec/bin/run-experiment.sh \
+  --config experiments/tri-arm-fixed-spec/config.spec-handoff.json \
+  <base_commit> [task_id...]
 ```
 
 `base_commit` は task ごとの target repo 上で解決される。`repo_path` を持つ task はその repo を対象に実行する。
@@ -126,7 +142,7 @@ task を省略すると `TEMPLATE` 以外の全 task を実行する。
 
 ## 出力
 
-各実行で `runs/<timestamp>-tri-arm/` を生成する。
+各実行で `runs/<timestamp>-<experiment-slug>/` を生成する。`experiment-slug` は config の `experiment_id` を filesystem-safe に正規化した値で、空になる場合は `unnamed-experiment` を使う。
 
 主な成果物:
 
@@ -161,6 +177,8 @@ Secondary:
 - `files_changed_count`
 - `lines_changed`
 - `failure_type`
+- `hidden_fail_review_pass`
+- `hidden_pass_review_block`
 
 推奨 failure type:
 
@@ -171,6 +189,17 @@ Secondary:
 - `requirement_misunderstanding`
 - `timeout`
 - `tool_error`
+
+review signal の見方:
+
+- `hidden_fail_review_pass`: hidden tests は落ちたのに reviewer が high/medium を 0 にした件数。review の見逃し臭い。
+- `hidden_pass_review_block`: hidden tests は通ったのに reviewer が high/medium を残した件数。review の過検知臭い。
+
+normalization / slug / sanitize 系の task では、hidden tests に少なくとも次を入れる。
+
+- 全無効入力で空識別子にならないか
+- fallback 後の値も同じ正規化ルールを通るか
+- 具体例と一般ルールの食い違いに引きずられていないか
 
 ## 非対話ルール
 
@@ -184,5 +213,6 @@ Secondary:
 
 - reviewer も自動化しているので、最終判断前に重要 task だけ人間レビューを追加してよい
 - `MYSK_EXPERIMENT_SKIP_REVIEW=true` の場合、review は実行せず `review.json` に skipped stub を書く
+- review gate の精度を見たい run では `MYSK_EXPERIMENT_SKIP_REVIEW` を設定しないこと
 - usage/cost の JSON 形式は CLI 実装差分があり得るため、取得できない場合は空欄で残す
 - `hidden_tests.sh` は repo に置かないこと。`$MYSK_HIDDEN_TEST_ROOT/<task_id>/hidden-tests.sh` のような repo 外パスで運用する

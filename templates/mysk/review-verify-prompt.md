@@ -14,7 +14,10 @@ cat ~/.claude/templates/mysk/verify-schema.json
 ## 検証対象
 
 レビューJSON: {REVIEW_JSON_PATH}
+仕様書: {SPEC_PATH}
 このJSONにリストされた指摘が現在のコードでどのように修正されたかを検証してください。
+
+`{SPEC_PATH}` が存在する場合は、review 指摘の再検証に加えて、`spec.md` の scope / constraints / acceptance が最終状態で満たされているかも確認してください。
 
 **重要**: review.jsonには `project_root` フィールドが含まれており、レビューが実行されたプロジェクトルートパスが指定されています。このパスを使用して、指摘内の相対ファイルパスを解決してください。
 
@@ -92,6 +95,14 @@ cat ~/.claude/templates/mysk/verify-schema.json
 - **回帰チェック**: 修正により新しい問題が発生しましたか？
 - **副作用チェック**: 関連する他のコードに影響はありますか？
 
+`{SPEC_PATH}` が存在する場合は、さらに以下を確認してください:
+- `受け入れ条件` を満たすコードまたはテスト根拠があるか
+- `範囲外` に踏み込む変更が残っていないか
+- `制約条件` に反する最終実装になっていないか
+- spec の一般ルールと例・期待値の矛盾が、最終実装側で未解決のまま残っていないか
+- sanitize / slug / 正規化 / fallback を行う箇所で、全無効入力や空入力が空の識別子・不正な path・危険な key / run id を生まないか
+- これらの観点で新しく見つかった問題は `new_findings` に追加すること
+
 ## verification_result判定基準
 
 - `passed`: すべての指摘が修正され、新規問題なし
@@ -149,4 +160,5 @@ cat ~/.claude/templates/mysk/verify-schema.json
 - 検証完了時、JSONファイルを以下のパスに保存してください:
   保存先: `{VERIFY_JSON_PATH}`
 - **画面出力は不要です。ファイルに保存するだけです。**
+- `new_findings` に spec 未達を入れる場合は、`detail` に未達の acceptance または制約名を短く書いてください。
 - ファイル保存後、「検証完了」とのみ報告してください。

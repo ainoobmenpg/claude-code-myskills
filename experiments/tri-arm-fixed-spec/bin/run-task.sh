@@ -24,6 +24,7 @@ RUN_SCHEMA_PATH="${EXP_DIR}/schema/run-output.json"
 REVIEW_SCHEMA_PATH="${EXP_DIR}/schema/review-output.json"
 PROMPT_DIRECT_PATH="${EXP_DIR}/prompts/direct.md"
 PROMPT_FIXED_SPEC_PATH="${EXP_DIR}/prompts/fixed-spec.md"
+PROMPT_SPEC_MD_PATH="${EXP_DIR}/prompts/spec-md.md"
 PROMPT_REVIEW_PATH="${EXP_DIR}/prompts/review.md"
 
 if [ ! -f "${CONFIG_PATH}" ]; then
@@ -102,6 +103,8 @@ write_impl_prompt() {
 
   if [ "${prompt_kind}" = "fixed_spec" ]; then
     cat "${PROMPT_FIXED_SPEC_PATH}" > "${output_path}"
+  elif [ "${prompt_kind}" = "spec_md" ]; then
+    cat "${PROMPT_SPEC_MD_PATH}" > "${output_path}"
   else
     cat "${PROMPT_DIRECT_PATH}" > "${output_path}"
   fi
@@ -122,6 +125,9 @@ write_impl_prompt() {
     if [ "${prompt_kind}" = "fixed_spec" ]; then
       printf '\n\n## Fixed Spec\n\n'
       cat "${TASK_DIR}/fixed-spec.md"
+    elif [ "${prompt_kind}" = "spec_md" ]; then
+      printf '\n\n## Spec\n\n'
+      cat "${TASK_DIR}/spec.md"
     fi
     printf '\n\n## Test Commands\n\n'
     printf -- '- public_task_specific: `%s`\n' "${public_test_command}"
@@ -137,9 +143,10 @@ write_impl_prompt() {
 }
 
 write_review_prompt() {
-  local arm_dir="$1"
-  local worktree="$2"
-  local output_path="$3"
+  local prompt_kind="$1"
+  local arm_dir="$2"
+  local worktree="$3"
+  local output_path="$4"
 
   cat "${PROMPT_REVIEW_PATH}" > "${output_path}"
   {
@@ -153,6 +160,13 @@ write_review_prompt() {
     printf '\n## Acceptance Criteria\n\n%s\n' "${acceptance_criteria}"
     printf '\n## Task Brief\n\n'
     cat "${TASK_DIR}/brief.md"
+    if [ "${prompt_kind}" = "fixed_spec" ] && [ -f "${TASK_DIR}/fixed-spec.md" ]; then
+      printf '\n\n## Fixed Spec\n\n'
+      cat "${TASK_DIR}/fixed-spec.md"
+    elif [ "${prompt_kind}" = "spec_md" ] && [ -f "${TASK_DIR}/spec.md" ]; then
+      printf '\n\n## Spec\n\n'
+      cat "${TASK_DIR}/spec.md"
+    fi
     printf '\n\n## Reviewer Instructions\n\n'
     printf -- '- Compare current worktree against `%s`.\n' "${BASE_COMMIT}"
     printf -- '- Inspect only changed files and their local context.\n'
@@ -400,6 +414,38 @@ for ((i=0; i<arm_count; i++)); do
     continue
   fi
 
+  if [ "${prompt_kind}" = "spec_md" ] && [ ! -f "${TASK_DIR}/spec.md" ]; then
+    echo "Missing spec.md for ${TASK_ID}" > "${arm_dir}/run.stderr.log"
+    append_score_row "$(printf '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s' \
+      "${TASK_ID}" \
+      "${arm_id}" \
+      "${start_time}" \
+      "${start_time}" \
+      "0" \
+      "0" \
+      "0" \
+      "0" \
+      "+0/-0" \
+      "0" \
+      "0" \
+      "0" \
+      "0" \
+      "0" \
+      "0" \
+      "99" \
+      "99" \
+      "99" \
+      "partial_implementation" \
+      "30" \
+      "" \
+      "" \
+      "" \
+      "${BASE_COMMIT}" \
+      "${review_model}" \
+      "$(csv_escape "Missing spec.md for ${TASK_ID}")")"
+    continue
+  fi
+
   git -C "${target_repo_root}" worktree add --detach "${worktree}" "${BASE_COMMIT}" > "${arm_dir}/worktree-add.log" 2>&1
 
   prompt_path="${arm_dir}/prompt.md"
@@ -504,7 +550,7 @@ for ((i=0; i<arm_count; i++)); do
   lines_changed="$(compute_lines_changed "${worktree}")"
 
   review_prompt_path="${arm_dir}/review-prompt.md"
-  write_review_prompt "${arm_dir}" "${worktree}" "${review_prompt_path}"
+  write_review_prompt "${prompt_kind}" "${arm_dir}" "${worktree}" "${review_prompt_path}"
   review_json="${arm_dir}/review.json"
   review_stderr="${arm_dir}/review.stderr.log"
 
