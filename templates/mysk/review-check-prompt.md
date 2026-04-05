@@ -11,6 +11,7 @@
 - `{SPEC_PATH}` が存在しない場合は、従来どおり current diff と repo 実態だけでレビューしてください。
 - 対象は current worktree diff のままです。spec を理由に unrelated な既存コード全体へ話を広げないでください。
 - prompt 内に Changed Paths / Diff Stat / Diff Patch がある場合は、それを primary context として使ってください。必要時だけ changed files の近傍や repo 実態を追加確認してください。
+- `spec.md` の `タスク種別` が `docs/text-only` の場合、Changed Paths / Diff Stat / Diff Patch を primary context とし、必要時だけ最小確認対象へ広げてください。それ以外の場合は従来通り repo 全体を確認してください。
 
 ## Diff Artifacts
 
@@ -87,7 +88,9 @@
      "run_id": "{RUN_ID}",
      "created_at": "現在のUTC時刻",
      "updated_at": "現在のUTC時刻",
+     "started_at": "現在のUTC時刻",
      "status": "in_progress",
+     "phase": "loading",
      "progress": "レビュー開始",
      "project_root": "{PROJECT_ROOT}"
    }
@@ -95,14 +98,21 @@
 
    **重要**: 初期JSONに「プロジェクトルート: {PROJECT_ROOT}」の値を使用して `project_root` フィールドを含めてください。
 
-2. **進捗更新**: 各ファイルのレビュー完了時に `status`、`progress`、`updated_at` を更新してください
+2. **進捗更新**: 各ファイルのレビュー完了時に `status`、`phase`、`progress`、`updated_at` を更新してください
    ```json
    {
      "status": "in_progress",
+     "phase": "checking",
      "progress": "src/auth.tsをレビュー中... (2/5)",
      "updated_at": "UTCタイムスタンプ"
    }
    ```
+
+   **重要**: `phase` は進行状況に応じて更新してください:
+   - `loading`: 入力の読み込み中
+   - `checking`: レビュー実施中
+   - `writing`: レビュー結果の書き込み中
+   - `completed`: レビュー完了
 
 3. **ユーザー待ち**: AskUserQuestionの前後で更新してください
    ```json
@@ -120,7 +130,11 @@
      "run_id": "{RUN_ID}",
      "created_at": "作成時のUTCタイムスタンプ",
      "updated_at": "完了時のUTCタイムスタンプ",
+     "started_at": "レビュー開始時のUTC時刻",
+     "first_artifact_at": "最初の有効artifact作成時のUTC時刻",
+     "completed_at": "完了時のUTCタイムスタンプ",
      "status": "completed",
+     "phase": "completed",
      "progress": "レビュー完了",
      "project_root": "{PROJECT_ROOT}",
      "source": {

@@ -63,6 +63,10 @@
   "version": 1,
   "run_id": "{RUN_ID}",
   "created_at": "UTCタイムスタンプ",
+  "updated_at": "UTCタイムスタンプ",
+  "started_at": "UTCタイムスタンプ",
+  "first_artifact_at": "UTCタイムスタンプ",
+  "completed_at": "UTCタイムスタンプ",
   "project_root": "{PROJECT_ROOT}",
   "source": {
     "type": "spec",
@@ -128,10 +132,18 @@
 ```json
 {
   "status": "in_progress",
+  "phase": "loading",
   "progress": "仕様書のレビューを開始",
+  "started_at": "UTCタイムスタンプ",
   "updated_at": "UTCタイムスタンプ"
 }
 ```
+
+**重要**: `phase` は進行状況に応じて更新してください:
+- `loading`: 仕様書と関連ファイルの読み込み中
+- `checking`: レビュー実施中
+- `writing`: レビュー結果の書き込み中
+- `completed`: レビュー完了
 
 ### 各セクション確認時
 
@@ -142,8 +154,11 @@ progress を適宜更新（例: "完全性チェック完了"、"明確性チェ
 ```json
 {
   "status": "completed",
+  "phase": "completed",
   "progress": "仕様書レビュー完了",
-  "updated_at": "UTCタイムスタンプ"
+  "started_at": "レビュー開始時の時刻",
+  "first_artifact_at": "最初の有効artifact作成時の時刻",
+  "completed_at": "UTCタイムスタンプ"
 }
 ```
 
