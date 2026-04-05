@@ -38,10 +38,11 @@ rm -rf ~/.claude/templates/mysk && ln -sfn "$(pwd)/templates/mysk" ~/.claude/tem
 
 - run directory の JSON 契約は継続利用
 - `verify-rerun.json` 優先などの verify state machine は継続
+- 新規の公開フローは `spec.md` を直接更新する
 - 旧 run に `spec-draft.md` が残っている場合は、`/mysk-spec` が `spec.md` へ移行してから処理する
 - `fixed-spec.md` や `impl-plan.md` は archive 扱いで、現行 `/mysk-implement` の入力には使わない
 
 ## 注意点
 
-- `/mysk-spec` と `/mysk-review` は `cmux`、`tmux`、CronCreate / CronDelete が必要
+- `/mysk-spec` と `/mysk-review` は `cmux`、`tmux`、CronList / CronCreate / CronDelete が必要
 - `review.json.project_root` がない旧 review artifact は現行フローで再利用できないため、`/mysk-review` で作り直す

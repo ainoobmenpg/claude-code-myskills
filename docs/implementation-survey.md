@@ -16,8 +16,8 @@
 
 | コマンド | 役割 | 主な出力 |
 |---------|------|----------|
-| `/mysk-spec` | 仕様策定の開始または再開 | `spec.md`, `spec-review.json`, `status.json` |
-| `/mysk-implement` | `spec.md` を主入力に実装 | プロジェクトコードの変更, `status.json` |
+| `/mysk-spec` | 仕様策定の開始または再開 | `spec.md`, `spec-review.json`, `status.json`, 必要時 `spec-vN.md` |
+| `/mysk-implement` | `spec.md` を主入力に実装 | プロジェクトコードの変更 |
 | `/mysk-review` | review の開始または再開 | `review.json`, `fix-plan.md`, `diffcheck.json`, `verify*.json` |
 | `/mysk-help` | 公開フロー表示 | なし |
 | `/mysk-reset` | monitor / サブペイン掃除 | なし |
@@ -42,7 +42,10 @@
 ### `/mysk-spec`
 
 - 新規 topic なら `spec.md` 作成を起動
+- spec prompt は `spec.md` を直接更新する
+- 旧 run に `spec-draft.md` だけがある場合のみ、互換移行として `spec.md` へコピーする
 - 既存 run に `spec.md` があれば spec review へ進める
+- spec review 指摘の反映時は `spec-vN.md` バックアップを作成する
 - `spec-review.json` の high / medium が 0 なら完了扱い
 
 ### `/mysk-implement`
@@ -56,8 +59,12 @@
 
 ### `/mysk-review`
 
-- `review.json` がなければ初回 review
-- `diffcheck.json` と `verify*.json` を見て fix / diffcheck / verify を切り替える
+- `review.json` がなければ現在の作業ツリー差分を対象に初回 review
+- 2 回目以降は `review.json` を source of truth に `fix-plan.md` を先に作る
+- 修正はユーザー承認後にだけ行い、結果を `diffcheck.json` に反映する
+- `diffcheck.json` の remaining がすべて 0 のときだけ、承認後に verify を開始する
+- `verify-rerun.json` があれば `verify.json` より優先する
+- verify で new high または未解決 high があれば停止し、medium / low だけなら `/mysk-review` に戻す
 - ユーザー向けには常に `/mysk-review` とだけ見せる
 
 ## run artifacts
@@ -67,6 +74,7 @@
 - `run-meta.json`
 - `spec.md`
 - `spec-review.json`
+- `spec-vN.md`
 - `review.json`
 - `fix-plan.md`
 - `diffcheck.json`
@@ -76,6 +84,7 @@
 
 legacy run では次も存在しえます。
 
+- `spec-draft.md`
 - `fixed-spec-draft.md`
 - `fixed-spec.md`
 - `fixed-spec-review.json`
@@ -85,7 +94,7 @@ legacy run では次も存在しえます。
 
 ### 実装
 
-現行公開フローでは `spec.md` が source of truth です。`fixed-spec.md` は legacy 互換の補助入力です。
+現行公開フローでは `spec.md` が source of truth です。`spec-vN.md` は review 反映前のバックアップで、`fixed-spec.md` は legacy 互換の補助入力です。
 
 ### review
 
@@ -107,4 +116,5 @@ legacy run では次も存在しえます。
 
 - 公開面を減らしても、内部の JSON 契約と state machine は温存できる
 - 変更時は `commands/` と `templates/mysk/*.md` を先に確認し、archive は必要時だけ読む
+- `/mysk-help` は存在するが、表示内容は実運用の 4 コマンド中心に保つ
 - 利用者向け docs では old command names を出さず、内部 docs でのみ archive を説明するのが前提

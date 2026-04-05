@@ -6,6 +6,8 @@ This file provides guidance to Claude Code when working in this repository.
 
 mysk は、初心者向けに公開フローを `仕様策定 -> 実装 -> レビュー` の 3 段階へ絞ったスキル集です。公開コマンドは 5 個だけで、runtime は `commands/` と `templates/mysk/*.md` で完結します。旧コマンド定義は `templates/mysk/legacy-commands/` に archive されています。
 
+`/mysk-help` も公開コマンドだが、表示内容は実運用の 4 コマンド (`/mysk-spec`、`/mysk-implement`、`/mysk-review`、`/mysk-reset`) を中心に要約する。
+
 ## ディレクトリ構成
 
 ```text
@@ -44,6 +46,7 @@ claude-code-myskills(cc-mysk)/
 
 - `commands/` は公開面だけを持つ
 - 実体の複雑な state machine は `commands/` と `templates/mysk/*.md` にある
+- `spec.md` が現行フローの source of truth で、`spec-vN.md` は spec review 反映時のバックアップ
 - 旧コマンド名は slash command として復活させない
 - 利用者向けドキュメントでは old command names を列挙しない
 

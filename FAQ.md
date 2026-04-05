@@ -2,7 +2,7 @@
 
 ## Q: cmux が未導入です。何が使えませんか？
 
-**A**: `cmux` がないと `/mysk-spec` と `/mysk-review` は使えません。`/mysk-implement`、`/mysk-help`、`/mysk-reset` は引き続き使えます。
+**A**: `cmux` がないと `/mysk-spec` と `/mysk-review` は使えません。`/mysk-implement` と `/mysk-help` は引き続き使えます。`/mysk-reset` は monitor 削除には使えますが、cmux surface のクローズは行えません。
 
 ```bash
 # macOS
@@ -45,7 +45,19 @@ ls -lt ~/.local/share/claude-mysk/ | head -5
 
 **A**: まだ仕様策定が完了していません。`/mysk-spec` を実行して `spec.md` を確定させてください。
 
-旧 run に `spec-draft.md` だけが残っている場合は、現行 `/mysk-spec` が `spec.md` へ移行してから続行します。
+現行フローは `spec.md` を直接更新します。旧 run に `spec-draft.md` だけが残っている場合は、現行 `/mysk-spec` が `spec.md` へ移行してから続行します。
+
+## Q: `/mysk-help` が 4 コマンドしか案内しません
+
+**A**: `mysk-help` 自体は公開コマンドですが、表示内容は実運用の 4 コマンド (`/mysk-spec`、`/mysk-implement`、`/mysk-review`、`/mysk-reset`) を中心に要約する実装です。
+
+## Q: `/mysk-review` を再実行したらすぐ修正せず、確認を求められました
+
+**A**: 現行フローではそれが正しい挙動です。`/mysk-review` はまず `fix-plan.md` を作って承認を取り、承認後にだけ修正へ進みます。`diffcheck.json` の remaining が 0 になった後も、final verify の前にもう一度確認を取ります。
+
+## Q: `spec-v1.md` のようなファイルが増えました
+
+**A**: `spec-review.json` の指摘を `spec.md` に反映する際、現行 `/mysk-spec` はバックアップとして `spec-vN.md` を作成します。`spec.md` が最新の source of truth で、`spec-vN.md` は戻り先のスナップショットです。
 
 ## Q: `review.json` に `project_root` がないと言われます
 

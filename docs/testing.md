@@ -84,7 +84,7 @@ bats tests/integration/review-workflow-mock.bats
 現在のテストは主に **静的契約とモックフロー** を見ています。次は直接は検証していません。
 
 - 実際の cmux / tmux 起動
-- CronCreate / CronDelete の実動作
+- CronList / CronCreate / CronDelete の実動作
 - Claude Code 上での live な AskUserQuestion 体験
 - ユーザープロジェクトを相手にした本番運用
 

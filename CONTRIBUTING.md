@@ -5,6 +5,7 @@
 ## 変更方針
 
 - 公開面は `mysk-spec`、`mysk-implement`、`mysk-review`、`mysk-help`、`mysk-reset` に限定する
+- `/mysk-help` 自体は公開コマンドだが、表示内容は実運用の 4 コマンド中心に保つ
 - 旧コマンドは `templates/mysk/legacy-commands/` にのみ置く
 - 公開 command から archive を runtime 参照させない
 - 利用者向け docs では old command names を slash command として見せない
