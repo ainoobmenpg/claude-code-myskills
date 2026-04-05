@@ -44,6 +44,11 @@
 - 新規 topic なら `spec.md` 作成を起動
 - spec prompt は `spec.md` を直接更新する
 - 狭いタスクでは、関連ファイルと近傍テストの最小集合から探索する前提を prompt で与える
+- `spec.md` は `最小確認対象` セクションを持ち、planner / implementer / reviewer の初期 working set を共有する
+- helper の current behavior と helper 外の前処理は混ぜない前提を prompt / review で強制する
+- spec prompt / spec-review prompt は acceptance 条件同士の打ち消し合いを禁止し、それ自体を review 観点に含める
+- 狭い docs / text-only タスクでは、spec に箇所別の literal な変更後文言を残し、共通置換パターンは補助説明へ下げる
+- spec review prompt は `status.json` と `spec-review.json` を早めに保存し、review 結果を段階的に更新する前提を持つ
 - 旧 run に `spec-draft.md` だけがある場合のみ、互換移行として `spec.md` へコピーする
 - 既存 run に `spec.md` があれば spec review へ進める
 - spec review 指摘の反映時は `spec-vN.md` バックアップを作成する
@@ -61,7 +66,11 @@
 ### `/mysk-review`
 
 - `review.json` がなければ現在の作業ツリー差分を対象に初回 review
+- 初回 review prompt には Changed Paths / Diff Stat / bounded Diff Patch を埋め込み、full diff 再探索を default にしない
 - `spec.md` があれば、review-check / verify はそれを scope / constraints / acceptance の source of truth として追加参照する
+- `spec.md` の `最小確認対象` があれば、review-check / verify はそこを最初の working set として使う
+- verify prompt には `spec.md` から抽出した acceptance / scope / constraints snapshot を埋め込み、spec にない acceptance や extra top-level field を増やさない前提を与える
+- review 系 prompt は、狭い docs / text-only タスクで共通パターンより箇所別の literal な変更後文言を優先する
 - 2 回目以降は `review.json` を source of truth に `fix-plan.md` を先に作る
 - 修正はユーザー承認後にだけ行い、結果を `diffcheck.json` に反映する
 - `diffcheck.json` の remaining がすべて 0 のときだけ、承認後に verify を開始する
@@ -74,12 +83,16 @@
 現行の run directory で重要なのは次のファイルです。
 
 - `run-meta.json`
+- `spec-launch-meta.json`
 - `spec.md`
+- `spec-review-launch-meta.json`
 - `spec-review.json`
 - `spec-vN.md`
+- `review-check-launch-meta.json`
 - `review.json`
 - `fix-plan.md`
 - `diffcheck.json`
+- `review-verify-launch-meta.json`
 - `verify.json`
 - `verify-rerun.json`
 - `status.json`
@@ -97,6 +110,10 @@ legacy run では次も存在しえます。
 ### 実装
 
 現行公開フローでは `spec.md` が source of truth です。`spec-vN.md` は review 反映前のバックアップで、`fixed-spec.md` は legacy 互換の補助入力です。
+
+### model routing
+
+現行公開フローでは `requested_model_alias` が source of truth です。`opus` / `sonnet` / `haiku` の alias を command / template に残し、`configured_runtime_model` や `resolved_runtime_model` は provider 差し替え時にも壊れないよう診断情報としてだけ保存します。
 
 ### review
 

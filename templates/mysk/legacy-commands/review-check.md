@@ -48,6 +48,7 @@ review.jsonには `project_root` フィールドに `WORK_DIR` の値を記録�
 - run_id 解決、runディレクトリ作成
 - WORK_DIR: `git rev-parse --show-toplevel 2>/dev/null || pwd`
 - `SPEC_PATH="$RUN_DIR/spec.md"` として扱う（存在する場合のみ review の追加コンテキストに使う）
+- full diff 文字列をそのまま prompt 冒頭に埋め込まず、Changed Paths / Diff Stat / bounded Diff Patch を prompt に含める
 
 **run-meta.json生成**（run_id自動解決用）:
 ```bash
@@ -79,15 +80,101 @@ done
 
 ### 3. レビュープロンプトの送信
 
-sedで置換後、一時ファイルに保存し、短い読み込み指示を送信:
+Python で prompt を描画し、Changed Paths / Diff Stat / bounded Diff Patch を埋め込んでから短い読み込み指示を送信する:
 ```bash
-sed -e "s|{REVIEW_TARGET}|$REVIEW_TARGET|g" -e "s|{RUN_ID}|$RUN_ID|g" \
-    -e "s|{REVIEW_JSON_PATH}|$REVIEW_JSON_PATH|g" -e "s|{PROJECT_ROOT}|$WORK_DIR|g" \
-    -e "s|{SPEC_PATH}|$SPEC_PATH|g" \
-  $HOME/.claude/templates/mysk/review-check-prompt.md > "/tmp/mysk-${RUN_ID}-prompt.txt"
+python3 - <<'PY'
+from pathlib import Path
+import subprocess
+
+template = Path("$HOME/.claude/templates/mysk/review-check-prompt.md").expanduser()
+output = Path("/tmp/mysk-" + "{RUN_ID}" + "-prompt.txt")
+text = template.read_text()
+spec_path = Path("{SPEC_PATH}")
+
+def run(*args):
+    return subprocess.run(args, capture_output=True, text=True, check=False).stdout
+
+def render_changed_paths():
+    tracked = run("git", "diff", "--name-only", "--", ".").splitlines()
+    untracked = run("git", "ls-files", "--others", "--exclude-standard", "--", ".").splitlines()
+    paths = sorted({p for p in tracked + untracked if p})
+    if not paths:
+        return "- (no changed paths detected)"
+    return "\n".join(f"- {p}" for p in paths)
+
+def render_diff_stat():
+    stat = run("git", "diff", "--stat", "--", ".").strip()
+    untracked = [p for p in run("git", "ls-files", "--others", "--exclude-standard", "--", ".").splitlines() if p]
+    extras = "\n".join(f"untracked {p}" for p in untracked)
+    if stat and extras:
+        return stat + "\n" + extras
+    return stat or extras or "diff stat unavailable"
+
+def render_diff_patch():
+    patch = run("git", "diff", "--binary", "--", ".")
+    root = Path.cwd()
+    for rel_path in [p for p in run("git", "ls-files", "--others", "--exclude-standard", "--", ".").splitlines() if p]:
+        patch += subprocess.run(
+            ["git", "diff", "--binary", "--no-index", "--", "/dev/null", str(root / rel_path)],
+            capture_output=True,
+            text=True,
+            check=False,
+        ).stdout
+    patch = patch.strip("\n")
+    if not patch:
+        return "_empty diff patch_"
+    truncated = False
+    lines = patch.splitlines()
+    if len(lines) > 400:
+        lines = lines[:400]
+        truncated = True
+    patch = "\n".join(lines)
+    if len(patch) > 40000:
+        patch = patch[:40000]
+        truncated = True
+    if truncated:
+        return "_diff patch truncated to first 400 lines / 40000 chars_\n\n" + patch
+    return patch
+
+def extract_markdown_section(markdown_text, heading):
+    target = f"## {heading}"
+    lines = markdown_text.splitlines()
+    collecting = False
+    collected = []
+    for line in lines:
+        if line.startswith("## "):
+            if collecting:
+                break
+            if line.strip() == target:
+                collecting = True
+                continue
+        if collecting:
+            collected.append(line)
+    section = "\n".join(collected).strip()
+    return section or f"({heading} section not found)"
+
+def render_spec_section(heading):
+    if not spec_path.is_file():
+        return "(spec.md not found)"
+    return extract_markdown_section(spec_path.read_text(), heading)
+
+for key, value in {
+    "{REVIEW_TARGET}": "git diff -- .",
+    "{RUN_ID}": "{RUN_ID}",
+    "{REVIEW_JSON_PATH}": "{REVIEW_JSON_PATH}",
+    "{PROJECT_ROOT}": "{WORK_DIR}",
+    "{SPEC_PATH}": "{SPEC_PATH}",
+    "{CHANGED_PATHS}": render_changed_paths(),
+    "{DIFF_STAT}": render_diff_stat(),
+    "{DIFF_PATCH}": render_diff_patch(),
+    "{SPEC_MINIMUM_CONTEXT}": render_spec_section("最小確認対象"),
+}.items():
+    text = text.replace(key, value)
+output.write_text(text)
+PY
 
 cmux send --workspace "$WS_REF" --surface "$SUB_SURFACE" \
-  "Read /tmp/mysk-${RUN_ID}-prompt.txt and follow all instructions in it exactly."
+  "Read /tmp/mysk-${RUN_ID}-prompt.txt. Use Changed Paths / Diff Stat / Diff Patch and 最小確認対象 as primary context, do not rediscover the whole diff unless needed, and follow the review template exactly."
 cmux send-key --workspace "$WS_REF" --surface "$SUB_SURFACE" return
 ```
 

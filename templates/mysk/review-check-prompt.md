@@ -7,8 +7,36 @@
 ## 追加コンテキスト
 
 - `{SPEC_PATH}` が存在する場合は、その `spec.md` を scope / constraints / acceptance の source of truth として使ってください。
+- `spec.md` に `最小確認対象` がある場合は、それを最初の working set として使ってください。そこに十分な根拠がある限り、repo 全体へ探索を広げないでください。
 - `{SPEC_PATH}` が存在しない場合は、従来どおり current diff と repo 実態だけでレビューしてください。
 - 対象は current worktree diff のままです。spec を理由に unrelated な既存コード全体へ話を広げないでください。
+- prompt 内に Changed Paths / Diff Stat / Diff Patch がある場合は、それを primary context として使ってください。必要時だけ changed files の近傍や repo 実態を追加確認してください。
+
+## Diff Artifacts
+
+### Changed Paths
+
+{CHANGED_PATHS}
+
+### Diff Stat
+
+```text
+{DIFF_STAT}
+```
+
+### Diff Patch
+
+```diff
+{DIFF_PATCH}
+```
+
+## Spec Snapshot
+
+### 最小確認対象スナップショット
+
+```markdown
+{SPEC_MINIMUM_CONTEXT}
+```
 
 ## JSON契約
 
@@ -150,7 +178,9 @@
 - 重要度順（high→low）に指摘を並べてください
 - 優先順位: 正確性、回帰、セキュリティ、テスト不足
 - `spec.md` がある場合は、spec 逸脱、acceptance 未達、scope 超過、制約違反を優先して見つけてください
+- `最小確認対象` がある場合は、まずその working set と Changed Paths の整合を確認し、必要になるまで探索を広げないでください
 - spec が current behavior や既存 helper の挙動を述べている場合、その記述を repo のコードやテストで裏付けてください。spec の断定を無条件に前提化しないでください。
+- helper や current behavior の説明に、helper 自体がしていない前処理・後処理が混ざっていないか確認してください。
 - 指摘数が0でもJSONを出力してください
 
 ## 重要度の運用
@@ -170,11 +200,13 @@ style-only の指摘は、正しさや要件に結びつかない限り出さな
 3. `制約条件` に反する実装になっていないか
 4. `受け入れ条件` を満たす根拠がコードまたはテストにあるか
 5. acceptance に対するテスト不足があれば指摘するか
-6. spec の一般ルールと例・期待値が食い違う場合、diff がどちらに寄っているか。その結果が spec drift や回帰を生まないか
-7. sanitize / slug / 正規化 / fallback を行う変更なら、全無効入力や空入力で空の識別子・不正な path・危険な key / run id を作らないか
-8. spec が current behavior を断定している場合、その断定自体が changed files や近傍テストと矛盾していないか
+6. `最小確認対象` に listed されたファイル・テスト・コマンドが、この diff と spec の確認対象として十分で、かつ広すぎないか
+7. spec の一般ルールと例・期待値が食い違う場合、diff がどちらに寄っているか。その結果が spec drift や回帰を生まないか
+8. sanitize / slug / 正規化 / fallback を行う変更なら、全無効入力や空入力で空の識別子・不正な path・危険な key / run id を作らないか
+9. spec が current behavior を断定している場合、その断定自体が changed files や近傍テストと矛盾していないか
+10. spec や diff の helper / current behavior 説明に、helper がしていない前処理・後処理が混ざっていないか
 
-6 から 8 は、該当する変更なら優先して確認してください。guard もテスト根拠もない場合は原則 `medium` 以上を検討してください。
+6 から 10 は、該当する変更なら優先して確認してください。guard もテスト根拠もない場合は原則 `medium` 以上を検討してください。
 
 ## 重要
 

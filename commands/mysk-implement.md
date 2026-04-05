@@ -27,7 +27,7 @@ user-invocable: true
 1. run_id を解決する
 2. `spec.md` を探す
 3. `spec.md` がない場合は、`先に /mysk-spec を実行してください` と伝えて終了する
-4. 対象 spec の scope / constraints / acceptance を読み、repo を探索して最小変更単位を決める
+4. 対象 spec の `最小確認対象` / scope / constraints / acceptance を読み、まず `最小確認対象` の working set から確認して最小変更単位を決める
 5. 必要なコード変更とテスト変更を実装する
 6. 完了したら変更ファイルと検証結果を要約し、次に `/mysk-review {run_id}` を案内する
 

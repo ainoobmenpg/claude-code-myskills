@@ -27,6 +27,41 @@ cat ~/.claude/templates/mysk/verify-schema.json
 - `status` を "failed" に設定してください
 - 検証を続行しないでください
 
+## 追加コンテキスト
+
+prompt 内に spec snapshot が埋め込まれている場合は、それを acceptance / scope / constraints / 最小確認対象 の primary context として使ってください。必要時だけ `spec.md` の周辺文脈を追加確認してください。
+
+### 最小確認対象スナップショット
+
+```markdown
+{SPEC_MINIMUM_CONTEXT}
+```
+
+### 受け入れ条件スナップショット
+
+```markdown
+{SPEC_ACCEPTANCE_CONTEXT}
+```
+
+### スコープスナップショット
+
+```markdown
+{SPEC_SCOPE_CONTEXT}
+```
+
+### 制約条件スナップショット
+
+```markdown
+{SPEC_CONSTRAINTS_CONTEXT}
+```
+
+**重要**:
+- 受け入れ条件の評価対象は、`spec.md` に実在する項目だけです。推測で acceptance を増やさないでください。
+- spec に番号がない場合、`AC1` のような新しいIDを発明せず、元の条件文や短い引用で表現してください。
+- acceptance / scope / constraints の検証結果は `verifications[].detail` または `new_findings[].detail` に書いてください。
+- `最小確認対象` がある場合は、まずその listed files / tests / commands で検証を始め、十分な根拠がある限り探索を広げないでください。
+- `spec_acceptance_check` や `spec_scope_check` など、完了時JSON形式にないトップレベルフィールドを追加しないでください。
+
 ## 状態遷移
 
 1. **開始時**: 初期JSONを保存してください
@@ -96,12 +131,14 @@ cat ~/.claude/templates/mysk/verify-schema.json
 - **副作用チェック**: 関連する他のコードに影響はありますか？
 
 `{SPEC_PATH}` が存在する場合は、さらに以下を確認してください:
-- `受け入れ条件` を満たすコードまたはテスト根拠があるか
+- `最小確認対象` がある場合、その working set で最終状態を確認できるか。追加探索が必要なら、その理由が changed files や review 指摘に紐づくか
+- `受け入れ条件` を満たすコードまたはテスト根拠があるか。評価対象は spec に実在する条件だけとし、推測で acceptance を増やさないこと
 - `範囲外` に踏み込む変更が残っていないか
 - `制約条件` に反する最終実装になっていないか
 - spec の一般ルールと例・期待値の矛盾が、最終実装側で未解決のまま残っていないか
 - sanitize / slug / 正規化 / fallback を行う箇所で、全無効入力や空入力が空の識別子・不正な path・危険な key / run id を生まないか
 - spec が current behavior を断定している場合、その断定が changed files や近傍テストと矛盾していないか
+- helper や current behavior の説明に、helper 自体がしていない前処理・後処理が混ざっていないか
 - これらの観点で新しく見つかった問題は `new_findings` に追加すること
 
 ## verification_result判定基準
@@ -112,6 +149,8 @@ cat ~/.claude/templates/mysk/verify-schema.json
 ## 完了時JSON形式
 
 **重要**: 各verificationの`severity`は、review.jsonの元指摘のseverityをそのままコピーしてください。
+
+**重要**: 完了時JSONのトップレベルフィールドは、以下の定義だけにしてください。余分なトップレベルフィールドを追加しないでください。
 
 ```json
 {
@@ -162,4 +201,5 @@ cat ~/.claude/templates/mysk/verify-schema.json
   保存先: `{VERIFY_JSON_PATH}`
 - **画面出力は不要です。ファイルに保存するだけです。**
 - `new_findings` に spec 未達を入れる場合は、`detail` に未達の acceptance または制約名を短く書いてください。
+- spec の acceptance を参照する場合は、spec に実在する条件文またはその短い引用を使ってください。新しい `AC` 番号は作らないでください。
 - ファイル保存後、「検証完了」とのみ報告してください。

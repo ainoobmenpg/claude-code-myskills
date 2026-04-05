@@ -72,21 +72,34 @@ graph LR
 ### `/mysk-spec`
 
 - Opus で対話的に要件を固めます
+- `opus` / `sonnet` / `haiku` の alias を source of truth とし、provider 固有の実モデル名は診断情報としてだけ扱います
 - spec 作成フェーズでは `spec.md` と `status.json` を段階的に更新します
 - 狭いタスクでは、関連ファイルと近傍テストの最小集合から確認し、repo 全体探索は必要時だけに寄せます
+- `spec.md` には `最小確認対象` を持たせ、最初に見るファイル・テスト・コマンドを明示します
+- helper の current behavior を書くときは、helper 本体がしていない前処理や後処理を混ぜません
+- 狭い docs / text-only タスクでは、変更箇所ごとの literal な変更後文言を spec に残し、共通パターンは補助説明にとどめます
+- `受け入れ条件` 同士が互いを打ち消さないようにし、「X 以外に変更がない」と書く場合は他の必須変更を禁止していないか確認します
 - 作成完了後は monitor が `spec.md` の確認を取り、確定後に `/mysk-spec {run_id}` の再実行で仕様レビューへ進みます
 - 仕様レビューでは `spec-review.json` を生成します
+- 仕様レビューでは `status.json` と `spec-review.json` を早めに保存し、段階的に更新します
+- 仕様レビューでは acceptance 条件同士の打ち消し合いも確認します
 - review の high / medium が 0 になるまで、同じ `/mysk-spec {run_id}` で再開します
 
 ### `/mysk-implement`
 
 - `spec.md` を source of truth として実装します
+- `最小確認対象` がある場合は、そこを最初の working set として実装判断を始めます
 - 完了後は `/mysk-review` に進みます
 
 ### `/mysk-review`
 
 - 初回は現在の作業ツリー差分を対象に `review.json` を生成します
+- review / verify の sub-pane でも `requested_model_alias` を正とし、実解決モデルは診断情報としてだけ保存します
+- 初回 review では Changed Paths / Diff Stat / bounded Diff Patch を prompt に含め、これを primary context として使います
+- run に `spec.md` の `最小確認対象` があれば、review / verify でもそれを最初の working set として使います
 - run に `spec.md` があれば、spec 逸脱や acceptance 未達も review / verify で確認します
+- 狭い docs / text-only タスクでは、review でも箇所別の literal な変更後文言を優先し、共通パターンだけで pass させません
+- verify では `spec.md` から抽出した acceptance / scope / constraints の snapshot を prompt に埋め込み、spec にない acceptance や extra field を増やさないようにします
 - 以後は run の状態を見て、内部で `fix-plan.md` 作成、承認後の修正、`diffcheck.json` 更新、最終 verify を切り替えます
 - final verify は `diffcheck.json` の remaining がすべて 0 になった後、ユーザー承認時だけ開始します
 - verify で high の未解決や新規 high が見つかった場合は完了扱いにせず停止します
@@ -143,16 +156,22 @@ export MYSK_SKIP_PERMISSIONS=true
 成果物は `~/.local/share/claude-mysk/{run_id}/` に保存されます。代表的なファイル:
 
 - `run-meta.json`
+- `spec-launch-meta.json`
+- `spec-review-launch-meta.json`
 - `spec.md`
 - `spec-review.json`
 - `spec-vN.md`
+- `review-check-launch-meta.json`
 - `review.json`
 - `fix-plan.md`
 - `diffcheck.json`
+- `review-verify-launch-meta.json`
 - `verify.json`
 - `verify-rerun.json`
 - `status.json`
 - `timeout-grace.json`
+
+`*-launch-meta.json` では `requested_model_alias` が source of truth です。`configured_runtime_model` と `resolved_runtime_model` は provider や CLI の都合で変わりうる診断情報で、workflow の routing 根拠にはしません。
 
 `run_id` を省略した `/mysk-implement` と `/mysk-review` は、現在の `project_root` に一致する最新 run を自動選択します。
 

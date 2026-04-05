@@ -10,6 +10,9 @@
 - style 指摘ではなく、正しさ・要件逸脱・回帰リスク・テスト不足を優先する
 - 正規化、slug 化、sanitize、fallback を含む変更なら、全無効入力や空入力で空の識別子・不正な path・危険な run id を作らないかを見る
 - spec / fixed-spec に一般ルールと具体例の食い違いがある場合、その矛盾を見逃さない
+- ある acceptance criterion が、他の acceptance で必要な変更を打ち消していないかを見る
+- 狭い docs / text-only タスクなら、箇所別の literal な変更後文言が spec / fixed-spec にあるか、共通パターンがそれを上書きしていないかを見る
+- spec / fixed-spec に `最小確認対象` がある場合は、それを最初の working set として使い、必要時だけ追加探索する
 - prompt に含まれる Changed Paths / Diff Stat / Diff Patch を primary input とし、repo 全体の再探索は必要時だけ行う
 - spec / fixed-spec が current behavior を断定している場合、その記述を changed files や近傍テストで確認してから採用する
 

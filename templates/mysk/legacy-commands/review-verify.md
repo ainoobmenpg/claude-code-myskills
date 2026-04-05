@@ -101,14 +101,54 @@ done
 
 ### 4. 検証プロンプト送信
 
-sedで置換後、一時ファイルに保存し、短い読み込み指示を送信:
+Python で prompt を描画し、spec snapshot を埋め込んだ上で短い読み込み指示を送信:
 ```bash
-sed -e "s|{REVIEW_JSON_PATH}|$REVIEW_JSON_PATH|g" -e "s|{RUN_ID}|$RUN_ID|g" -e "s|{VERIFY_JSON_PATH}|$VERIFY_JSON_PATH|g" \
-  -e "s|{SPEC_PATH}|$SPEC_PATH|g" \
-  $HOME/.claude/templates/mysk/review-verify-prompt.md > "/tmp/mysk-${RUN_ID}-prompt.txt"
+python3 - <<'PY'
+from pathlib import Path
+
+template = Path("$HOME/.claude/templates/mysk/review-verify-prompt.md").expanduser()
+output = Path("/tmp/mysk-" + "{RUN_ID}" + "-prompt.txt")
+text = template.read_text()
+spec_path = Path("{SPEC_PATH}")
+
+def extract_markdown_section(markdown_text, heading):
+    target = f"## {heading}"
+    lines = markdown_text.splitlines()
+    collecting = False
+    collected = []
+    for line in lines:
+        if line.startswith("## "):
+            if collecting:
+                break
+            if line.strip() == target:
+                collecting = True
+                continue
+        if collecting:
+            collected.append(line)
+    section = "\n".join(collected).strip()
+    return section or f"({heading} section not found)"
+
+def render_spec_section(heading):
+    if not spec_path.is_file():
+        return "(spec.md not found)"
+    return extract_markdown_section(spec_path.read_text(), heading)
+
+for key, value in {
+    "{REVIEW_JSON_PATH}": "{REVIEW_JSON_PATH}",
+    "{RUN_ID}": "{RUN_ID}",
+    "{VERIFY_JSON_PATH}": "{VERIFY_JSON_PATH}",
+    "{SPEC_PATH}": "{SPEC_PATH}",
+    "{SPEC_MINIMUM_CONTEXT}": render_spec_section("最小確認対象"),
+    "{SPEC_ACCEPTANCE_CONTEXT}": render_spec_section("受け入れ条件"),
+    "{SPEC_SCOPE_CONTEXT}": render_spec_section("スコープ"),
+    "{SPEC_CONSTRAINTS_CONTEXT}": render_spec_section("制約条件"),
+}.items():
+    text = text.replace(key, value)
+output.write_text(text)
+PY
 
 cmux send --workspace "$WS_REF" --surface "$SUB_SURFACE" \
-  "Read /tmp/mysk-${RUN_ID}-prompt.txt and follow all instructions in it exactly."
+  "Read /tmp/mysk-${RUN_ID}-prompt.txt. Use the provided spec snapshot and 最小確認対象 as primary context, do not invent acceptance IDs or extra top-level fields, and follow the verify template exactly."
 cmux send-key --workspace "$WS_REF" --surface "$SUB_SURFACE" return
 ```
 

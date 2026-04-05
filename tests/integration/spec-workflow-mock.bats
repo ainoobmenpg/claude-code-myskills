@@ -46,6 +46,10 @@ End users and administrators.
 - Input: credentials
 - Output: session token
 
+## 最小確認対象
+- src/auth.ts: login/logout behavior
+- tests/auth.bats: auth regression
+
 ## スコープ
 ### 範囲内
 Authentication flow
@@ -131,6 +135,10 @@ End users and administrators.
 ## 入出力
 - Input: credentials (username + password)
 - Output: JWT session token
+
+## 最小確認対象
+- src/auth.ts: login/logout behavior
+- tests/auth.bats: invalid credential handling
 
 ## スコープ
 ### 範囲内
@@ -391,7 +399,7 @@ EOF
     create_valid_spec_md "$run_dir"
 
     # Verify all required sections are present
-    local required_sections="概要 目的 利用者 ユースケース 入出力 スコープ 受け入れ条件"
+    local required_sections="概要 目的 利用者 ユースケース 入出力 最小確認対象 スコープ 受け入れ条件"
     for section in $required_sections; do
         run grep -q "## $section" "$run_dir/spec.md"
         [ "$status" -eq 0 ]
@@ -533,7 +541,7 @@ META
     create_valid_spec_md "$run_dir"
 
     # Verify all required sections are present
-    local required_sections="概要 目的 利用者 ユースケース 入出力 スコープ 受け入れ条件"
+    local required_sections="概要 目的 利用者 ユースケース 入出力 最小確認対象 スコープ 受け入れ条件"
     for section in $required_sections; do
         run grep -q "## $section" "$run_dir/spec.md"
         [ "$status" -eq 0 ]
@@ -594,7 +602,7 @@ PLAN
     create_incomplete_spec_md "$run_dir"
 
     # Check required sections
-    local required_sections="利用者 ユースケース 入出力 スコープ 受け入れ条件"
+    local required_sections="利用者 ユースケース 入出力 最小確認対象 スコープ 受け入れ条件"
     local missing=0
     for section in $required_sections; do
         if ! grep -q "## $section" "$run_dir/spec.md"; then
@@ -602,6 +610,6 @@ PLAN
         fi
     done
 
-    # 5 sections should be missing
-    [ "$missing" -eq 5 ]
+    # 6 sections should be missing
+    [ "$missing" -eq 6 ]
 }

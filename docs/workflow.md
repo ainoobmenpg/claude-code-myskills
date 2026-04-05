@@ -29,14 +29,25 @@ graph LR
 - run_id を渡すとその run の仕様策定を再開する
 - spec 作成フェーズでは `spec.md` を直接更新し、完了時に monitor が `はい / いいえ / 修正して` で確認する
 - 狭いタスクでは、関連ファイルと近傍テストの最小集合を先に当て、repo 全体探索は必要時だけに寄せる
+- `spec.md` には `最小確認対象` を持たせ、planner / implementer / reviewer が最初に見る working set を共有する
+- sub-pane 起動時の model routing は alias (`opus` / `sonnet` / `haiku`) を正とし、provider 固有の実モデル名は診断情報としてだけ扱う
+- helper の current behavior を書くときは、helper 本体がしていない前処理や後処理を混ぜない
+- 狭い docs / text-only タスクでは、変更箇所ごとの literal な変更後文言を spec に残し、共通パターンは補助説明として扱う
+- `受け入れ条件` 同士が互いを打ち消さないようにし、「X 以外に変更がない」のような条件は他の必須変更を禁止しない形にする
 - `spec.md` が確定したら、同じ `/mysk-spec {run_id}` の再実行で spec review に進む
+- spec review では `status.json` と `spec-review.json` を先に保存し、review 結果を段階的に更新する
 - `spec-review.json` の high / medium が残る場合は、monitor が `spec.md` への反映可否を確認する
 - 反映時は `spec-vN.md` バックアップを作ってから `spec.md` を更新し、同じコマンドを再実行して再レビューする
 
 ### `/mysk-review`
 
 - 初回は現在の作業ツリー差分を対象に review を開始する
+- 初回 review では Changed Paths / Diff Stat / bounded Diff Patch を prompt に含め、これを primary context とする
+- `spec.md` に `最小確認対象` がある場合は、review / verify もそれを最初の working set とする
 - `spec.md` が存在する run では、diff に加えて spec の scope / constraints / acceptance も review / verify の判断材料にする
+- spec / fixed-spec では acceptance 条件同士の打ち消し合いも review 対象に含める
+- 狭い docs / text-only タスクでは、review も箇所別の literal な変更後文言を優先し、共通パターンだけでは十分とみなさない
+- verify では `spec.md` の acceptance / scope / constraints snapshot を prompt に埋め込み、spec に存在しない acceptance や extra field を増やさない
 - 2 回目以降は `review.json`、`diffcheck.json`、`verify.json`、`verify-rerun.json` を見て続きから再開する
 - 修正フェーズの最初の応答ではコード変更を始めず、`fix-plan.md` を作って日本語で承認を取る
 - final verify は `diffcheck.json` の remaining がすべて 0 になった後、ユーザー承認時だけ開始する
@@ -103,12 +114,16 @@ graph TD
 ```text
 ~/.local/share/claude-mysk/{run_id}/
 ├── run-meta.json
+├── spec-launch-meta.json
 ├── spec.md
+├── spec-review-launch-meta.json
 ├── spec-review.json
 ├── spec-vN.md
+├── review-check-launch-meta.json
 ├── review.json
 ├── fix-plan.md
 ├── diffcheck.json
+├── review-verify-launch-meta.json
 ├── verify.json
 ├── verify-rerun.json
 ├── status.json
@@ -128,6 +143,7 @@ graph TD
 ## 運用上の注意
 
 - `/mysk-spec` と `/mysk-review` には `cmux`、`tmux`、CronList / CronCreate / CronDelete が必要
+- `*-launch-meta.json` の `requested_model_alias` が workflow 上の正で、`configured_runtime_model` / `resolved_runtime_model` は診断用です
 - `/mysk-reset` は CronList / CronDelete を使い、workspace / surface が取れたときだけ cmux surface も閉じる
 - 旧コマンドは archive 済みなので、利用者向けドキュメントや案内では slash command として列挙しない
 - old run を扱うときも、ユーザーへの案内は新しい公開コマンド名へ統一する
