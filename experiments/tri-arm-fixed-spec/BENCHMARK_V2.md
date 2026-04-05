@@ -166,6 +166,8 @@ runner は作業 worktree に対してこの script を実行する。agent prom
 2. prompt, stdout, stderr, run.json を保存
 3. timeout で止まったら `failure_type=timeout`
 
+reviewer には full repo 再探索を期待しすぎず、最低限 changed paths、`diff.stat`、必要なら bounded `diff.patch` を prompt に含める。これで timeout を減らし、spec drift の検出を prompt 側に寄せる。
+
 ### 生成後の機械判定
 
 1. `git diff --quiet`
@@ -226,6 +228,7 @@ review は primary ではなく secondary。
 
 - spec の一般ルールと具体例の内部矛盾を見逃す
 - sanitize / slug の退化ケースを low に寄せすぎる
+- full context を渡しすぎると遅くなり、review 自体が timeout しやすい
 
 したがって、これらは reviewer 任せにせず hidden tests と task 設計で先に塞ぐ。
 

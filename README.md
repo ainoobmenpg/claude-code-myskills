@@ -73,6 +73,7 @@ graph LR
 
 - Opus で対話的に要件を固めます
 - spec 作成フェーズでは `spec.md` と `status.json` を段階的に更新します
+- 狭いタスクでは、関連ファイルと近傍テストの最小集合から確認し、repo 全体探索は必要時だけに寄せます
 - 作成完了後は monitor が `spec.md` の確認を取り、確定後に `/mysk-spec {run_id}` の再実行で仕様レビューへ進みます
 - 仕様レビューでは `spec-review.json` を生成します
 - review の high / medium が 0 になるまで、同じ `/mysk-spec {run_id}` で再開します

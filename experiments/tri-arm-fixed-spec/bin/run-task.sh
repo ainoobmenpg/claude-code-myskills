@@ -147,6 +147,14 @@ write_review_prompt() {
   local arm_dir="$2"
   local worktree="$3"
   local output_path="$4"
+  local changed_paths_file="$5"
+  local diff_stat_path="$6"
+  local diff_patch="$7"
+  local diff_patch_size=0
+
+  if [ -f "${diff_patch}" ]; then
+    diff_patch_size="$(wc -c < "${diff_patch}" | tr -d ' ')"
+  fi
 
   cat "${PROMPT_REVIEW_PATH}" > "${output_path}"
   {
@@ -167,9 +175,40 @@ write_review_prompt() {
       printf '\n\n## Spec\n\n'
       cat "${TASK_DIR}/spec.md"
     fi
+    printf '\n\n## Changed Paths\n\n'
+    if [ -s "${changed_paths_file}" ]; then
+      sed 's/^/- /' "${changed_paths_file}"
+    else
+      printf -- '- (no changed paths detected)\n'
+    fi
+    printf '\n## Diff Stat\n\n```text\n'
+    if [ -s "${diff_stat_path}" ]; then
+      cat "${diff_stat_path}"
+    else
+      printf 'diff stat unavailable\n'
+    fi
+    printf '```\n'
+    printf '\n## Diff Patch\n\n'
+    if [ -s "${diff_patch}" ]; then
+      if [ "${diff_patch_size}" -le 40000 ]; then
+        printf '```diff\n'
+        cat "${diff_patch}"
+        printf '```\n'
+      else
+        printf '_diff patch truncated to first 400 lines / 40000 bytes_\n\n'
+        printf '```diff\n'
+        sed -n '1,400p' "${diff_patch}" | head -c 40000
+        printf '\n```\n'
+      fi
+    else
+      printf '_empty diff patch_\n'
+    fi
     printf '\n\n## Reviewer Instructions\n\n'
     printf -- '- Compare current worktree against `%s`.\n' "${BASE_COMMIT}"
     printf -- '- Inspect only changed files and their local context.\n'
+    printf -- '- Use the Changed Paths / Diff Stat / Diff Patch above as primary context.\n'
+    printf -- '- Do not rediscover the whole repo diff if the prompt-provided artifacts are sufficient.\n'
+    printf -- '- If spec text describes current repo behavior, verify that claim against changed-file context or nearby tests before treating it as ground truth.\n'
     printf -- '- If no remaining issue exists, return zero counts.\n'
   } >> "${output_path}"
 }
@@ -550,7 +589,7 @@ for ((i=0; i<arm_count; i++)); do
   lines_changed="$(compute_lines_changed "${worktree}")"
 
   review_prompt_path="${arm_dir}/review-prompt.md"
-  write_review_prompt "${prompt_kind}" "${arm_dir}" "${worktree}" "${review_prompt_path}"
+  write_review_prompt "${prompt_kind}" "${arm_dir}" "${worktree}" "${review_prompt_path}" "${changed_paths_file}" "${diff_stat_path}" "${diff_patch}"
   review_json="${arm_dir}/review.json"
   review_stderr="${arm_dir}/review.stderr.log"
 

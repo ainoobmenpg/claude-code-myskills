@@ -101,6 +101,7 @@ cat ~/.claude/templates/mysk/verify-schema.json
 - `制約条件` に反する最終実装になっていないか
 - spec の一般ルールと例・期待値の矛盾が、最終実装側で未解決のまま残っていないか
 - sanitize / slug / 正規化 / fallback を行う箇所で、全無効入力や空入力が空の識別子・不正な path・危険な key / run id を生まないか
+- spec が current behavior を断定している場合、その断定が changed files や近傍テストと矛盾していないか
 - これらの観点で新しく見つかった問題は `new_findings` に追加すること
 
 ## verification_result判定基準

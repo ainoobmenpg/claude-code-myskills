@@ -43,6 +43,7 @@
 
 - 新規 topic なら `spec.md` 作成を起動
 - spec prompt は `spec.md` を直接更新する
+- 狭いタスクでは、関連ファイルと近傍テストの最小集合から探索する前提を prompt で与える
 - 旧 run に `spec-draft.md` だけがある場合のみ、互換移行として `spec.md` へコピーする
 - 既存 run に `spec.md` があれば spec review へ進める
 - spec review 指摘の反映時は `spec-vN.md` バックアップを作成する

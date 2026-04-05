@@ -154,6 +154,7 @@ task を省略すると `TEMPLATE` 以外の全 task を実行する。
 - `<task_id>/<arm_id>/review.json`
 - `<task_id>/<arm_id>/task-test.log`
 - `<task_id>/<arm_id>/repo-test.log`
+- `<task_id>/<arm_id>/diff.stat`
 - `<task_id>/<arm_id>/diff.patch`
 
 ## 評価指標
@@ -194,6 +195,8 @@ review signal の見方:
 
 - `hidden_fail_review_pass`: hidden tests は落ちたのに reviewer が high/medium を 0 にした件数。review の見逃し臭い。
 - `hidden_pass_review_block`: hidden tests は通ったのに reviewer が high/medium を残した件数。review の過検知臭い。
+
+review の実用性を上げたい場合は、reviewer に full repo の再探索を期待しすぎないこと。現在の harness は Changed Paths、`diff.stat`、`diff.patch` を prompt に含め、これを primary context にする。
 
 normalization / slug / sanitize 系の task では、hidden tests に少なくとも次を入れる。
 

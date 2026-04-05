@@ -28,6 +28,7 @@ graph LR
 - 新規 topic を渡すと仕様策定を開始する
 - run_id を渡すとその run の仕様策定を再開する
 - spec 作成フェーズでは `spec.md` を直接更新し、完了時に monitor が `はい / いいえ / 修正して` で確認する
+- 狭いタスクでは、関連ファイルと近傍テストの最小集合を先に当て、repo 全体探索は必要時だけに寄せる
 - `spec.md` が確定したら、同じ `/mysk-spec {run_id}` の再実行で spec review に進む
 - `spec-review.json` の high / medium が残る場合は、monitor が `spec.md` への反映可否を確認する
 - 反映時は `spec-vN.md` バックアップを作ってから `spec.md` を更新し、同じコマンドを再実行して再レビューする
