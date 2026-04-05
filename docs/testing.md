@@ -42,7 +42,7 @@ bats tests/integration/review-workflow-mock.bats
 
 | レイヤ | 主なファイル | 目的 |
 |--------|-------------|------|
-| 静的契約 | `tests/unit/frontmatter.bats`, `tests/unit/template-vars.bats`, `tests/unit/json-schema.bats` | 公開コマンド frontmatter、legacy 手順とテンプレート変数、JSON ブロック例の破損を防ぐ |
+| 静的契約 | `tests/unit/frontmatter.bats`, `tests/unit/template-vars.bats`, `tests/unit/json-schema.bats` | 公開コマンド frontmatter、public template 参照、JSON ブロック例の破損を防ぐ |
 | ロジック単体 | `tests/unit/run-id.bats`, `tests/unit/path-resolution.bats`, `tests/unit/status-state-machine.bats`, `tests/unit/json-fallback.bats` | run_id 解決、相対パス解決、状態遷移、フォールバック読み取りを確認する |
 | モック統合 | `tests/integration/spec-workflow-mock.bats`, `tests/integration/review-workflow-mock.bats`, `tests/integration/monitor-logic.bats`, `tests/integration/verify-termination.bats` | run directory と JSON fixture を使ってフローの接続を検証する |
 
@@ -50,7 +50,7 @@ bats tests/integration/review-workflow-mock.bats
 
 | 場所 | 用途 |
 |------|------|
-| `tests/helpers/test-common.bash` | 公開コマンド一覧、legacy command 一覧、テンプレート一覧、frontmatter、テンプレート変数抽出の共通処理 |
+| `tests/helpers/test-common.bash` | 公開コマンド一覧、legacy archive 一覧、テンプレート一覧、frontmatter、テンプレート変数抽出の共通処理 |
 | `tests/helpers/fixture-loader.bash` | run directory fixture の展開と最小 JSON 生成 |
 | `tests/helpers/validate-json-blocks.py` | Markdown 内の JSON サンプルをプレースホルダ置換して検証 |
 | `tests/fixtures/` | 正常系と異常系の run directory / malformed JSON サンプル |
@@ -60,7 +60,7 @@ bats tests/integration/review-workflow-mock.bats
 ### コマンドを変えたとき
 
 - frontmatter が壊れていないか
-- public wrapper が legacy archive を正しく参照しているか
+- public command が top-level template を正しく参照しているか
 - 対応テンプレート名が変わったなら `tests/unit/template-vars.bats` が通るか
 - run_id 解決や path 解決を変えたなら `tests/unit/run-id.bats` と `tests/unit/path-resolution.bats` を更新したか
 

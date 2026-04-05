@@ -220,7 +220,7 @@ cat ~/.claude/templates/mysk/verify-schema.json
        ↓
 ┌──────────────────────────────────┐
 │ any non-high (medium/low)?       │
-│ → Yes: /mysk-review-fix に戻る   │
+│ → Yes: /mysk-review に戻る       │
 │ → No: 【End】                    │
 └──────────────────────────────────┘
 ```
@@ -232,7 +232,7 @@ cat ~/.claude/templates/mysk/verify-schema.json
 | すべて修正済み、新規問題なし | `passed` | **終了** |
 | 新規`high`発見 | （fallbackにより "failed"） | エラーレポート → **終了** |
 | 未修正の`high`あり | （fallbackにより "failed"） | エラーレポート → **終了** |
-| `high`なし、non-high（medium/low）あり | （fallbackにより "failed"） | /mysk-review-fix に戻る |
+| `high`なし、non-high（medium/low）あり | （fallbackにより "failed"） | /mysk-review {RUN_ID} を再実行 |
 | `high`なし、未解決なし | `passed` | **終了** |
 
 **When ending**:

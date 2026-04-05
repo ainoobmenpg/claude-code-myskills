@@ -9,7 +9,7 @@ load '../helpers/test-common'
 # ----------------------------------------------------------------------
 _get_template_refs_from_command() {
     local cmd_file="$1"
-    grep -oE '(cmux-launch-procedure|fixed-spec-draft-prompt|fixed-spec-draft-monitor|fixed-spec-review-prompt|fixed-spec-review-monitor|spec-draft-prompt|spec-draft-monitor|spec-review-prompt|spec-review-monitor|review-check-prompt|review-check-monitor|review-verify-prompt|review-verify-monitor)\.md' "$cmd_file" | sort -u
+    grep -oE '(cmux-launch-procedure|spec-prompt|spec-monitor|fixed-spec-draft-prompt|fixed-spec-draft-monitor|fixed-spec-review-prompt|fixed-spec-review-monitor|spec-draft-prompt|spec-draft-monitor|spec-review-prompt|spec-review-monitor|review-check-prompt|review-check-monitor|review-verify-prompt|review-verify-monitor)\.md' "$cmd_file" | sort -u
 }
 
 # ----------------------------------------------------------------------
@@ -167,20 +167,51 @@ _get_template_refs_from_command() {
 }
 
 # ----------------------------------------------------------------------
-# Test: public commands route through legacy commands, not cmux directly
+# Test: public commands reference top-level templates directly
 # ----------------------------------------------------------------------
-@test "public commands do not reference cmux-launch-procedure directly" {
-    for cmd in mysk-spec mysk-implement mysk-review mysk-help mysk-reset; do
+@test "mysk-spec references 5 public templates directly" {
+    local refs
+    refs=$(_get_template_refs_from_command "$COMMANDS_DIR/mysk-spec.md")
+    local ref_count
+    ref_count=$(echo "$refs" | wc -l | tr -d ' ')
+
+    [ "$ref_count" -eq 5 ]
+    echo "$refs" | grep -q 'cmux-launch-procedure.md'
+    echo "$refs" | grep -q 'spec-prompt.md'
+    echo "$refs" | grep -q 'spec-monitor.md'
+    echo "$refs" | grep -q 'spec-review-prompt.md'
+    echo "$refs" | grep -q 'spec-review-monitor.md'
+}
+
+@test "mysk-review references 5 public templates directly" {
+    local refs
+    refs=$(_get_template_refs_from_command "$COMMANDS_DIR/mysk-review.md")
+    local ref_count
+    ref_count=$(echo "$refs" | wc -l | tr -d ' ')
+
+    [ "$ref_count" -eq 5 ]
+    echo "$refs" | grep -q 'cmux-launch-procedure.md'
+    echo "$refs" | grep -q 'review-check-prompt.md'
+    echo "$refs" | grep -q 'review-check-monitor.md'
+    echo "$refs" | grep -q 'review-verify-prompt.md'
+    echo "$refs" | grep -q 'review-verify-monitor.md'
+}
+
+@test "public commands do not reference legacy command archive" {
+    while IFS= read -r cmd_file; do
+        run grep -q 'legacy-commands/' "$cmd_file"
+        [ "$status" -ne 0 ]
+    done < <(get_command_files)
+}
+
+@test "only spec and review reference cmux-launch-procedure directly" {
+    grep -q 'cmux-launch-procedure.md' "$COMMANDS_DIR/mysk-spec.md"
+    grep -q 'cmux-launch-procedure.md' "$COMMANDS_DIR/mysk-review.md"
+
+    for cmd in mysk-implement mysk-help mysk-reset; do
         run grep -q 'cmux-launch-procedure.md' "$COMMANDS_DIR/${cmd}.md"
         [ "$status" -ne 0 ]
     done
-}
-
-@test "public wrapper commands reference legacy command archive" {
-    grep -q 'legacy-commands/spec-draft.md' "$COMMANDS_DIR/mysk-spec.md"
-    grep -q 'legacy-commands/spec-review.md' "$COMMANDS_DIR/mysk-spec.md"
-    grep -q 'legacy-commands/review-check.md' "$COMMANDS_DIR/mysk-review.md"
-    grep -q 'legacy-commands/cleanup.md' "$COMMANDS_DIR/mysk-reset.md"
 }
 
 @test "legacy archive contains former public commands" {

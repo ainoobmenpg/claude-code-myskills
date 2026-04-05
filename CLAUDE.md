@@ -4,7 +4,7 @@ This file provides guidance to Claude Code when working in this repository.
 
 ## プロジェクト概要
 
-mysk は、初心者向けに公開フローを `仕様策定 -> 実装 -> レビュー` の 3 段階へ絞ったスキル集です。公開コマンドは 5 個だけで、旧コマンド定義は `templates/mysk/legacy-commands/` に archive されています。
+mysk は、初心者向けに公開フローを `仕様策定 -> 実装 -> レビュー` の 3 段階へ絞ったスキル集です。公開コマンドは 5 個だけで、runtime は `commands/` と `templates/mysk/*.md` で完結します。旧コマンド定義は `templates/mysk/legacy-commands/` に archive されています。
 
 ## ディレクトリ構成
 
@@ -43,14 +43,14 @@ claude-code-myskills(cc-mysk)/
 ## 開発時の前提
 
 - `commands/` は公開面だけを持つ
-- 実体の複雑な state machine は `templates/mysk/legacy-commands/` と `templates/mysk/*.md` にある
+- 実体の複雑な state machine は `commands/` と `templates/mysk/*.md` にある
 - 旧コマンド名は slash command として復活させない
 - 利用者向けドキュメントでは old command names を列挙しない
 
 ## テスト方針
 
 - `tests/unit/frontmatter.bats` は公開コマンド面を検証する
-- `tests/unit/template-vars.bats` と `tests/unit/cross-reference.bats` は archive された legacy 手順とテンプレートの整合を見る
+- `tests/unit/template-vars.bats` と `tests/unit/cross-reference.bats` は public command と template の整合を見る
 - review / verify の JSON 契約は `verify-schema.json` と統合テストで守る
 
 ```bash
@@ -65,13 +65,13 @@ bats tests/integration/*.bats
 | 変更内容 | 更新対象 |
 |----------|----------|
 | 公開コマンドの変更 | `README.md`, `docs/workflow.md`, `FAQ.md`, `CLAUDE.md`, `CONTRIBUTING.md` |
-| legacy 手順や template の変更 | `docs/implementation-survey.md`, `docs/testing.md`, 必要なら `docs/MIGRATION.md` |
+| public template や archive の変更 | `docs/implementation-survey.md`, `docs/testing.md`, 必要なら `docs/MIGRATION.md` |
 | review / verify 契約の変更 | `templates/mysk/verify-schema.json`, `docs/implementation-survey.md`, `docs/testing.md`, 統合テスト |
 
 ## コミット前チェック
 
 1. 公開コマンド面が 5 個のままか
-2. `templates/mysk/legacy-commands/` への参照が壊れていないか
+2. `commands/` と `templates/mysk/*.md` の参照が壊れていないか
 3. template 変数と verify schema が壊れていないか
 4. README と workflow が初心者向けの公開面に一致しているか
 

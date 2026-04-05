@@ -45,6 +45,8 @@ ls -lt ~/.local/share/claude-mysk/ | head -5
 
 **A**: まだ仕様策定が完了していません。`/mysk-spec` を実行して `spec.md` を確定させてください。
 
+旧 run に `spec-draft.md` だけが残っている場合は、現行 `/mysk-spec` が `spec.md` へ移行してから続行します。
+
 ## Q: `review.json` に `project_root` がないと言われます
 
 **A**: その `review.json` は旧形式です。現行フローでは `project_root` が必須です。現在のプロジェクトで `/mysk-review` を再実行して新しい review を作り直してください。

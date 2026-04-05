@@ -1,6 +1,6 @@
 # mysk - Claude Code Workflow Skills
 
-mysk は、初心者向けに `仕様策定 -> 実装 -> レビュー` を単純な 3 段階で進める Claude Code 用スキル集です。公開コマンドは最小限に絞り、旧コマンド群は `templates/mysk/legacy-commands/` に退避して `/` 補完に出ないようにしています。
+mysk は、初心者向けに `仕様策定 -> 実装 -> レビュー` を単純な 3 段階で進める Claude Code 用スキル集です。公開コマンドは最小限に絞り、runtime では `spec.md` を唯一の仕様 artifact として扱います。旧コマンド群は `templates/mysk/legacy-commands/` に参考資料として退避し、`/` 補完に出ないようにしています。
 
 ## クイックスタート
 
@@ -71,7 +71,6 @@ graph LR
 ### `/mysk-implement`
 
 - `spec.md` を source of truth として実装します
-- 旧フローの `fixed-spec.md` と `impl-plan.md` は legacy 互換の補助入力としてのみ参照します
 - 完了後は `/mysk-review` に進みます
 
 ### `/mysk-review`
@@ -143,10 +142,8 @@ export MYSK_SKIP_PERMISSIONS=true
 ## 内部アーキテクチャ
 
 - `commands/` は公開コマンドだけを置く
-- `templates/mysk/legacy-commands/` に旧コマンド手順を退避する
-- `templates/mysk/*.md` と `verify-schema.json` が cmux prompt / monitor / verify 契約を持つ
-
-つまり、公開面は簡単にしつつ、内部では既存の state machine と JSON 契約を再利用しています。
+- `templates/mysk/*.md` が public flow の prompt / monitor / verify 契約を持つ
+- `templates/mysk/legacy-commands/` は過去フローの参考 archive であり、公開コマンドの runtime 依存先ではない
 
 ## テスト
 

@@ -7,7 +7,7 @@
 | 層 | 場所 | 役割 |
 |----|------|------|
 | 公開コマンド層 | `commands/` | 利用者に見せる最小コマンド面 |
-| legacy 手順層 | `templates/mysk/legacy-commands/` | 旧コマンドの具体手順を archive して再利用 |
+| legacy archive 層 | `templates/mysk/legacy-commands/` | 旧コマンドの具体手順を参考資料として保持 |
 | prompt / monitor 層 | `templates/mysk/` | cmux sub-pane に送る prompt / monitor |
 | 契約層 | `templates/mysk/verify-schema.json` | verify の判定基準 |
 | テスト層 | `tests/` | 公開面、legacy 手順、JSON 契約を Bats で検証 |
@@ -16,7 +16,7 @@
 
 | コマンド | 役割 | 主な出力 |
 |---------|------|----------|
-| `/mysk-spec` | 仕様策定の開始または再開 | `spec-draft.md`, `spec.md`, `spec-review.json`, `status.json` |
+| `/mysk-spec` | 仕様策定の開始または再開 | `spec.md`, `spec-review.json`, `status.json` |
 | `/mysk-implement` | `spec.md` を主入力に実装 | プロジェクトコードの変更, `status.json` |
 | `/mysk-review` | review の開始または再開 | `review.json`, `fix-plan.md`, `diffcheck.json`, `verify*.json` |
 | `/mysk-help` | 公開フロー表示 | なし |
@@ -35,13 +35,13 @@
 - `review-verify.md`
 - そのほか fixed-spec 系と旧 help / cleanup
 
-これらは slash command ではなく internal playbook としてだけ使います。
+これらは slash command ではなく、比較や移行確認のための archive です。
 
 ## ルーティングの考え方
 
 ### `/mysk-spec`
 
-- 新規 topic なら spec draft を起動
+- 新規 topic なら `spec.md` 作成を起動
 - 既存 run に `spec.md` があれば spec review へ進める
 - `spec-review.json` の high / medium が 0 なら完了扱い
 
@@ -52,7 +52,7 @@
 1. ユーザー指示
 2. `spec.md`
 3. repo 実態
-4. legacy 互換の `fixed-spec.md` / `impl-plan.md`
+4. なし
 
 ### `/mysk-review`
 
@@ -106,5 +106,5 @@ legacy run では次も存在しえます。
 ## 実装上の含意
 
 - 公開面を減らしても、内部の JSON 契約と state machine は温存できる
-- 変更時は `commands/` だけでなく `templates/mysk/legacy-commands/` も読む必要がある
+- 変更時は `commands/` と `templates/mysk/*.md` を先に確認し、archive は必要時だけ読む
 - 利用者向け docs では old command names を出さず、内部 docs でのみ archive を説明するのが前提

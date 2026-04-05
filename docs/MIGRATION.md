@@ -17,7 +17,8 @@
 ### 内部実装
 
 - 旧コマンド定義は削除ではなく `templates/mysk/legacy-commands/` へ archive
-- `spec.md` を公開フローの主入力へ戻した
+- 公開コマンドは archive を runtime 参照せず、`templates/mysk/*.md` を直接使う
+- `spec.md` を公開フローの唯一の仕様入力にした
 - review の fix / diffcheck / verify は `/mysk-review` の内部ルーティングに閉じ込めた
 
 ## アップグレード手順
@@ -37,7 +38,8 @@ rm -rf ~/.claude/templates/mysk && ln -sfn "$(pwd)/templates/mysk" ~/.claude/tem
 
 - run directory の JSON 契約は継続利用
 - `verify-rerun.json` 優先などの verify state machine は継続
-- 旧 run に `fixed-spec.md` や `impl-plan.md` が残っていても、`/mysk-implement` は legacy 互換として参照可能
+- 旧 run に `spec-draft.md` が残っている場合は、`/mysk-spec` が `spec.md` へ移行してから処理する
+- `fixed-spec.md` や `impl-plan.md` は archive 扱いで、現行 `/mysk-implement` の入力には使わない
 
 ## 注意点
 

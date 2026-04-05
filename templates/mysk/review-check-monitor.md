@@ -54,7 +54,7 @@ If status is "completed":
    - Summary (total count, high/medium/low counts, overall risk)
    - Main findings (from high priority, ID, title, file:line, detail, suggested_fix)
    - 保存先パス
-   - "次のステップ: 修正計画を作成するには /mysk-review-fix {RUN_ID}"
+   - "次のステップ: /mysk-review {RUN_ID} を再実行して修正と再確認を進める"
 4. Cleanup:
    - rm -f {GRACE_FILE}
    - cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit"

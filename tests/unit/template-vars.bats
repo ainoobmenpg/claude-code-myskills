@@ -8,6 +8,8 @@ load '../helpers/test-common'
 # Sub-pane command template mapping (no associative arrays for bash 3 compat)
 # Format: "command:prompt_template monitor_template"
 SUBPANE_MAP="
+public-spec:spec-prompt.md spec-monitor.md spec-review-prompt.md spec-review-monitor.md
+public-review:review-check-prompt.md review-check-monitor.md review-verify-prompt.md review-verify-monitor.md
 fixed-spec-draft:fixed-spec-draft-prompt.md fixed-spec-draft-monitor.md
 fixed-spec-review:fixed-spec-review-prompt.md fixed-spec-review-monitor.md
 spec-draft:spec-draft-prompt.md spec-draft-monitor.md
@@ -65,6 +67,34 @@ _get_all_command_vars() {
 # ----------------------------------------------------------------------
 # Test: for each sub-pane command, every template var is substituted
 # ----------------------------------------------------------------------
+@test "mysk-spec: all template vars are referenced by command" {
+    local cmd_file="$COMMANDS_DIR/mysk-spec.md"
+    local template_vars
+    template_vars=$(_get_all_template_vars_for_command "public-spec")
+
+    local cmd_vars
+    cmd_vars=$(_get_all_command_vars "$cmd_file")
+
+    while IFS= read -r var; do
+        [ -n "$var" ] || continue
+        echo "$cmd_vars" | grep -qF "$var"
+    done <<< "$template_vars"
+}
+
+@test "mysk-review: all template vars are referenced by command" {
+    local cmd_file="$COMMANDS_DIR/mysk-review.md"
+    local template_vars
+    template_vars=$(_get_all_template_vars_for_command "public-review")
+
+    local cmd_vars
+    cmd_vars=$(_get_all_command_vars "$cmd_file")
+
+    while IFS= read -r var; do
+        [ -n "$var" ] || continue
+        echo "$cmd_vars" | grep -qF "$var"
+    done <<< "$template_vars"
+}
+
 @test "fixed-spec-draft: all template vars are substituted by command" {
     local cmd_file="$LEGACY_COMMANDS_DIR/fixed-spec-draft.md"
     local template_vars
@@ -154,6 +184,14 @@ _get_all_command_vars() {
 # Test: cmux-launch-procedure.md {WORK_DIR} is substituted by all
 #       4 sub-pane commands
 # ----------------------------------------------------------------------
+@test "mysk-spec substitutes {WORK_DIR} from cmux-launch-procedure" {
+    grep -q '{WORK_DIR}' "$COMMANDS_DIR/mysk-spec.md"
+}
+
+@test "mysk-review substitutes {WORK_DIR} from cmux-launch-procedure" {
+    grep -q '{WORK_DIR}' "$COMMANDS_DIR/mysk-review.md"
+}
+
 @test "fixed-spec-draft substitutes {WORK_DIR} from cmux-launch-procedure" {
     grep -q '{WORK_DIR}' "$LEGACY_COMMANDS_DIR/fixed-spec-draft.md"
 }
@@ -211,7 +249,19 @@ _get_all_command_vars() {
                     found=1
                     break
                 fi
-            done < <(get_legacy_command_files)
+            done < <(get_command_files)
+            if [ "$found" -eq 0 ]; then
+                while IFS= read -r cmd_file; do
+                    if grep -q "s|[^|]*${var}[^|]*|" "$cmd_file"; then
+                        found=1
+                        break
+                    fi
+                    if grep -q "${var}" "$cmd_file"; then
+                        found=1
+                        break
+                    fi
+                done < <(get_legacy_command_files)
+            fi
             if [ "$found" -eq 0 ]; then
                 failures="${failures} Unsubstituted: ${var} in ${tmpl_name}"
             fi

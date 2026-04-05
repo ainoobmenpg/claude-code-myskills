@@ -19,7 +19,7 @@ cat ~/.claude/templates/mysk/verify-schema.json
 **重要**: review.jsonには `project_root` フィールドが含まれており、レビューが実行されたプロジェクトルートパスが指定されています。このパスを使用して、指摘内の相対ファイルパスを解決してください。
 
 **エラー処理**: review.jsonに `project_root` フィールドが含まれていない場合、これは旧バージョンで作成されたレビューであることを示しています。この場合:
-- progressフィールドにエラーを報告してください: "エラー: review.jsonに 'project_root' フィールドがありません。このレビューは旧バージョンで作成されました。/mysk-review-check を再実行して互換性のあるレビューを作成してください。"
+- progressフィールドにエラーを報告してください: "エラー: review.jsonに 'project_root' フィールドがありません。このレビューは旧バージョンで作成されました。/mysk-review {RUN_ID} を再実行して互換性のある review.json を作成してください。"
 - `verification_result` を "failed" に設定してください
 - `status` を "failed" に設定してください
 - 検証を続行しないでください

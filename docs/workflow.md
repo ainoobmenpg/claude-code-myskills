@@ -37,24 +37,24 @@ graph LR
 
 ## 内部実装
 
-公開面の簡素化のため、内部では legacy 手順を archive として残しています。
+公開 command は top-level template を直接使います。legacy archive は移行や比較のために残しているだけです。
 
 ```mermaid
 graph TD
-    A["commands/*.md<br/>public wrappers"] --> B["templates/mysk/legacy-commands/*.md<br/>archived procedures"]
-    B --> C["templates/mysk/*.md<br/>prompt / monitor"]
-    B --> D["templates/mysk/verify-schema.json"]
+    A["commands/*.md<br/>public commands"] --> B["templates/mysk/*.md<br/>prompt / monitor"]
+    A --> C["templates/mysk/verify-schema.json"]
+    D["templates/mysk/legacy-commands/*.md<br/>historical archive"] --> E["docs / migration only"]
 ```
 
 ### 役割分担
 
 - `commands/`
   - `/` 補完に出る公開コマンドだけ
-- `templates/mysk/legacy-commands/`
-  - 旧コマンドの具体手順
-  - public wrapper からのみ参照される
 - `templates/mysk/*.md`
   - cmux sub-pane に送る prompt と monitor
+- `templates/mysk/legacy-commands/`
+  - 旧コマンドの具体手順
+  - runtime では参照しない
 - `templates/mysk/verify-schema.json`
   - verify の source of truth
 
@@ -64,9 +64,9 @@ graph TD
 
 `/mysk-spec` は run の状態に応じて次を切り替えます。
 
-1. spec draft の開始
-2. spec review の開始
-3. review 結果を見た再開
+1. `spec.md` の新規作成
+2. `spec-review.json` の作成
+3. review 指摘を反映した `spec.md` の再レビュー
 
 ### 実装
 
@@ -75,7 +75,6 @@ graph TD
 1. ユーザーの明示指示
 2. `spec.md`
 3. repo 実態
-4. legacy 互換の `fixed-spec.md` / `impl-plan.md`
 
 ### レビュー
 
@@ -93,7 +92,6 @@ graph TD
 ```text
 ~/.local/share/claude-mysk/{run_id}/
 ├── run-meta.json
-├── spec-draft.md
 ├── spec.md
 ├── spec-review.json
 ├── review.json
@@ -107,12 +105,13 @@ graph TD
 
 ### 補足
 
+- `spec-draft.md`
 - `fixed-spec-draft.md`
 - `fixed-spec.md`
 - `fixed-spec-review.json`
 - `impl-plan.md`
 
-これらは legacy 互換 run で残る可能性があります。現行の公開フローでは primary artifact ではありません。
+これらは legacy run で残る可能性があります。現行の公開フローでは primary artifact ではありません。
 
 ## 運用上の注意
 
