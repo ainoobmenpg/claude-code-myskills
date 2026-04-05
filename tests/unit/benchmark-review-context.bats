@@ -165,3 +165,47 @@ load '../helpers/test-common'
   run grep -F 'VERIFY_LAUNCH_META_PATH="$RUN_DIR/review-verify-launch-meta.json"' "$PROJECT_ROOT/commands/mysk-review.md"
   [ "$status" -eq 0 ]
 }
+
+@test "spec-review prompt includes checked_paths in output JSON" {
+  run grep -F '"checked_paths"' "$PROJECT_ROOT/templates/mysk/spec-review-prompt.md"
+  [ "$status" -eq 0 ]
+}
+
+@test "spec-review prompt includes checked_lines in output JSON" {
+  run grep -F '"checked_lines"' "$PROJECT_ROOT/templates/mysk/spec-review-prompt.md"
+  [ "$status" -eq 0 ]
+}
+
+@test "spec-review prompt requires checked_paths even with zero findings" {
+  run grep -F '0 findings のときも空配列にしないでください' "$PROJECT_ROOT/templates/mysk/spec-review-prompt.md"
+  [ "$status" -eq 0 ]
+}
+
+@test "spec-review prompt requires checked_lines even with zero findings" {
+  run grep -F 'checked_lines' "$PROJECT_ROOT/templates/mysk/spec-review-prompt.md"
+  [ "$status" -eq 0 ]
+  run grep -F '0 findings のときも空配列にしないでください' "$PROJECT_ROOT/templates/mysk/spec-review-prompt.md"
+  [ "$status" -eq 0 ]
+}
+
+@test "verify prompt includes out_of_scope_files in output JSON" {
+  run grep -F '"out_of_scope_files"' "$PROJECT_ROOT/templates/mysk/review-verify-prompt.md"
+  [ "$status" -eq 0 ]
+}
+
+@test "verify prompt includes touched files scope checking section" {
+  run grep -F '変更ファイルと spec スコープの照合' "$PROJECT_ROOT/templates/mysk/review-verify-prompt.md"
+  [ "$status" -eq 0 ]
+}
+
+@test "verify prompt checks touched files against spec scope" {
+  run grep -F '範囲内' "$PROJECT_ROOT/templates/mysk/review-verify-prompt.md"
+  [ "$status" -eq 0 ]
+}
+
+@test "verify prompt sets failed when out of scope files exist" {
+  run grep -F 'out_of_scope_files' "$PROJECT_ROOT/templates/mysk/review-verify-prompt.md"
+  [ "$status" -eq 0 ]
+  run grep -E 'verification_result.*failed' "$PROJECT_ROOT/templates/mysk/review-verify-prompt.md"
+  [ "$status" -eq 0 ]
+}

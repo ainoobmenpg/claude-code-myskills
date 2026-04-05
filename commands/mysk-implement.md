@@ -29,7 +29,28 @@ user-invocable: true
 3. `spec.md` がない場合は、`先に /mysk-spec を実行してください` と伝えて終了する
 4. 対象 spec の `最小確認対象` / scope / constraints / acceptance を読み、まず `最小確認対象` の working set から確認して最小変更単位を決める
 5. 必要なコード変更とテスト変更を実装する
-6. 完了したら変更ファイルと検証結果を要約し、次に `/mysk-review {run_id}` を案内する
+6. 実装完了時に run directory に以下の artifact を保存してください:
+   - `touched-files.txt`: 変更したファイルパスの一覧（1行1パス、相対パス）。変更がない場合は空ファイル
+   - `executed-tests.txt`: 実行したテストコマンドの一覧（1行1コマンド）。テスト未実行の場合は空ファイル
+7. 完了したら変更ファイルと検証結果を要約し、次に `/mysk-review {run_id}` を案内する
+
+## Artifact 保存方法
+
+実装完了時、以下の手順で artifact を保存してください：
+
+```bash
+# 変更ファイル一覧の保存
+git diff --name-only -- . > "$RUN_DIR/touched-files.txt" 2>/dev/null || true
+# untracked ファイルも含める
+git ls-files --others --exclude-standard -- . >> "$RUN_DIR/touched-files.txt" 2>/dev/null || true
+# 空の場合でも空ファイルを作成する
+touch "$RUN_DIR/touched-files.txt"
+
+# 実行したテストコマンドの記録（実装者が手動で記述）
+# テストを実行した場合は、実行したコマンドを1行ずつ記述してください
+# 例: bats tests/unit/*.bats
+touch "$RUN_DIR/executed-tests.txt"
+```
 
 ## 実装原則
 

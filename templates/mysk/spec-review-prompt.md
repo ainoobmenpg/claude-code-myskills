@@ -86,9 +86,15 @@
       "detail": "詳細な説明",
       "suggestion": "改善提案"
     }
-  ]
+  ],
+  "checked_paths": ["path/to/spec.md", "path/to/verified/file.txt"],
+  "checked_lines": [{"path": "path/to/file.md", "lines": "1-42"}]
 }
 ```
+
+**重要**: `checked_paths` と `checked_lines` は必須項目です。
+- `checked_paths`: レビューで確認したファイルパスの一覧（文字列配列）。少なくとも spec.md 自体を含めてください。0 findings のときも空配列にしないでください。
+- `checked_lines`: レビューで確認したファイルと行範囲の一覧（オブジェクト配列）。各オブジェクトは `{ "path": "path/to/file", "lines": "1-42" }` 形式。`lines` は人が読める範囲表記（例: `"1-42"`, `"15,30-35"`）。0 findings のときも空配列にしないでください。
 
 ## 重要度の目安
 

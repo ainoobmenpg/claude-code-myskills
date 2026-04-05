@@ -263,6 +263,7 @@ template = Path.home() / ".claude/templates/mysk/review-verify-prompt.md"
 output = Path("/tmp/mysk-" + "{RUN_ID}" + "-prompt.txt")
 text = template.read_text()
 spec_path = Path("{SPEC_PATH}")
+run_dir = Path("{RUN_DIR}")
 
 def extract_markdown_section(markdown_text, heading):
     target = f"## {heading}"
@@ -286,6 +287,16 @@ def render_spec_section(heading):
         return "(spec.md not found)"
     return extract_markdown_section(spec_path.read_text(), heading)
 
+def render_touched_files():
+    touched_files_path = run_dir / "touched-files.txt"
+    if touched_files_path.is_file():
+        content = touched_files_path.read_text().strip()
+        if content:
+            lines = content.splitlines()
+            return "\n".join(f"- {line}" for line in lines if line.strip())
+        return "(no changed files)"
+    return "(touched-files.txt not found)"
+
 for key, value in {
     "{REVIEW_JSON_PATH}": "{REVIEW_JSON_PATH}",
     "{RUN_ID}": "{RUN_ID}",
@@ -295,6 +306,7 @@ for key, value in {
     "{SPEC_ACCEPTANCE_CONTEXT}": render_spec_section("受け入れ条件"),
     "{SPEC_SCOPE_CONTEXT}": render_spec_section("スコープ"),
     "{SPEC_CONSTRAINTS_CONTEXT}": render_spec_section("制約条件"),
+    "{TOUCHED_FILES}": render_touched_files(),
 }.items():
     text = text.replace(key, value)
 output.write_text(text)

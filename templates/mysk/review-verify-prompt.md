@@ -27,6 +27,28 @@ cat ~/.claude/templates/mysk/verify-schema.json
 - `status` を "failed" に設定してください
 - 検証を続行しないでください
 
+## 変更ファイルと spec スコープの照合
+
+spec.md が存在する場合、変更ファイルが spec の `スコープ > 範囲内` に記載された許容範囲内にあるか照合してください。
+
+### 変更ファイル一覧
+
+以下のファイルが変更されました（touched-files.txt）:
+
+```
+{TOUCHED_FILES}
+```
+
+### 照合手順
+
+1. spec.md の `スコープ > 範囲内` セクションに記載されたパスを確認してください
+2. 変更ファイルの各パスが、許容範囲のパスまたはその下位パスに含まれるか判定してください
+   - 前方一致で判定して構いません（例: `範囲内` に `commands/` があれば `commands/mysk-implement.md` は許可）
+3. 許容範囲外のファイルが 1 件でもある場合:
+   - `out_of_scope_files` 配列にそのパスを追加してください
+   - `verification_result` を `failed` に設定してください
+4. spec.md が存在しない場合は照合をスキップし、`out_of_scope_files` は空配列としてください
+
 ## 追加コンテキスト
 
 prompt 内に spec snapshot が埋め込まれている場合は、それを acceptance / scope / constraints / 最小確認対象 の primary context として使ってください。必要時だけ `spec.md` の周辺文脈を追加確認してください。
@@ -190,6 +212,9 @@ prompt 内に spec snapshot が埋め込まれている場合は、それを acc
       "detail": "詳細な説明",
       "related_fix": "関連する修正（例: F001）"
     }
+  ],
+  "out_of_scope_files": [
+    "relative/path/to/out_of_scope_file"
   ]
 }
 ```
