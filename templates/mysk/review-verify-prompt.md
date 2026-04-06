@@ -104,6 +104,7 @@ prompt 内に spec snapshot が埋め込まれている場合は、それを acc
      "verification_result": null,
      "summary": null,
      "verifications": [],
+     "acceptance_verifications": [],
      "new_findings": []
    }
    ```
@@ -190,6 +191,8 @@ prompt 内に spec snapshot が埋め込まれている場合は、それを acc
 
 **重要**: 完了時JSONのトップレベルフィールドは、以下の定義だけにしてください。余分なトップレベルフィールドを追加しないでください。
 
+ただし、`acceptance_verifications` フィールド（spec の受け入れ条件ごとの検証結果）は追加してください。
+
 ```json
 {
   "version": 1,
@@ -218,6 +221,16 @@ prompt 内に spec snapshot が埋め込まれている場合は、それを acc
       "detail": "詳細な検証結果"
     }
   ],
+  "acceptance_verifications": [
+    {
+      "acceptance": "spec に実在する条件文またはその短い引用",
+      "status": "met | not_met | unclear",
+      "detail": "確認内容",
+      "evidence_path": ["relative/path/to/evidence"],
+      "evidence_text": "確認根拠となったコードや文書の文言",
+      "evidence_line": "15"
+    }
+  ],
   "new_findings": [
     {
       "id": "N001",
@@ -234,6 +247,16 @@ prompt 内に spec snapshot が埋め込まれている場合は、それを acc
   ]
 }
 ```
+
+**重要**: `acceptance_verifications` の仕様:
+- spec が存在し、かつ `受け入れ条件` セクションに条件が 1 つ以上ある場合にのみ出力してください
+- spec がない、または `受け入れ条件` セクションがない・空の場合は空配列 `[]` としてください
+- `passed` のときも各 acceptance の結果を埋めてください
+- spec に受け入れ条件がある場合、`acceptance_verifications` が空配列のまま完了してはなりません
+- `evidence_path` は文字列配列です。空配列や省略は禁止です。最低 1 つのパスを入れてください
+- `evidence_text` または `evidence_line` の少なくとも一方は必須です。両方あっても構いません
+- `evidence_text`: 確認根拠となったコードや文書の文言（引用）
+- `evidence_line`: 行番号ベースの参照（例: `"15"`, `"30-35"`）
 
 ## 重要
 

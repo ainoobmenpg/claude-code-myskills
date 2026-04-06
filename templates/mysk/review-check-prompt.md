@@ -73,11 +73,19 @@
       "detail": "詳細な説明",
       "suggested_fix": "修正提案"
     }
+  ],
+  "checked_paths": ["commands/mysk-review.md", "templates/mysk/review-check-prompt.md"],
+  "checked_hunks": [
+    {"file": "relative/path", "start_line": 1, "end_line": 42}
   ]
 }
 ```
 
 **重要**: 初期JSONを作成する際は、上記の「プロジェクトルート: {PROJECT_ROOT}」の値を使用して `project_root` フィールドを含める必要があります。このフィールドは検証が正しく機能するために必須です。
+
+**重要**: `checked_paths` と `checked_hunks` は必須項目です。
+- `checked_paths`: レビューで確認したファイルパスの一覧（文字列配列）。少なくとも Changed Paths に含まれるファイルを含めてください。0 findings のときも空配列にしないでください。
+- `checked_hunks`: レビューで確認した diff hunk の一覧（オブジェクト配列）。各オブジェクトは `{ "file": "relative/path", "start_line": N, "end_line": M }` 形式。`start_line` と `end_line` は 1-origin の行番号。0 findings のときも空配列にしないでください。
 
 ## 状態遷移
 
@@ -156,6 +164,10 @@
          "detail": "詳細な説明",
          "suggested_fix": "修正提案"
        }
+     ],
+     "checked_paths": ["commands/mysk-review.md", "templates/mysk/review-check-prompt.md"],
+     "checked_hunks": [
+       {"file": "relative/path", "start_line": 1, "end_line": 42}
      ]
    }
    ```
@@ -196,6 +208,7 @@
 - spec が current behavior や既存 helper の挙動を述べている場合、その記述を repo のコードやテストで裏付けてください。spec の断定を無条件に前提化しないでください。
 - helper や current behavior の説明に、helper 自体がしていない前処理・後処理が混ざっていないか確認してください。
 - 指摘数が0でもJSONを出力してください
+- 指摘数が0でも `checked_paths` と `checked_hunks` を必ず記録してください。Changed Paths を確認した痕跡を残してください
 
 ## 重要度の運用
 

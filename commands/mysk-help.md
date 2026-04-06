@@ -10,8 +10,8 @@ user-invocable: true
 
 必ず次の 4 点を含める。
 
-1. 公開コマンドは `/mysk-spec`、`/mysk-implement`、`/mysk-review`、`/mysk-reset` のみ
-2. 基本フローは `仕様策定 -> 実装 -> レビュー`
+1. 公開コマンドは `/mysk-spec`、`/mysk-issue`、`/mysk-implement`、`/mysk-review`、`/mysk-reset` のみ
+2. 基本フローは `仕様策定 -> Issue 作成 -> 実装 -> レビュー`
 3. `/mysk-spec` と `/mysk-review` は再実行で続きから再開できる
 4. 旧コマンドは公開廃止されており、`/` 補完には出ない
 

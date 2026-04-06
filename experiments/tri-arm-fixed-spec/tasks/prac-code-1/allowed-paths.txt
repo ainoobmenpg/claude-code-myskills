@@ -1,0 +1,1 @@
+experiments/tri-arm-fixed-spec/bin/run-practical.sh

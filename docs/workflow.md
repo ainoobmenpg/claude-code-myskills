@@ -1,14 +1,15 @@
 # mysk Workflow
 
-現行の公開フローは、初心者向けに `仕様策定 -> 実装 -> レビュー` の 3 段階へ整理されています。公開コマンド定義は 5 個ですが、実運用フローとして覚える主役は `mysk-spec`、`mysk-implement`、`mysk-review`、補助として `mysk-reset` です。`mysk-help` はその案内役です。
+現行の公開フローは、初心者向けに `仕様策定 -> Issue 作成 -> 実装 -> レビュー` の 4 段階へ整理されています。公開コマンド定義は 6 個ですが、実運用フローとして覚える主役は `mysk-spec`、`mysk-issue`、`mysk-implement`、`mysk-review`、補助として `mysk-reset` です。`mysk-help` はその案内役です。
 
 ## 公開フロー
 
 ```mermaid
 graph LR
-    A["/mysk-spec"] --> B["/mysk-implement"]
-    B --> C["/mysk-review"]
-    C --> D["完了"]
+    A["/mysk-spec"] --> B["/mysk-issue"]
+    B --> C["/mysk-implement"]
+    C --> D["/mysk-review"]
+    D --> E["完了"]
 ```
 
 ## 公開コマンド
@@ -16,9 +17,10 @@ graph LR
 | コマンド | 目的 | 備考 |
 |---------|------|------|
 | `/mysk-spec` | 仕様策定の開始または再開 | Opus 主体。`spec.md` を確定させる |
+| `/mysk-issue` | GitHub Issue 作成 | `spec.md` を読み取り対話的に Issue 作成。`gh` コマンド使用 |
 | `/mysk-implement` | 実装 | `spec.md` を主入力に使う |
 | `/mysk-review` | レビューの開始または再開 | Opus 主体。内部で修正ループを回す |
-| `/mysk-help` | 使い方の確認 | 公開フローを要約する。表示内容は運用上の 4 コマンド中心 |
+| `/mysk-help` | 使い方の確認 | 公開フローを要約する。表示内容は運用上の 5 コマンド中心 |
 | `/mysk-reset` | monitor / サブペインの片付け | 異常終了時の回復用 |
 
 ## 再開ルール
@@ -119,6 +121,7 @@ graph TD
 ├── spec-review-launch-meta.json
 ├── spec-review.json
 ├── spec-vN.md
+├── issue.json
 ├── review-check-launch-meta.json
 ├── review.json
 ├── fix-plan.md
@@ -143,6 +146,7 @@ graph TD
 ## 運用上の注意
 
 - `/mysk-spec` と `/mysk-review` には `cmux`、`tmux`、CronList / CronCreate / CronDelete が必要
+- `/mysk-issue` には `gh` コマンドが必要ですが、cmux や monitor は不要です
 - `*-launch-meta.json` の `requested_model_alias` が workflow 上の正で、`configured_runtime_model` / `resolved_runtime_model` は診断用です
 - `/mysk-reset` は CronList / CronDelete を使い、workspace / surface が取れたときだけ cmux surface も閉じる
 - 旧コマンドは archive 済みなので、利用者向けドキュメントや案内では slash command として列挙しない

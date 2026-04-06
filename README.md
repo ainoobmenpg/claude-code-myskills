@@ -37,6 +37,7 @@ rm -rf ~/.claude/templates/mysk && ln -sfn "$(pwd)/templates/mysk" ~/.claude/tem
 | コマンド | 役割 | 引数 |
 |---------|------|------|
 | `/mysk-spec` | Opus で対話しながら仕様を固める。再実行で続きから再開できる | `[topic_or_run_id]` |
+| `/mysk-issue` | spec.md をベースに GitHub Issue を作成する | `[run_id]` |
 | `/mysk-implement` | `spec.md` を主入力に実装する | `[run_id]` |
 | `/mysk-review` | Opus review を開始または再開する。内部で fix / diffcheck / verify を回す | `[run_id]` |
 | `/mysk-help` | 今の公開フローを表示する | なし |
@@ -44,28 +45,41 @@ rm -rf ~/.claude/templates/mysk && ln -sfn "$(pwd)/templates/mysk" ~/.claude/tem
 
 旧コマンドは公開廃止です。`/mysk-spec-draft` や `/mysk-review-check` のような名前は `commands/` には存在せず、`/` 補完にも出ません。
 
-`/mysk-help` 自体は公開コマンドですが、表示内容は実運用の 4 コマンド (`/mysk-spec`、`/mysk-implement`、`/mysk-review`、`/mysk-reset`) を中心に案内します。
+`/mysk-help` 自体は公開コマンドですが、表示内容は実運用の 5 コマンド (`/mysk-spec`、`/mysk-issue`、`/mysk-implement`、`/mysk-review`、`/mysk-reset`) を中心に案内します。
 
 ## 基本フロー
 
 ```mermaid
 graph LR
-    A["/mysk-spec"] --> B["/mysk-implement"]
-    B --> C["/mysk-review"]
-    C --> D["完了"]
+    A["/mysk-spec"] --> B["/mysk-issue"]
+    B --> C["/mysk-implement"]
+    C --> D["/mysk-review"]
+    D --> E["完了"]
 ```
 
 ### 使い方の目安
 
 1. `/mysk-spec ユーザー認証機能`
-2. `/mysk-implement`
-3. `/mysk-review`
+2. `/mysk-issue`
+3. `/mysk-implement`
+4. `/mysk-review`
 
 `/mysk-spec` と `/mysk-review` は 1 回で全工程を完了しないことがあります。その場合でも、ユーザーは同じコマンドをもう一度実行するだけで続きを進められます。
 
 - `/mysk-spec` の初回実行では `spec.md` を作成し、monitor が確認 (`はい / いいえ / 修正して`) を取ります。確定後に同じ `/mysk-spec {run_id}` を再実行して仕様レビューへ進みます。
 - `spec-review.json` に high または medium が残る場合、monitor が `spec.md` への反映可否を確認します。反映時は `spec-vN.md` バックアップを作成してから `spec.md` を更新します。
 - `/mysk-review` の初回対象は原則として現在の作業ツリー差分です。run に `spec.md` があれば、それも scope / acceptance の判断材料として使います。2 回目以降は `review.json` を source of truth に、修正計画、承認後の修正、`diffcheck.json`、最終 verify を順に進めます。
+
+## Practical Test Fixtures
+
+`experiments/tri-arm-fixed-spec/` には、フレームワーク自体を検証するための practical test fixture があります。
+
+利用可能な fixture:
+- `prac-docs-1line`: 1 行のドキュメント修正
+- `prac-docs-multi`: 複数行のドキュメント更新
+- `prac-code-1`: シンプルなコード変更（runner スクリプト）
+
+詳細は [experiments/tri-arm-fixed-spec/README.md](experiments/tri-arm-fixed-spec/README.md) を参照してください。
 
 ## コマンドごとの考え方
 
@@ -84,6 +98,14 @@ graph LR
 - 仕様レビューでは `status.json` と `spec-review.json` を早めに保存し、段階的に更新します
 - 仕様レビューでは acceptance 条件同士の打ち消し合いも確認します
 - review の high / medium が 0 になるまで、同じ `/mysk-spec {run_id}` で再開します
+
+### `/mysk-issue`
+
+- spec.md を読み取って対話的に GitHub Issue を作成します
+- タイトル・本文・ラベルを確認しながら進めます
+- `gh issue create` で GitHub リポジトリに直接 Issue を登録します
+- 作成した Issue の情報は `run_dir/issue.json` に保存されます
+- 完了後は `/mysk-implement` に進みます
 
 ### `/mysk-implement`
 
@@ -122,11 +144,12 @@ graph LR
 | `tmux` | `/mysk-spec` と `/mysk-review` で必要 | cmux の前提 |
 | `cmux` | `/mysk-spec` と `/mysk-review` で必要 | 別ペイン実行と後片付け |
 | CronList / CronCreate / CronDelete | `/mysk-spec`、`/mysk-review`、`/mysk-reset` で必要 | monitor の列挙、登録、削除 |
+| `gh` | `/mysk-issue` で必要 | GitHub Issue 作成 |
 
 cmux が未導入の場合:
 
 - `/mysk-spec` と `/mysk-review` は利用できません
-- `/mysk-implement` と `/mysk-help` は使えます
+- `/mysk-issue`、`/mysk-implement`、`/mysk-help` は使えます
 - `/mysk-reset` は monitor 削除には使えますが、cmux surface のクローズまでは行えません
 
 ## 環境変数
@@ -160,6 +183,7 @@ export MYSK_SKIP_PERMISSIONS=true
 - `spec-review-launch-meta.json`
 - `spec.md`
 - `spec-review.json`
+- `issue.json`
 - `spec-vN.md`
 - `review-check-launch-meta.json`
 - `review.json`
@@ -200,3 +224,4 @@ bats tests/unit/*.bats tests/integration/*.bats
 - [docs/testing.md](docs/testing.md)
 - [docs/MIGRATION.md](docs/MIGRATION.md)
 - [FAQ.md](FAQ.md)
+- [experiments/tri-arm-fixed-spec/PRACTICAL_CRITERIA.md](experiments/tri-arm-fixed-spec/PRACTICAL_CRITERIA.md) - Practical test evaluation criteria

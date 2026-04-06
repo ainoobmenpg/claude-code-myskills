@@ -1,0 +1,27 @@
+{
+  "benchmark_version": "v2",
+  "task_id": "prac-code-1",
+  "title": "Add practical test runner script",
+  "repo_path": "/Users/m2_macbookair_3911/GitHub/claude-code-myskills(cc-mysk)",
+  "time_budget_minutes": 30,
+  "max_clarification_questions": 0,
+  "allowed_paths_file": "experiments/tri-arm-fixed-spec/tasks/prac-code-1/allowed-paths.txt",
+  "allowed_files": [
+    "experiments/tri-arm-fixed-spec/bin/run-practical.sh"
+  ],
+  "review_paths": [
+    "experiments/tri-arm-fixed-spec/bin/run-practical.sh"
+  ],
+  "acceptance_criteria": [
+    "run-practical.sh exists and is executable",
+    "Accepts task_id as argument and runs the practical test",
+    "Creates isolated run directory with unique ID",
+    "Outputs summary to stdout after completion"
+  ],
+  "public_test_command": "bash experiments/tri-arm-fixed-spec/tasks/prac-code-1/public-tests.sh",
+  "task_test_command": "bash experiments/tri-arm-fixed-spec/tasks/prac-code-1/public-tests.sh",
+  "repo_test_command_override": "bats tests/unit/frontmatter.bats",
+  "hidden_test_id": "prac-code-1",
+  "no_op_is_failure": true,
+  "wrong_files_is_failure": true
+}

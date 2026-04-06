@@ -1,0 +1,27 @@
+{
+  "benchmark_version": "v2",
+  "task_id": "prac-docs-multi",
+  "title": "Update multi-line documentation in README",
+  "repo_path": "/Users/m2_macbookair_3911/GitHub/claude-code-myskills(cc-mysk)",
+  "time_budget_minutes": 20,
+  "max_clarification_questions": 0,
+  "allowed_paths_file": "experiments/tri-arm-fixed-spec/tasks/prac-docs-multi/allowed-paths.txt",
+  "allowed_files": [
+    "README.md"
+  ],
+  "review_paths": [
+    "README.md"
+  ],
+  "acceptance_criteria": [
+    "Add practical test fixture names to the fixtures section in README.md",
+    "Document PRACTICAL_CRITERIA.md in the related documents section",
+    "Preserve existing README structure and formatting",
+    "No other files are modified"
+  ],
+  "public_test_command": "bash experiments/tri-arm-fixed-spec/tasks/prac-docs-multi/public-tests.sh",
+  "task_test_command": "bash experiments/tri-arm-fixed-spec/tasks/prac-docs-multi/public-tests.sh",
+  "repo_test_command_override": "bats tests/unit/frontmatter.bats",
+  "hidden_test_id": "prac-docs-multi",
+  "no_op_is_failure": true,
+  "wrong_files_is_failure": true
+}

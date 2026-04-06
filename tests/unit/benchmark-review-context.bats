@@ -209,3 +209,52 @@ load '../helpers/test-common'
   run grep -E 'verification_result.*failed' "$PROJECT_ROOT/templates/mysk/review-verify-prompt.md"
   [ "$status" -eq 0 ]
 }
+
+@test "review-check prompt includes checked_paths in output JSON" {
+  run grep -F '"checked_paths"' "$PROJECT_ROOT/templates/mysk/review-check-prompt.md"
+  [ "$status" -eq 0 ]
+}
+
+@test "review-check prompt includes checked_hunks in output JSON" {
+  run grep -F '"checked_hunks"' "$PROJECT_ROOT/templates/mysk/review-check-prompt.md"
+  [ "$status" -eq 0 ]
+}
+
+@test "review-check prompt requires checked_paths even with zero findings" {
+  run grep -F '0 findings のときも空配列にしないでください' "$PROJECT_ROOT/templates/mysk/review-check-prompt.md"
+  run grep -F 'checked_paths' "$PROJECT_ROOT/templates/mysk/review-check-prompt.md"
+  [ "$status" -eq 0 ]
+}
+
+@test "review-check prompt requires checked_hunks even with zero findings" {
+  run grep -F '0 findings のときも空配列にしないでください' "$PROJECT_ROOT/templates/mysk/review-check-prompt.md"
+  run grep -F 'checked_hunks' "$PROJECT_ROOT/templates/mysk/review-check-prompt.md"
+  [ "$status" -eq 0 ]
+}
+
+@test "review-check prompt tells to record checked_paths and checked_hunks even with zero findings" {
+  grep -E 'checked_paths.*checked_hunks.*記録' "$PROJECT_ROOT/templates/mysk/review-check-prompt.md" >/dev/null
+  [ "$?" -eq 0 ]
+}
+
+@test "review-verify prompt includes acceptance_verifications in output JSON" {
+  run grep -F '"acceptance_verifications"' "$PROJECT_ROOT/templates/mysk/review-verify-prompt.md"
+  [ "$status" -eq 0 ]
+}
+
+@test "review-verify prompt includes evidence_path in acceptance_verifications" {
+  run grep -F '"evidence_path"' "$PROJECT_ROOT/templates/mysk/review-verify-prompt.md"
+  [ "$status" -eq 0 ]
+}
+
+@test "review-verify prompt includes evidence_text or evidence_line in acceptance_verifications" {
+  run grep -F '"evidence_text"' "$PROJECT_ROOT/templates/mysk/review-verify-prompt.md"
+  run grep -F '"evidence_line"' "$PROJECT_ROOT/templates/mysk/review-verify-prompt.md"
+  [ "$status" -eq 0 ]
+}
+
+@test "review-verify prompt requires acceptance_verifications for passed verify" {
+  run grep 'passed.*ときも.*acceptance.*結果を埋めて' "$PROJECT_ROOT/templates/mysk/review-verify-prompt.md"
+  [ "$status" -eq 0 ]
+}
+

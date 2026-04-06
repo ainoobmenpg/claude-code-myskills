@@ -140,6 +140,44 @@ experiments/tri-arm-fixed-spec/bin/run-experiment.sh ac4b0aac5a1db126f6ebf6a0e39
 
 task を省略すると `TEMPLATE` 以外の全 task を実行する。
 
+## Practical Test
+
+Practical test fixtures validate the framework itself with minimal tasks.
+
+### Available Fixtures
+
+- `prac-docs-1line`: Single-line documentation fix
+- `prac-docs-multi`: Multi-line documentation updates
+- `prac-code-1`: Simple code changes (runner script)
+
+### Running Practical Tests
+
+```bash
+experiments/tri-arm-fixed-spec/bin/run-practical.sh <task_id>
+```
+
+Example:
+```bash
+experiments/tri-arm-fixed-spec/bin/run-practical.sh prac-docs-1line
+```
+
+This creates an isolated run directory in `runs/<timestamp>-<slug>/` with task files and results.
+
+### Comparing Multiple Runs
+
+```bash
+python3 experiments/tri-arm-fixed-spec/bin/render-practical-summary.py <run_dir> [<run_dir>...]
+```
+
+Output: Markdown summary to stdout. Redirect to save:
+```bash
+python3 experiments/tri-arm-fixed-spec/bin/render-practical-summary.py runs/* > summary.md
+```
+
+### Evaluation Criteria
+
+See [PRACTICAL_CRITERIA.md](PRACTICAL_CRITERIA.md) for pass/warning/fail criteria.
+
 ## 出力
 
 各実行で `runs/<timestamp>-<experiment-slug>/` を生成する。`experiment-slug` は config の `experiment_id` を filesystem-safe に正規化した値で、空になる場合は `unnamed-experiment` を使う。

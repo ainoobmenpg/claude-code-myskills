@@ -31,5 +31,10 @@
       "detail": "Unhandled promise rejection",
       "suggested_fix": "Add try-catch block"
     }
+  ],
+  "checked_paths": ["src/main.ts", "src/util.ts"],
+  "checked_hunks": [
+    {"file": "src/main.ts", "start_line": 1, "end_line": 25},
+    {"file": "src/util.ts", "start_line": 15, "end_line": 30}
   ]
 }

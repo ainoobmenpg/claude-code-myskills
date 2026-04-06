@@ -56,6 +56,7 @@
     "monitor_integration": "review-verify-monitor.mdの終了判定で本schemaの条件を使用する",
     "workflow_integration": "mysk-workflow.mdから本schemaを参照してドキュメントを生成する",
     "rerun_policy": "初回はverify.jsonに保存。verify.jsonが既存の場合はverify-rerun.jsonに保存。どちらも同じschemaで判定する。",
-    "source_of_truth": "verify-rerun.jsonが存在する場合はverify-rerun.jsonを最新の真実とする。存在しない場合はverify.jsonを使用する。"
+    "source_of_truth": "verify-rerun.jsonが存在する場合はverify-rerun.jsonを最新の真実とする。存在しない場合はverify.jsonを使用する。",
+    "acceptance_verifications": "spec の受け入れ条件ごとの検証結果を記録するフィールド。spec がある場合は必須。passed のときも各 acceptance の結果を埋める。"
   }
 }

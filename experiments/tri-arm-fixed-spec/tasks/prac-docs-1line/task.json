@@ -1,0 +1,26 @@
+{
+  "benchmark_version": "v2",
+  "task_id": "prac-docs-1line",
+  "title": "Fix 1-line comment in command description",
+  "repo_path": "/Users/m2_macbookair_3911/GitHub/claude-code-myskills(cc-mysk)",
+  "time_budget_minutes": 15,
+  "max_clarification_questions": 0,
+  "allowed_paths_file": "experiments/tri-arm-fixed-spec/tasks/prac-docs-1line/allowed-paths.txt",
+  "allowed_files": [
+    "commands/mysk-help.md"
+  ],
+  "review_paths": [
+    "commands/mysk-help.md"
+  ],
+  "acceptance_criteria": [
+    "The description field in mysk-help.md is updated to clarify the command's purpose",
+    "Existing frontmatter structure is preserved",
+    "No other commands are modified"
+  ],
+  "public_test_command": "bash experiments/tri-arm-fixed-spec/tasks/prac-docs-1line/public-tests.sh",
+  "task_test_command": "bash experiments/tri-arm-fixed-spec/tasks/prac-docs-1line/public-tests.sh",
+  "repo_test_command_override": "bats tests/unit/frontmatter.bats",
+  "hidden_test_id": "prac-docs-1line",
+  "no_op_is_failure": true,
+  "wrong_files_is_failure": true
+}
