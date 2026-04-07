@@ -9,7 +9,7 @@ load '../helpers/test-common'
 # Format: "command:prompt_template monitor_template"
 SUBPANE_MAP="
 public-spec:spec-prompt.md spec-review-prompt.md
-public-review:review-check-prompt.md review-check-monitor.md review-verify-prompt.md review-verify-monitor.md
+public-review:review-check-prompt.md review-check-monitor.md review-verify-prompt.md review-verify-monitor.md monitor-tick.md
 fixed-spec-draft:fixed-spec-draft-prompt.md fixed-spec-draft-monitor.md
 fixed-spec-review:fixed-spec-review-prompt.md fixed-spec-review-monitor.md
 spec-draft:spec-draft-prompt.md spec-draft-monitor.md

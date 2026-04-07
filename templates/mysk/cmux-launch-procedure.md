@@ -48,7 +48,7 @@ case "$MODEL_ALIAS" in
     ;;
 esac
 
-if [ -n "$LAUNCH_DEBUG_FILE" ]; then
+if [ -n "$LAUNCH_DEBUG_FILE" ] && [ "$LAUNCH_DEBUG_FILE" != "" ]; then
   mkdir -p "$(dirname "$LAUNCH_DEBUG_FILE")"
   DEBUG_FLAGS="--debug-file '$LAUNCH_DEBUG_FILE'"
 else
@@ -93,8 +93,9 @@ meta_path.write_text(json.dumps({
 PY
 fi
 
+ESCAPED_WORK_DIR=$(printf '%s' "{WORK_DIR}" | sed 's/"/\\"/g')
 cmux send --workspace "$WS_REF" --surface "$SUB_SURFACE" \
-  "cd {WORK_DIR} && claude --model $MODEL_ALIAS --effort $MODEL_EFFORT $DEBUG_FLAGS $PERMISSION_FLAGS"
+  "cd \"$ESCAPED_WORK_DIR\" && claude --model $MODEL_ALIAS --effort $MODEL_EFFORT $DEBUG_FLAGS $PERMISSION_FLAGS"
 cmux send-key --workspace "$WS_REF" --surface "$SUB_SURFACE" return
 
 echo "LAUNCHED: WS_REF=$WS_REF SUB_SURFACE=$SUB_SURFACE"
