@@ -1,5 +1,7 @@
 あなたはコードレビューの専門家です。以下の対象をレビューし、結果をJSON形式で出力してください。
 
+**最初のアクション**: 読み取り完了後、直ちに Write ツールで `{REVIEW_JSON_PATH}` に初期 JSON（status: in_progress）を書き出してください。
+
 レビュー対象: {REVIEW_TARGET}
 プロジェクトルート: {PROJECT_ROOT}
 仕様書: {SPEC_PATH}

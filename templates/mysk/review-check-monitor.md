@@ -5,8 +5,32 @@ cat {REVIEW_JSON_PATH} 2>/dev/null || echo "NOT_FOUND"
 Parse the JSON output to extract the status field.
 
 If the file does not exist yet:
-- Do nothing. Do not output any message. Do not run any bash commands.
-- Just wait for the next check.
+- Check for marker file to track elapsed time:
+  ```bash
+  MARKER_FILE="{MARKER_FILE}"
+  if [ -f "$MARKER_FILE" ]; then
+    MARKER_TIME=$(cat "$MARKER_FILE")
+    CURRENT_TIME=$(date -u +%s)
+    ELAPSED_MINUTES=$(( (CURRENT_TIME - MARKER_TIME) / 60 ))
+    echo "ELAPSED:$ELAPSED_MINUTES"
+  else
+    date -u +%s > "$MARKER_FILE"
+    echo "MARKER_CREATED"
+  fi
+  ```
+- If ELAPSED_MINUTES >= 5 (marker exists and 5+ minutes passed):
+  1. FIRST: Find review-check-monitor job in CronList and delete it using CronDelete
+  2. Display error: "エラー: review.json が5分間作成されませんでした。サブエージェントがプロンプト読み取り後に最初のアクションを実行していない可能性があります。"
+  3. Execute cleanup:
+     - rm -f {MARKER_FILE}
+     - cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit"
+     - cmux send-key --workspace {WS_REF} --surface {SUB_SURFACE} return
+     - sleep 2
+     - cmux close-surface --workspace {WS_REF} --surface {SUB_SURFACE}
+  4. Stop processing
+- Otherwise (marker just created or < 5 minutes):
+  - Do nothing. Do not output any message. Do not run any bash commands.
+  - Just wait for the next check.
 
 ## JSON読み取り（フォールバック付き）
 
@@ -36,6 +60,7 @@ If the file does not exist yet:
 2. Display error: "エラー: review.json に必須の 'status' フィールドがありません。サブエージェントがプロンプトの指示に従いませんでした。"
 3. Display review.json content for debugging: `cat {REVIEW_JSON_PATH}`
 4. Execute cleanup:
+   - rm -f {MARKER_FILE}
    - cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit"
    - cmux send-key --workspace {WS_REF} --surface {SUB_SURFACE} return
    - sleep 2
@@ -56,6 +81,7 @@ If status is "completed":
    - 保存先パス
    - "次のステップ: /mysk-review {RUN_ID} を再実行して修正と再確認を進める"
 4. Cleanup:
+   - rm -f {MARKER_FILE}
    - rm -f {GRACE_FILE}
    - cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit"
    - cmux send-key --workspace {WS_REF} --surface {SUB_SURFACE} return
@@ -153,6 +179,7 @@ If status is "in_progress":
          ```
          Then do nothing (監視を継続)
         - "中止" → Delete review-check-monitor using CronDelete, then execute cleanup:
+          - rm -f {MARKER_FILE}
           - rm -f {GRACE_FILE}
           - cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit" && sleep 1 && cmux send-key --workspace {WS_REF} --surface {SUB_SURFACE} return && sleep 2 && cmux close-surface --workspace {WS_REF} --surface {SUB_SURFACE}
      Else:
@@ -185,6 +212,7 @@ If status is "in_progress":
           ```
           Then do nothing (監視を継続)
         - "中止" → Delete review-check-monitor using CronDelete, then execute cleanup:
+     - rm -f {MARKER_FILE}
      - rm -f {GRACE_FILE}
      - cmux send --workspace {WS_REF} --surface {SUB_SURFACE} "/exit"
      - sleep 1
