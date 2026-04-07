@@ -1,0 +1,22 @@
+# 用語集
+
+- `spec.md`: 実装前に確定する仕様書です。実装入力の一次資料です。
+- `spec-review.json`: spec が repo 実態と整合しているかのレビュー結果です。
+- `review.json`: current diff に対するレビュー結果です。
+- `diffcheck.json`: review 指摘が直ったかを再確認した結果です。
+- `verify.json`: final verify の結果です。再実行時は `verify-rerun.json` を使います。
+- `acceptance`: spec の受け入れ条件です。完了判定の基準です。
+- `scope`: 変更してよい範囲です。
+- `constraints`: 守るべき条件です。
+- `gate`: 次へ進んでよいかを判断する関門です。
+- `working set`: 最初に集中して確認するファイル群です。
+- `最小確認対象`: spec に書かれる最初の working set です。
+- `checked_paths`: reviewer / verifier が見たファイルの証跡です。
+- `checked_hunks`: reviewer が見た差分 hunk の証跡です。
+- `acceptance_verifications`: verify で acceptance ごとに残す確認結果です。
+- `evidence_path`: どのファイルを根拠にしたかです。
+- `evidence_text`: どの文言やコードを根拠にしたかです。
+- `phase`: その stage の内部進行状況です。`loading`、`checking`、`writing`、`completed` などを使います。
+- `status`: 大きな状態です。`in_progress`、`waiting_for_user`、`completed`、`failed` を使います。
+- `run_id`: 1 回の flow を識別する ID です。
+- `run directory`: `~/.local/share/claude-mysk/{run_id}/` 配下の成果物置き場です。

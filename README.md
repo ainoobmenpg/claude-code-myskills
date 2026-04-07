@@ -1,6 +1,6 @@
 # mysk - Claude Code Workflow Skills
 
-mysk は、初心者向けに `仕様策定 -> 実装 -> レビュー` を単純な 3 段階で進める Claude Code 用スキル集です。公開コマンド定義ファイルは 5 個だけに絞り、runtime では `spec.md` を実装入力の source of truth として扱います。旧コマンド群は `templates/mysk/legacy-commands/` に参考資料として退避し、`/` 補完に出ないようにしています。
+mysk は、初心者向けに `仕様策定 -> 実装 -> レビュー` を単純な 3 段階で進める Claude Code 用スキル集です。公開コマンド定義ファイルは 6 個だけに絞り、runtime では `spec.md` を実装入力の source of truth として扱います。旧コマンド群は `templates/mysk/legacy-commands/` に参考資料として退避し、`/` 補完に出ないようにしています。
 
 ## クイックスタート
 
@@ -225,11 +225,32 @@ bin/stage-time-summary.sh <run_id>
 
 `status.json` / `spec-review.json` / `review.json` / `verify*.json` の `started_at` と `completed_at` を読み、stage ごとの所要時間と合計時間を表示します。
 
+## 初学者向けガイド
+
+artifact の読み方と運用判断は、次の 1 ページ資料を使ってください。
+
+- [docs/spec-md-guide.md](docs/spec-md-guide.md)
+- [docs/spec-review-json-guide.md](docs/spec-review-json-guide.md)
+- [docs/review-json-guide.md](docs/review-json-guide.md)
+- [docs/verify-json-guide.md](docs/verify-json-guide.md)
+- [docs/low-finding-decision.md](docs/low-finding-decision.md)
+- [docs/task-fit-checklist.md](docs/task-fit-checklist.md)
+- [docs/waiting-runbook.md](docs/waiting-runbook.md)
+- [docs/glossary.md](docs/glossary.md)
+
 ## 関連ドキュメント
 
 - [docs/workflow.md](docs/workflow.md)
 - [docs/implementation-survey.md](docs/implementation-survey.md)
 - [docs/testing.md](docs/testing.md)
 - [docs/MIGRATION.md](docs/MIGRATION.md)
+- [docs/spec-md-guide.md](docs/spec-md-guide.md)
+- [docs/spec-review-json-guide.md](docs/spec-review-json-guide.md)
+- [docs/review-json-guide.md](docs/review-json-guide.md)
+- [docs/verify-json-guide.md](docs/verify-json-guide.md)
+- [docs/low-finding-decision.md](docs/low-finding-decision.md)
+- [docs/task-fit-checklist.md](docs/task-fit-checklist.md)
+- [docs/waiting-runbook.md](docs/waiting-runbook.md)
+- [docs/glossary.md](docs/glossary.md)
 - [FAQ.md](FAQ.md)
 - [experiments/tri-arm-fixed-spec/PRACTICAL_CRITERIA.md](experiments/tri-arm-fixed-spec/PRACTICAL_CRITERIA.md) - Practical test evaluation criteria

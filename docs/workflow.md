@@ -56,6 +56,22 @@ graph LR
 - verify で new high または未解決 high があればエラー扱いで停止し、medium / low だけが残る場合は `/mysk-review {run_id}` に戻す
 - ユーザーは old command names を意識しない
 
+## 初学者向けの補助資料
+
+artifact の読み方:
+
+- [spec.md の読み方](./spec-md-guide.md)
+- [spec-review.json の読み方](./spec-review-json-guide.md)
+- [review.json の読み方](./review-json-guide.md)
+- [verify.json の読み方](./verify-json-guide.md)
+
+判断と運用:
+
+- [low が 1 件残ったときの判断表](./low-finding-decision.md)
+- [このフローに向く task / 向かない task のチェックリスト](./task-fit-checklist.md)
+- [長時間待ちのときに見る artifact の順番](./waiting-runbook.md)
+- [用語集](./glossary.md)
+
 ## 内部実装
 
 公開 command は top-level template を直接使います。legacy archive は移行や比較のために残しているだけです。

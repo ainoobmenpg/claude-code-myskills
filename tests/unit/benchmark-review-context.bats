@@ -137,6 +137,13 @@ load '../helpers/test-common'
   [ "$status" -eq 0 ]
 }
 
+@test "mysk-review command tells reviewer to continue immediately after reading the prompt" {
+  run grep -F "Do not stop after the Read tool output" "$PROJECT_ROOT/commands/mysk-review.md"
+  [ "$status" -eq 0 ]
+  run grep -F "begin the review work right away without waiting for another user turn" "$PROJECT_ROOT/commands/mysk-review.md"
+  [ "$status" -eq 0 ]
+}
+
 @test "mysk-review command renders minimal working set snapshot" {
   run grep -F "\"{SPEC_MINIMUM_CONTEXT}\": render_spec_section(\"最小確認対象\")" "$PROJECT_ROOT/commands/mysk-review.md"
   [ "$status" -eq 0 ]
@@ -257,4 +264,3 @@ load '../helpers/test-common'
   run grep 'passed.*ときも.*acceptance.*結果を埋めて' "$PROJECT_ROOT/templates/mysk/review-verify-prompt.md"
   [ "$status" -eq 0 ]
 }
-
