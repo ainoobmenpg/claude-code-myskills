@@ -8,7 +8,7 @@ load '../helpers/test-common'
 # Sub-pane command template mapping (no associative arrays for bash 3 compat)
 # Format: "command:prompt_template monitor_template"
 SUBPANE_MAP="
-public-spec:spec-prompt.md spec-monitor.md spec-review-prompt.md spec-review-monitor.md
+public-spec:spec-prompt.md spec-review-prompt.md
 public-review:review-check-prompt.md review-check-monitor.md review-verify-prompt.md review-verify-monitor.md
 fixed-spec-draft:fixed-spec-draft-prompt.md fixed-spec-draft-monitor.md
 fixed-spec-review:fixed-spec-review-prompt.md fixed-spec-review-monitor.md

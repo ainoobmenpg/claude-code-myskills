@@ -86,10 +86,10 @@ _extract_all_fm_keys() {
 # ----------------------------------------------------------------------
 # Test: public command set and argument-hint values
 # ----------------------------------------------------------------------
-@test "public command surface is exactly 5 files" {
+@test "public command surface is exactly 6 files" {
     local count
     count=$(get_command_files | wc -l | tr -d ' ')
-    [ "$count" -eq 5 ]
+    [ "$count" -eq 6 ]
 }
 
 @test "mysk-spec has argument-hint [topic_or_run_id]" {
@@ -101,6 +101,12 @@ _extract_all_fm_keys() {
 @test "mysk-implement has argument-hint [run_id]" {
     local hint
     hint=$(extract_frontmatter "$COMMANDS_DIR/mysk-implement.md" "argument-hint")
+    [ "$hint" = "[run_id]" ]
+}
+
+@test "mysk-issue has argument-hint [run_id]" {
+    local hint
+    hint=$(extract_frontmatter "$COMMANDS_DIR/mysk-issue.md" "argument-hint")
     [ "$hint" = "[run_id]" ]
 }
 

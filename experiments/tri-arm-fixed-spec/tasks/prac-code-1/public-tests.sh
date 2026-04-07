@@ -22,15 +22,14 @@ grep -q 'main()' "bin/run-practical.sh"
 
 # Test slug generation with empty input (should default to unnamed-experiment)
 # This tests the edge case handling mentioned in fixed-spec
-# Run the script with empty input to verify slugify behavior
-# Note: This will fail on usage, which is expected behavior for missing task_id
-if bash bin/run-practical.sh 2>&1 | grep -q "Usage:"; then
-  # Script correctly rejects empty input
-  :
-else
-  # Unexpected behavior - script should reject empty input
+# Run the script with empty input to verify missing-argument handling.
+USAGE_LOG="$(mktemp)"
+if bash bin/run-practical.sh >"$USAGE_LOG" 2>&1; then
+  rm -f "$USAGE_LOG"
   exit 1
 fi
+grep -q "Usage:" "$USAGE_LOG"
+rm -f "$USAGE_LOG"
 
 # Test slug generation with special characters
 # We verify slugify handles special characters by checking the function
@@ -47,8 +46,14 @@ fi
 # Use a subshell to avoid polluting the current environment
 TEST_RESULT=$(
   set -euo pipefail
-  # Source only the slugify function by extracting and evaling it
-  eval "$(grep -A 10 '^slugify()' bin/run-practical.sh | head -11)"
+  # Source only the slugify function by extracting it until the closing brace.
+  eval "$(
+    awk '
+      /^slugify\(\)/ { capture=1 }
+      capture { print }
+      capture && /^}/ { exit }
+    ' bin/run-practical.sh
+  )"
 
   # Test 1: Empty input should default to unnamed-experiment
   result=$(slugify "")

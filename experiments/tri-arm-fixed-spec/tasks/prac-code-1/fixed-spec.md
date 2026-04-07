@@ -78,6 +78,7 @@ main "$@"
 - Do NOT create config dependencies
 - Do NOT implement review integration
 - Do NOT use non-ASCII characters
+- Do NOT emit full benchmark artifacts such as `scorecard.csv` or `diff.patch`
 
 ## Acceptance Tests
 

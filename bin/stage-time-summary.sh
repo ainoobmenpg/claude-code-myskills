@@ -72,6 +72,17 @@ declare -A STAGE_START
 declare -A STAGE_FIRST
 declare -A STAGE_COMPLETE
 
+# Read spec status.json
+if [ -f "$RUN_DIR/status.json" ]; then
+  SPEC_STATUS="$RUN_DIR/status.json"
+  STARTED=$(grep -o '"started_at"[[:space:]]*:[[:space:]]*"[^"]*"' "$SPEC_STATUS" | cut -d'"' -f4 | head -1)
+  COMPLETED=$(grep -o '"completed_at"[[:space:]]*:[[:space:]]*"[^"]*"' "$SPEC_STATUS" | cut -d'"' -f4 | head -1)
+
+  STAGE_START[spec]="$STARTED"
+  STAGE_FIRST[spec]="N/A"
+  STAGE_COMPLETE[spec]="$COMPLETED"
+fi
+
 # Read spec-review.json
 if [ -f "$RUN_DIR/spec-review.json" ]; then
   SPEC_REVIEW="$RUN_DIR/spec-review.json"
@@ -118,7 +129,10 @@ fi
 echo "| Stage | Started | First Artifact | Completed | Duration |"
 echo "|-------|---------|----------------|-----------|----------|"
 
-for stage in spec-review review verify; do
+TOTAL_SECONDS=0
+TOTAL_COUNTED=0
+
+for stage in spec spec-review review verify; do
   if [ -n "${STAGE_START[$stage]}" ]; then
     STARTED="${STAGE_START[$stage]}"
     FIRST="${STAGE_FIRST[$stage]:-N/A}"
@@ -127,6 +141,10 @@ for stage in spec-review review verify; do
     DURATION_SECONDS="N/A"
     if [ "$COMPLETED" != "N/A" ] && [ "$STARTED" != "N/A" ]; then
       DURATION_SECONDS=$(calculate_duration "$STARTED" "$COMPLETED")
+    fi
+    if [ "$DURATION_SECONDS" != "N/A" ]; then
+      TOTAL_SECONDS=$((TOTAL_SECONDS + DURATION_SECONDS))
+      TOTAL_COUNTED=$((TOTAL_COUNTED + 1))
     fi
     
     DURATION_FORMATTED=$(format_duration "$DURATION_SECONDS")
@@ -141,6 +159,10 @@ for stage in spec-review review verify; do
 done
 
 echo ""
+if [ "$TOTAL_COUNTED" -gt 0 ]; then
+  echo "Total: $(format_duration "$TOTAL_SECONDS")"
+  echo ""
+fi
 echo "## Notes"
 echo "- N/A: データなし"
 echo "- 時刻は全て UTC"

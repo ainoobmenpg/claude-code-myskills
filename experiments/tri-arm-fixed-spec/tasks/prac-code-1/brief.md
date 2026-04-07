@@ -21,7 +21,7 @@ Create `experiments/tri-arm-fixed-spec/bin/run-practical.sh` to automate practic
 
 - Script must be bash compatible
 - Use inline config (do not depend on config.json)
-- Follow existing run-experiment.sh output structure
+- Follow run-experiment.sh naming conventions, but keep practical output limited to `run.log` and `results.json`
 - Use filesystem-safe slug generation
 
 ## Acceptance Criteria
@@ -45,7 +45,7 @@ See `allowed-paths.txt` for the complete list of modifiable paths.
 
 ## Implementation Notes
 
-- Reference run-experiment.sh for output structure inspiration
+- Reference run-experiment.sh for slug and run directory conventions
 - Use `date -u +"%Y%m%dT%H%M%SZ"` for timestamp
 - Default slug to "unnamed-experiment" if empty
 - Create runs/<timestamp>-<slug>/ directory structure

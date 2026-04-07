@@ -1,3 +1,9 @@
+---
+description: spec.mdを元にGitHub Issueを作成する
+argument-hint: "[run_id]"
+user-invocable: true
+---
+
 # mysk-issue
 
 spec.md をベースに対話的に GitHub Issue を作成する。

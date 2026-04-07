@@ -133,6 +133,13 @@ def render_spec_section(heading):
         return "(spec.md not found)"
     return extract_markdown_section(spec_path.read_text(), heading)
 
+def render_touched_files():
+    touched_path = Path("{RUN_DIR}") / "touched-files.txt"
+    if not touched_path.is_file():
+        return "(touched-files.txt not found)"
+    text = touched_path.read_text().strip()
+    return text or "(no changed files recorded)"
+
 for key, value in {
     "{REVIEW_JSON_PATH}": "{REVIEW_JSON_PATH}",
     "{RUN_ID}": "{RUN_ID}",
@@ -142,6 +149,7 @@ for key, value in {
     "{SPEC_ACCEPTANCE_CONTEXT}": render_spec_section("受け入れ条件"),
     "{SPEC_SCOPE_CONTEXT}": render_spec_section("スコープ"),
     "{SPEC_CONSTRAINTS_CONTEXT}": render_spec_section("制約条件"),
+    "{TOUCHED_FILES}": render_touched_files(),
 }.items():
     text = text.replace(key, value)
 output.write_text(text)

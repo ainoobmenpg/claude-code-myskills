@@ -92,6 +92,7 @@
 ### 作成中
 ```json
 {
+  "started_at": "UTCタイムスタンプ",
   "status": "in_progress",
   "progress": "仕様書を作成中",
   "updated_at": "UTCタイムスタンプ"
@@ -101,6 +102,8 @@
 ### 完了時
 ```json
 {
+  "started_at": "作成開始時のUTCタイムスタンプ",
+  "completed_at": "完了時のUTCタイムスタンプ",
   "status": "completed",
   "progress": "仕様書作成完了",
   "updated_at": "UTCタイムスタンプ"
@@ -110,6 +113,7 @@
 ### 失敗時
 ```json
 {
+  "started_at": "作成開始時のUTCタイムスタンプ",
   "status": "failed",
   "progress": "エラー内容",
   "updated_at": "UTCタイムスタンプ"

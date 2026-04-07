@@ -217,6 +217,14 @@ bats tests/unit/*.bats tests/integration/*.bats
 
 テスト観点の詳細は [docs/testing.md](docs/testing.md) を参照してください。
 
+run artifact の段階時間を見たい場合は次を使います。
+
+```bash
+bin/stage-time-summary.sh <run_id>
+```
+
+`status.json` / `spec-review.json` / `review.json` / `verify*.json` の `started_at` と `completed_at` を読み、stage ごとの所要時間と合計時間を表示します。
+
 ## 関連ドキュメント
 
 - [docs/workflow.md](docs/workflow.md)

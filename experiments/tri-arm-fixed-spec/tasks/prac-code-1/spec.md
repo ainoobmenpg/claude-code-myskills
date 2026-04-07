@@ -29,7 +29,8 @@ Provide a simple 1-command interface for running practical tests without manual 
 
 - Script must be bash compatible
 - Use inline config only
-- Follow existing output structure conventions
+- Follow `run-experiment.sh` conventions for slug generation, timestamp formatting, and run directory naming
+- Practical test runner uses simplified output artifacts (`run.log`, `results.json`) instead of full benchmark artifacts
 - ASCII-only code and comments
 
 ## Acceptance Criteria
@@ -75,7 +76,7 @@ After completion, output to stdout:
 ```
 Practical test completed: <task_id>
 Run directory: runs/<timestamp>-<slug>
-Status: <completed|failed>
+Status: <passed|failed>
 Elapsed: <N> minutes
 ```
 
@@ -84,4 +85,4 @@ Elapsed: <N> minutes
 See `bin/run-experiment.sh` for:
 - Slug generation logic
 - Run directory creation
-- Output structure conventions
+- Shared naming conventions only; practical output stays simplified
